@@ -2,21 +2,21 @@
 export enum UserRole {
   PLAYER = 'player',
   PROVIDER = 'provider',
-  STUDIO = 'studio'
+  STUDIO = 'studio',
 }
 
 // 关联状态枚举
 export enum RelationStatus {
   PENDING = 'pending',
   APPROVED = 'approved',
-  REJECTED = 'rejected'
+  REJECTED = 'rejected',
 }
 
 // 余额类型枚举
 export enum BalanceType {
   MONEY = 'money',
   TIME = 'time',
-  POINT = 'point'
+  POINT = 'point',
 }
 
 // 交易类型枚举
@@ -25,8 +25,24 @@ export enum TransactionType {
   CONSUME = 'consume',
   REFUND = 'refund',
   FREEZE = 'freeze',
-  UNFREEZE = 'unfreeze'
+  UNFREEZE = 'unfreeze',
 }
+
+// 游玩记录状态
+export enum PlayStatus {
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+}
+
+// 评价对象类型
+export enum ReviewTargetType {
+  PROVIDER = 'provider',
+  STUDIO = 'studio',
+}
+
+// 注意：后端 decimal 金额序列化为字符串（"328.50"），故 amount 类型为 string。
+export type Decimal = string;
 
 // 用户接口
 export interface User {
@@ -55,7 +71,6 @@ export interface Studio {
   updated_at: string;
   owner?: User;
   relations?: ProviderStudioRelation[];
-  reviews?: Review[];
 }
 
 // 服务者-工作室关联接口
@@ -80,8 +95,8 @@ export interface Balance {
   provider_id: number;
   studio_id: number;
   type: BalanceType;
-  amount: number;
-  frozen_amount: number;
+  amount: Decimal;
+  frozen_amount: Decimal;
   created_at: string;
   updated_at: string;
   player?: User;
@@ -94,9 +109,9 @@ export interface BalanceTransaction {
   id: number;
   balance_id: number;
   type: TransactionType;
-  amount: number;
-  before_amount: number;
-  after_amount: number;
+  amount: Decimal;
+  before_amount: Decimal;
+  after_amount: Decimal;
   description?: string;
   operator_id?: number;
   created_at: string;
@@ -115,8 +130,9 @@ export interface PlayRecord {
   start_time: string;
   end_time?: string;
   duration?: number;
-  amount?: number;
-  status: string;
+  amount?: Decimal;
+  settle_type?: BalanceType;
+  status: PlayStatus;
   description?: string;
   created_at: string;
   updated_at: string;
@@ -129,7 +145,7 @@ export interface PlayRecord {
 export interface Review {
   id: number;
   player_id: number;
-  target_type: string;
+  target_type: ReviewTargetType;
   target_id: number;
   rating: number;
   content?: string;
@@ -140,6 +156,71 @@ export interface Review {
   updated_at: string;
   player?: User;
   play_record?: PlayRecord;
+}
+
+// 余额汇总行
+export interface BalanceSummaryRow {
+  type: BalanceType;
+  total_amount: Decimal;
+  player_count: number;
+}
+
+// 评分汇总
+export interface ReviewSummary {
+  average_rating: number;
+  count: number;
+  distribution: Record<string, number>;
+}
+
+// 工作室成员
+export interface StudioMember {
+  provider: User;
+  status: RelationStatus;
+  player_count: number;
+  money_flow: Decimal;
+  rating: number;
+  joined_at?: string;
+}
+
+// 玩家控制台聚合
+export interface PlayerDashboard {
+  money_total: Decimal;
+  time_total: Decimal;
+  point_total: Decimal;
+  provider_count: number;
+  recent_transactions: BalanceTransaction[];
+  ongoing_records: PlayRecord[];
+}
+
+// 服务者视角的玩家聚合
+export interface ProviderPlayerAgg {
+  player_id: number;
+  nickname: string;
+  username: string;
+  money: Decimal;
+  time: Decimal;
+  point: Decimal;
+  last_active?: string;
+}
+
+// 服务者控制台聚合
+export interface ProviderDashboard {
+  earnings: BalanceSummaryRow[];
+  player_count: number;
+  active_players: ProviderPlayerAgg[];
+  weekly_play_counts: { date: string; count: number }[];
+  todos: ProviderPlayerAgg[];
+}
+
+// 工作室控制台聚合
+export interface StudioDashboard {
+  studio: Studio;
+  member_count: number;
+  served_player_count: number;
+  monthly_flow: Decimal;
+  average_rating: number;
+  pending_count: number;
+  pending_applications: ProviderStudioRelation[];
 }
 
 // API响应格式
@@ -157,13 +238,12 @@ export interface PageResponse<T> {
   page_size: number;
 }
 
-// 登录表单
+// 表单
 export interface LoginForm {
   username: string;
   password: string;
 }
 
-// 注册表单
 export interface RegisterForm {
   username: string;
   email: string;
@@ -173,13 +253,11 @@ export interface RegisterForm {
   role: UserRole;
 }
 
-// 登录响应
 export interface LoginResponse {
   token: string;
   user: User;
 }
 
-// 创建工作室表单
 export interface CreateStudioForm {
   name: string;
   description?: string;
@@ -187,8 +265,8 @@ export interface CreateStudioForm {
   contact_info?: string;
 }
 
-// 添加余额表单
-export interface AddBalanceForm {
+// 余额操作表单（充值 / 扣费 / 退款共用）
+export interface BalanceOpForm {
   player_id: number;
   provider_id: number;
   studio_id?: number;

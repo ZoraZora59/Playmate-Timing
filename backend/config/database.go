@@ -26,7 +26,10 @@ func InitDatabase(config *Config) error {
 
 	var err error
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Warn),
+		// studio_id=0 是「独立服务者」的约定值，与外键引用完整性冲突，
+		// 因此关闭迁移时的外键约束生成；关系完整性由应用层校验保证。
+		DisableForeignKeyConstraintWhenMigrating: true,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to connect database: %v", err)

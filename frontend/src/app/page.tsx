@@ -1,22 +1,58 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { Layout, Button, Card, Row, Col, Typography, Space, Divider } from 'antd';
-import { 
-  UserOutlined, 
-  TeamOutlined, 
-  WalletOutlined, 
-  StarOutlined,
-  ShopOutlined,
-  PlayCircleOutlined
-} from '@ant-design/icons';
-import Link from 'next/link';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from 'antd';
+import { COLORS } from '@/lib/theme';
+import { UserRole } from '@/types';
 import { useAuthStore } from '@/store/auth';
 
-const { Header, Content, Footer } = Layout;
-const { Title, Paragraph } = Typography;
+interface RoleEntry {
+  role: UserRole;
+  badge: string;
+  title: string;
+  en: string;
+  desc: string;
+  points: string[];
+  hue: string;
+  hueSoft: string;
+}
+
+const ROLE_ENTRIES: RoleEntry[] = [
+  {
+    role: UserRole.PLAYER,
+    badge: '玩',
+    title: '玩家',
+    en: 'PLAYER',
+    desc: '查看每位服务者处的独立余额、游玩记录与历史流水，随时给服务打分评价。',
+    points: ['多账户余额一目了然', '游玩记录时间轴', '匿名 / 实名评价'],
+    hue: COLORS.primary,
+    hueSoft: COLORS.primarySoft,
+  },
+  {
+    role: UserRole.PROVIDER,
+    badge: '服',
+    title: '陪玩服务者',
+    en: 'PROVIDER',
+    desc: '管理玩家余额、充值扣费、查看收益走势，并申请加入心仪的工作室。',
+    points: ['玩家账户充值 / 扣费', '收益汇总与趋势', '申请加入工作室'],
+    hue: COLORS.teal,
+    hueSoft: '#E3F8F5',
+  },
+  {
+    role: UserRole.STUDIO,
+    badge: '室',
+    title: '工作室',
+    en: 'STUDIO',
+    desc: '统一运营多名服务者，审批入驻申请，掌握成员表现与整体经营数据。',
+    points: ['入驻申请审批', '成员与服务者管理', '整体经营看板'],
+    hue: COLORS.point,
+    hueSoft: COLORS.pointSoft,
+  },
+];
 
 export default function Home() {
+  const router = useRouter();
   const { user, isAuthenticated, loadProfile } = useAuthStore();
 
   useEffect(() => {
@@ -25,220 +61,362 @@ export default function Home() {
     }
   }, [isAuthenticated, user, loadProfile]);
 
-  const features = [
-    {
-      icon: <UserOutlined style={{ fontSize: '2rem', color: '#1890ff' }} />,
-      title: '多角色支持',
-      description: '支持玩家、陪玩服务者、工作室三种角色，满足不同用户需求'
-    },
-    {
-      icon: <ShopOutlined style={{ fontSize: '2rem', color: '#52c41a' }} />,
-      title: '工作室管理',
-      description: '工作室可以管理多个服务者，批准关联申请，统一管理服务'
-    },
-    {
-      icon: <WalletOutlined style={{ fontSize: '2rem', color: '#faad14' }} />,
-      title: '余额管理',
-      description: '支持金额、时间、点数等多种余额类型，完整的充值消费记录'
-    },
-    {
-      icon: <PlayCircleOutlined style={{ fontSize: '2rem', color: '#722ed1' }} />,
-      title: '游玩记录',
-      description: '详细记录每次游玩服务，包含时长、消费等信息'
-    },
-    {
-      icon: <StarOutlined style={{ fontSize: '2rem', color: '#eb2f96' }} />,
-      title: '评价系统',
-      description: '玩家可以对工作室和服务者进行评价，建立信誉体系'
-    },
-    {
-      icon: <TeamOutlined style={{ fontSize: '2rem', color: '#13c2c2' }} />,
-      title: '关联管理',
-      description: '灵活的服务者与工作室关联机制，支持独立服务者'
-    }
-  ];
-
   return (
-    <Layout className="min-h-screen">
-      <Header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto flex justify-between items-center h-full">
-          <div className="flex items-center space-x-4">
-            <Title level={3} className="m-0 text-blue-600">
-              陪玩平台
-            </Title>
+    <div className="animate-pop" style={{ minHeight: '100vh', background: COLORS.bgPage }}>
+      {/* ===== 顶部导航（落地页自带） ===== */}
+      <header
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 20,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 20,
+          padding: '16px 34px',
+          background: 'rgba(244,245,250,.82)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: `1px solid ${COLORS.border}`,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+          <div
+            className="font-display"
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 11,
+              background: `linear-gradient(135deg,${COLORS.primary},${COLORS.cyan})`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: 19,
+              color: '#fff',
+              boxShadow: '0 6px 16px rgba(91,84,240,.4)',
+            }}
+          >
+            陪
           </div>
-          <Space>
-            {isAuthenticated ? (
-              <div className="flex items-center space-x-4">
-                <span>欢迎, {user?.nickname || user?.username}</span>
-                <Link href="/dashboard">
-                  <Button type="primary">控制台</Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-x-2">
-                <Link href="/auth/login">
-                  <Button>登录</Button>
-                </Link>
-                <Link href="/auth/register">
-                  <Button type="primary">注册</Button>
-                </Link>
-              </div>
-            )}
-          </Space>
+          <div>
+            <div
+              className="font-display"
+              style={{ fontWeight: 700, fontSize: 16, color: COLORS.textPrimary, letterSpacing: '.2px' }}
+            >
+              陪玩平台
+            </div>
+            <div
+              className="font-display"
+              style={{ fontSize: 10.5, color: COLORS.textMuted, letterSpacing: 2 }}
+            >
+              COMPANION HUB
+            </div>
+          </div>
         </div>
-      </Header>
 
-      <Content>
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white py-20">
-          <div className="max-w-7xl mx-auto px-4 text-center">
-            <Title level={1} className="text-white mb-4">
-              专业的陪玩服务信息平台
-            </Title>
-            <Paragraph className="text-xl mb-8 text-white">
-              连接陪玩工作室、服务者与玩家，提供完整的服务管理和信息查询平台
-            </Paragraph>
-            <Space size="large">
-              {!isAuthenticated && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {isAuthenticated ? (
+            <Button
+              type="primary"
+              size="large"
+              style={{ borderRadius: 11, fontWeight: 600, paddingInline: 22 }}
+              onClick={() => router.push('/dashboard')}
+            >
+              进入控制台
+            </Button>
+          ) : (
+            <>
+              <Button
+                size="large"
+                style={{
+                  borderRadius: 11,
+                  fontWeight: 600,
+                  borderColor: COLORS.border,
+                  color: COLORS.textPrimary,
+                }}
+                onClick={() => router.push('/auth/login')}
+              >
+                登录
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                style={{ borderRadius: 11, fontWeight: 600, paddingInline: 22 }}
+                onClick={() => router.push('/auth/register')}
+              >
+                注册
+              </Button>
+            </>
+          )}
+        </div>
+      </header>
+
+      <main style={{ maxWidth: 1180, width: '100%', margin: '0 auto', padding: '40px 34px 72px' }}>
+        {/* ===== Hero ===== */}
+        <section
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            borderRadius: 22,
+            padding: '54px 48px 58px',
+            marginBottom: 40,
+            background: `linear-gradient(135deg, ${COLORS.sidebar} 0%, #2E2A6B 60%, #3D3490 100%)`,
+            color: '#fff',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              right: -60,
+              top: -60,
+              width: 280,
+              height: 280,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle,rgba(21,200,216,.35),transparent 70%)',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              left: -40,
+              bottom: -80,
+              width: 240,
+              height: 240,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle,rgba(91,84,240,.4),transparent 70%)',
+            }}
+          />
+          <div style={{ position: 'relative', maxWidth: 720 }}>
+            <span
+              style={{
+                display: 'inline-block',
+                padding: '6px 14px',
+                borderRadius: 20,
+                background: 'rgba(255,255,255,.12)',
+                fontSize: 12.5,
+                fontWeight: 600,
+                letterSpacing: '.5px',
+                marginBottom: 22,
+              }}
+            >
+              陪玩工作室 · 服务者 · 玩家 三方信息平台
+            </span>
+            <h1
+              className="font-display"
+              style={{
+                margin: 0,
+                fontWeight: 700,
+                fontSize: 50,
+                lineHeight: 1.12,
+                letterSpacing: '-1px',
+              }}
+            >
+              让陪玩服务的每一笔
+              <br />
+              余额、记录与评价都<span style={{ color: COLORS.cyan }}>清清楚楚</span>
+            </h1>
+            <p
+              style={{
+                margin: '20px 0 0',
+                fontSize: 16,
+                lineHeight: 1.7,
+                color: 'rgba(255,255,255,.72)',
+                maxWidth: 600,
+              }}
+            >
+              一站式管理玩家余额、陪玩记录、收益结算与工作室协作。玩家看得明白，服务者算得清楚，工作室管得高效。
+            </p>
+            <div style={{ display: 'flex', gap: 14, marginTop: 32, flexWrap: 'wrap' }}>
+              {isAuthenticated ? (
+                <Button
+                  type="primary"
+                  size="large"
+                  style={{ borderRadius: 12, fontWeight: 600, height: 46, paddingInline: 28 }}
+                  onClick={() => router.push('/dashboard')}
+                >
+                  进入控制台 →
+                </Button>
+              ) : (
                 <>
-                  <Link href="/auth/register">
-                    <Button size="large" type="primary" className="bg-white text-blue-600 border-white hover:bg-gray-100">
-                      立即注册
-                    </Button>
-                  </Link>
-                  <Link href="/studios">
-                    <Button size="large" className="text-white border-white hover:bg-white hover:text-blue-600">
-                      浏览工作室
-                    </Button>
-                  </Link>
+                  <Button
+                    size="large"
+                    style={{
+                      borderRadius: 12,
+                      fontWeight: 600,
+                      height: 46,
+                      paddingInline: 28,
+                      background: '#fff',
+                      color: COLORS.primary,
+                      border: 'none',
+                    }}
+                    onClick={() => router.push('/auth/register')}
+                  >
+                    免费注册 →
+                  </Button>
+                  <Button
+                    size="large"
+                    style={{
+                      borderRadius: 12,
+                      fontWeight: 600,
+                      height: 46,
+                      paddingInline: 28,
+                      background: 'rgba(255,255,255,.1)',
+                      color: '#fff',
+                      border: '1px solid rgba(255,255,255,.25)',
+                    }}
+                    onClick={() => router.push('/auth/login')}
+                  >
+                    已有账号登录
+                  </Button>
                 </>
               )}
-              {isAuthenticated && (
-                <Link href="/dashboard">
-                  <Button size="large" type="primary" className="bg-white text-blue-600 border-white hover:bg-gray-100">
-                    进入控制台
-                  </Button>
-                </Link>
-              )}
-            </Space>
-          </div>
-        </div>
-
-        {/* Features Section */}
-        <div className="py-16 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center mb-12">
-              <Title level={2}>平台特色</Title>
-              <Paragraph className="text-lg text-gray-600">
-                专为陪玩行业设计的全方位信息管理平台
-              </Paragraph>
             </div>
-            
-            <Row gutter={[24, 24]}>
-              {features.map((feature, index) => (
-                <Col xs={24} md={12} lg={8} key={index}>
-                  <Card className="h-full text-center hover:shadow-lg transition-shadow">
-                    <div className="mb-4">{feature.icon}</div>
-                    <Title level={4}>{feature.title}</Title>
-                    <Paragraph className="text-gray-600">
-                      {feature.description}
-                    </Paragraph>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
           </div>
+        </section>
+
+        {/* ===== 角色入口 ===== */}
+        <div style={{ marginBottom: 22 }}>
+          <h2
+            className="font-display"
+            style={{ margin: 0, fontSize: 24, fontWeight: 700, color: COLORS.textPrimary }}
+          >
+            选择你的身份，立即开始
+          </h2>
+          <p style={{ margin: '6px 0 0', fontSize: 14, color: COLORS.textSecondary }}>
+            三种角色对应不同的工作台，注册后即可进入对应控制台。
+          </p>
         </div>
 
-        {/* CTA Section */}
-        <div className="py-16 bg-white">
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <Title level={2}>开始使用</Title>
-            <Paragraph className="text-lg mb-8 text-gray-600">
-              根据您的身份选择合适的注册类型，享受专业的陪玩服务平台
-            </Paragraph>
-            
-            <Row gutter={24}>
-              <Col xs={24} md={8}>
-                <Card className="text-center hover:shadow-lg transition-shadow">
-                  <UserOutlined style={{ fontSize: '3rem', color: '#1890ff' }} />
-                  <Title level={4}>玩家</Title>
-                  <Paragraph>
-                    查看余额、游玩记录、评价服务者和工作室
-                  </Paragraph>
-                  {!isAuthenticated && (
-                    <Link href="/auth/register?role=player">
-                      <Button type="primary">注册为玩家</Button>
-                    </Link>
-                  )}
-                </Card>
-              </Col>
-              
-              <Col xs={24} md={8}>
-                <Card className="text-center hover:shadow-lg transition-shadow">
-                  <TeamOutlined style={{ fontSize: '3rem', color: '#52c41a' }} />
-                  <Title level={4}>陪玩服务者</Title>
-                  <Paragraph>
-                    管理客户余额、申请加入工作室、查看收益
-                  </Paragraph>
-                  {!isAuthenticated && (
-                    <Link href="/auth/register?role=provider">
-                      <Button type="primary">注册为服务者</Button>
-                    </Link>
-                  )}
-                </Card>
-              </Col>
-              
-              <Col xs={24} md={8}>
-                <Card className="text-center hover:shadow-lg transition-shadow">
-                  <ShopOutlined style={{ fontSize: '3rem', color: '#faad14' }} />
-                  <Title level={4}>工作室</Title>
-                  <Paragraph>
-                    创建工作室、管理服务者、统一业务管理
-                  </Paragraph>
-                  {!isAuthenticated && (
-                    <Link href="/auth/register?role=studio">
-                      <Button type="primary">注册为工作室</Button>
-                    </Link>
-                  )}
-                </Card>
-              </Col>
-            </Row>
-          </div>
-        </div>
-      </Content>
-
-      <Footer className="bg-gray-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <Row gutter={[24, 24]}>
-            <Col xs={24} md={8}>
-              <Title level={4} className="text-white">陪玩服务平台</Title>
-              <Paragraph className="text-gray-300">
-                专业的陪玩工作室、服务者、玩家信息管理平台
-              </Paragraph>
-            </Col>
-            <Col xs={24} md={8}>
-              <Title level={5} className="text-white">快速链接</Title>
-              <div className="space-y-2">
-                <div><Link href="/studios" className="text-gray-300 hover:text-white">工作室列表</Link></div>
-                <div><Link href="/auth/login" className="text-gray-300 hover:text-white">用户登录</Link></div>
-                <div><Link href="/auth/register" className="text-gray-300 hover:text-white">用户注册</Link></div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3,1fr)',
+            gap: 18,
+          }}
+        >
+          {ROLE_ENTRIES.map((entry) => (
+            <button
+              key={entry.role}
+              onClick={() => router.push(`/auth/register?role=${entry.role}`)}
+              style={{
+                textAlign: 'left',
+                cursor: 'pointer',
+                background: COLORS.bgCard,
+                border: `1px solid ${COLORS.border}`,
+                borderRadius: 18,
+                padding: '24px 24px 26px',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: '.18s',
+                boxShadow: '0 1px 2px rgba(27,28,51,.03)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = entry.hue;
+                e.currentTarget.style.boxShadow = '0 12px 28px rgba(27,28,51,.08)';
+                e.currentTarget.style.transform = 'translateY(-3px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = COLORS.border;
+                e.currentTarget.style.boxShadow = '0 1px 2px rgba(27,28,51,.03)';
+                e.currentTarget.style.transform = 'none';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 16 }}>
+                <div
+                  className="font-display"
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 13,
+                    background: entry.hue,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: 20,
+                  }}
+                >
+                  {entry.badge}
+                </div>
+                <div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: COLORS.textPrimary }}>
+                    {entry.title}
+                  </div>
+                  <div
+                    className="font-display"
+                    style={{ fontSize: 11, letterSpacing: 1.5, color: COLORS.textMuted }}
+                  >
+                    {entry.en}
+                  </div>
+                </div>
               </div>
-            </Col>
-            <Col xs={24} md={8}>
-              <Title level={5} className="text-white">联系我们</Title>
-              <Paragraph className="text-gray-300">
-                如有问题或建议，请随时联系我们
-              </Paragraph>
-            </Col>
-          </Row>
-          <Divider className="border-gray-600" />
-          <div className="text-center text-gray-400">
-            © 2024 陪玩服务信息平台. All rights reserved.
-          </div>
+
+              <p
+                style={{
+                  margin: '0 0 16px',
+                  fontSize: 13.5,
+                  lineHeight: 1.7,
+                  color: COLORS.textSecondary,
+                  flex: 1,
+                }}
+              >
+                {entry.desc}
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
+                {entry.points.map((p) => (
+                  <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                    <span
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: 7,
+                        background: entry.hueSoft,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flex: 'none',
+                      }}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke={entry.hue}
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    </span>
+                    <span style={{ fontSize: 13, color: COLORS.textPrimary }}>{p}</span>
+                  </div>
+                ))}
+              </div>
+
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  alignSelf: 'flex-start',
+                  padding: '9px 16px',
+                  borderRadius: 11,
+                  background: entry.hueSoft,
+                  color: entry.hue,
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                注册为{entry.title} →
+              </span>
+            </button>
+          ))}
         </div>
-      </Footer>
-    </Layout>
+      </main>
+    </div>
   );
 }

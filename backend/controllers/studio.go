@@ -10,6 +10,7 @@ import (
 	"companion-platform-backend/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
@@ -359,4 +360,82 @@ func (sc *StudioController) ProcessApplication(c *gin.Context) {
 	}
 
 	utils.SuccessWithMessage(c, "Application processed successfully", relation)
+}
+
+// StudioMember 工作室成员（含聚合统计）
+type StudioMember struct {
+	Provider    models.User           `json:"provider"`
+	Status      models.RelationStatus `json:"status"`
+	PlayerCount int64                 `json:"player_count"`
+	MoneyFlow   decimal.Decimal       `json:"money_flow"`
+	Rating      float64               `json:"rating"`
+	JoinedAt    *time.Time            `json:"joined_at"`
+}
+
+// GetStudioMembers 获取工作室成员列表（工作室所有者查看自己的工作室）
+func (sc *StudioController) GetStudioMembers(c *gin.Context) {
+	userID, err := middleware.GetCurrentUserID(c)
+	if err != nil {
+		utils.Unauthorized(c, "User not found")
+		return
+	}
+
+	db := config.GetDB()
+	var studio models.Studio
+	if err := db.Where("owner_id = ?", userID).First(&studio).Error; err != nil {
+		utils.NotFound(c, "未找到你的工作室，请先创建")
+		return
+	}
+
+	var relations []models.ProviderStudioRelation
+	if err := db.Where("studio_id = ? AND status = ?", studio.ID, models.StatusApproved).
+		Preload("Provider").Order("processed_at DESC").Find(&relations).Error; err != nil {
+		utils.InternalServerError(c, "Failed to get members")
+		return
+	}
+
+	members := make([]StudioMember, 0, len(relations))
+	for _, rel := range relations {
+		m := StudioMember{
+			Provider: rel.Provider,
+			Status:   rel.Status,
+			JoinedAt: rel.ProcessedAt,
+			MoneyFlow: decimal.Zero,
+		}
+		db.Model(&models.Balance{}).
+			Where("provider_id = ? AND studio_id = ?", rel.ProviderID, studio.ID).
+			Distinct("player_id").Count(&m.PlayerCount)
+		db.Model(&models.Balance{}).
+			Where("provider_id = ? AND studio_id = ? AND type = ?", rel.ProviderID, studio.ID, models.BalanceTypeMoney).
+			Select("COALESCE(SUM(amount),0)").Scan(&m.MoneyFlow)
+		var avg *float64
+		db.Model(&models.Review{}).
+			Where("target_type = ? AND target_id = ?", models.ReviewTargetProvider, rel.ProviderID).
+			Select("AVG(rating)").Scan(&avg)
+		if avg != nil {
+			m.Rating = *avg
+		}
+		members = append(members, m)
+	}
+
+	utils.Success(c, members)
+}
+
+// GetMyRelations 服务者查看自己的工作室归属与申请记录
+func (sc *StudioController) GetMyRelations(c *gin.Context) {
+	userID, err := middleware.GetCurrentUserID(c)
+	if err != nil {
+		utils.Unauthorized(c, "User not found")
+		return
+	}
+
+	db := config.GetDB()
+	var relations []models.ProviderStudioRelation
+	if err := db.Where("provider_id = ?", userID).
+		Preload("Studio").Preload("Studio.Owner").Order("applied_at DESC").Find(&relations).Error; err != nil {
+		utils.InternalServerError(c, "Failed to get relations")
+		return
+	}
+
+	utils.Success(c, relations)
 }

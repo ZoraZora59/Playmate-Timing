@@ -1,26 +1,108 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 设计令牌（与 src/lib/theme.ts 保持一致） */
+  --bg-page: #F4F5FA;
+  --bg-card: #FFFFFF;
+  --bg-subtle: #FBFBFE;
+  --sidebar: #16172A;
+
+  --text-primary: #1B1C33;
+  --text-secondary: #6B6D85;
+  --text-muted: #9AA0B5;
+
+  --border: #EAEBF2;
+  --divider: #F1F2F7;
+
+  --primary: #5B54F0;
+  --primary-hover: #7C75FF;
+  --primary-soft: #ECEBFE;
+  --cyan: #15C8D8;
+  --teal: #0FB6A8;
+
+  --money: #1FB573;
+  --time: #2E90FA;
+  --point: #F5A524;
+  --danger: #F0476A;
+
+  --font-display: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+  --font-body: 'Noto Sans SC', system-ui, -apple-system, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #d6d8e4;
+  border-radius: 8px;
+  border: 3px solid var(--bg-page);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #bfc2d4;
+}
+
+/* 动画（取自设计原型） */
+@keyframes pop {
+  from {
+    transform: translateY(10px) scale(0.99);
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes ovl {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes livedot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.animate-pop {
+  animation: pop 0.35s ease;
+}
+.live-dot {
+  animation: livedot 1.4s infinite;
+}
+
+/* 通用卡片 */
+.pm-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
 }

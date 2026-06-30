@@ -1,229 +1,243 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { Form, Input, Button, Card, Typography, message, Space, Divider, Select } from 'antd';
-import { UserOutlined, MailOutlined, LockOutlined, PhoneOutlined, EditOutlined } from '@ant-design/icons';
+import { Suspense, useMemo } from 'react';
+import { Form, Input, Button, Segmented, App, Spin } from 'antd';
+import { UserOutlined, LockOutlined, MailOutlined, SmileOutlined, PhoneOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { RegisterForm, UserRole } from '@/types';
+import { COLORS, FONT_DISPLAY, ROLE_HUE } from '@/lib/theme';
 
-const { Title, Paragraph } = Typography;
-const { Option } = Select;
+interface RegisterFields extends RegisterForm {
+  confirm: string;
+}
 
-export default function RegisterPage() {
+const ROLE_OPTIONS: { label: string; value: UserRole; desc: string }[] = [
+  { label: '玩家', value: UserRole.PLAYER, desc: '查看余额与游玩记录' },
+  { label: '服务者', value: UserRole.PROVIDER, desc: '管理玩家余额与收益' },
+  { label: '工作室', value: UserRole.STUDIO, desc: '管理成员与审批入驻' },
+];
+
+function isUserRole(v: string | null): v is UserRole {
+  return v === UserRole.PLAYER || v === UserRole.PROVIDER || v === UserRole.STUDIO;
+}
+
+function RegisterCard() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { register, isLoading, error, clearError } = useAuthStore();
-  const [form] = Form.useForm();
+  const { message } = App.useApp();
+  const { register, isLoading } = useAuthStore();
+  const [form] = Form.useForm<RegisterFields>();
 
-  useEffect(() => {
-    // 从URL参数获取角色预设
-    const role = searchParams.get('role');
-    if (role && Object.values(UserRole).includes(role as UserRole)) {
-      form.setFieldsValue({ role: role as UserRole });
-    }
-  }, [searchParams, form]);
+  const initialRole: UserRole = useMemo(() => {
+    const q = searchParams.get('role');
+    return isUserRole(q) ? q : UserRole.PLAYER;
+  }, [searchParams]);
 
-  const handleSubmit = async (values: RegisterForm) => {
+  const selectedRole: UserRole = Form.useWatch('role', form) ?? initialRole;
+  const accent = ROLE_HUE[selectedRole];
+  const roleDesc = ROLE_OPTIONS.find((o) => o.value === selectedRole)?.desc ?? '';
+
+  const handleSubmit = async (values: RegisterFields) => {
     try {
-      clearError();
-      await register(values);
-      message.success('注册成功！');
+      const payload: RegisterForm = {
+        username: values.username.trim(),
+        email: values.email.trim(),
+        password: values.password,
+        role: values.role,
+        nickname: values.nickname?.trim() || undefined,
+        phone: values.phone?.trim() || undefined,
+      };
+      await register(payload);
+      message.success('注册成功，欢迎加入陪玩平台！');
       router.push('/dashboard');
-    } catch (error) {
-      message.error('注册失败，请检查输入信息');
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : '注册失败，请稍后重试');
     }
   };
 
-  const roleOptions = [
-    {
-      value: UserRole.PLAYER,
-      label: '玩家',
-      description: '享受陪玩服务，查看余额和游玩记录'
-    },
-    {
-      value: UserRole.PROVIDER,
-      label: '陪玩服务者',
-      description: '提供陪玩服务，管理客户余额'
-    },
-    {
-      value: UserRole.STUDIO,
-      label: '工作室',
-      description: '管理多个服务者，统一业务运营'
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <Card className="shadow-lg">
-          <div className="text-center mb-8">
-            <Title level={2} className="text-gray-900">
-              创建账户
-            </Title>
-            <Paragraph className="text-gray-600">
-              加入陪玩服务平台，开始您的陪玩之旅
-            </Paragraph>
-          </div>
-
-          <Form
-            form={form}
-            name="register"
-            onFinish={handleSubmit}
-            layout="vertical"
-            size="large"
-            initialValues={{
-              role: UserRole.PLAYER
+    <div
+      className="animate-pop"
+      style={{
+        minHeight: '100vh',
+        width: '100%',
+        background: COLORS.bgPage,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px 20px',
+      }}
+    >
+      <div
+        style={{
+          width: 440,
+          maxWidth: '100%',
+          background: COLORS.bgCard,
+          border: `1px solid ${COLORS.border}`,
+          borderRadius: 20,
+          padding: '34px 34px 30px',
+          boxShadow: '0 24px 70px rgba(22,23,42,.10)',
+        }}
+      >
+        {/* logo + 标题 */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 26 }}>
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 15,
+              background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.cyan})`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 700,
+              fontSize: 25,
+              color: '#fff',
+              boxShadow: '0 10px 24px rgba(91,84,240,.4)',
             }}
           >
-            <Form.Item
-              name="username"
-              label="用户名"
-              rules={[
-                { required: true, message: '请输入用户名！' },
-                { min: 3, message: '用户名至少3个字符！' },
-                { max: 50, message: '用户名不能超过50个字符！' },
-                { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线！' }
-              ]}
-            >
-              <Input
-                prefix={<UserOutlined />}
-                placeholder="请输入用户名"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="email"
-              label="邮箱"
-              rules={[
-                { required: true, message: '请输入邮箱！' },
-                { type: 'email', message: '请输入有效的邮箱地址！' }
-              ]}
-            >
-              <Input
-                prefix={<MailOutlined />}
-                placeholder="请输入邮箱"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="password"
-              label="密码"
-              rules={[
-                { required: true, message: '请输入密码！' },
-                { min: 6, message: '密码至少6个字符！' }
-              ]}
-            >
-              <Input.Password
-                prefix={<LockOutlined />}
-                placeholder="请输入密码"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="confirmPassword"
-              label="确认密码"
-              dependencies={['password']}
-              rules={[
-                { required: true, message: '请确认密码！' },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || getFieldValue('password') === value) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(new Error('两次密码输入不一致！'));
-                  },
-                }),
-              ]}
-            >
-              <Input.Password
-                prefix={<LockOutlined />}
-                placeholder="请再次输入密码"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="phone"
-              label="手机号"
-            >
-              <Input
-                prefix={<PhoneOutlined />}
-                placeholder="请输入手机号（可选）"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="nickname"
-              label="昵称"
-            >
-              <Input
-                prefix={<EditOutlined />}
-                placeholder="请输入昵称（可选）"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="role"
-              label="角色类型"
-              rules={[
-                { required: true, message: '请选择角色类型！' }
-              ]}
-            >
-              <Select placeholder="请选择您的角色">
-                {roleOptions.map(option => (
-                  <Option key={option.value} value={option.value}>
-                    <div>
-                      <div className="font-medium">{option.label}</div>
-                      <div className="text-sm text-gray-500">{option.description}</div>
-                    </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-red-600 text-sm">{error}</p>
-              </div>
-            )}
-
-            <Form.Item>
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="w-full"
-                loading={isLoading}
-              >
-                注册
-              </Button>
-            </Form.Item>
-          </Form>
-
-          <Divider>或</Divider>
-
-          <div className="text-center">
-            <Space direction="vertical" size="small">
-              <Paragraph className="text-gray-600 mb-0">
-                已有账户？
-              </Paragraph>
-              <Link href="/auth/login">
-                <Button type="link" className="p-0">
-                  立即登录
-                </Button>
-              </Link>
-            </Space>
+            陪
           </div>
-        </Card>
+          <div
+            style={{
+              fontFamily: FONT_DISPLAY,
+              fontWeight: 700,
+              fontSize: 22,
+              color: COLORS.textPrimary,
+              marginTop: 14,
+            }}
+          >
+            创建账户
+          </div>
+          <div style={{ fontSize: 13, color: COLORS.textSecondary, marginTop: 4 }}>
+            加入陪玩平台 · {roleDesc}
+          </div>
+        </div>
 
-        <div className="mt-8 text-center">
-          <Link href="/">
-            <Button type="link">
-              返回首页
+        <Form
+          form={form}
+          name="register"
+          layout="vertical"
+          size="large"
+          requiredMark={false}
+          initialValues={{ role: initialRole }}
+          onFinish={handleSubmit}
+        >
+          <Form.Item name="role" label="选择身份" style={{ marginBottom: 18 }}>
+            <Segmented<UserRole>
+              block
+              options={ROLE_OPTIONS.map((o) => ({ label: o.label, value: o.value }))}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="username"
+            label="用户名"
+            rules={[
+              { required: true, message: '请输入用户名' },
+              { min: 3, max: 50, message: '用户名长度需为 3-50 个字符' },
+            ]}
+          >
+            <Input prefix={<UserOutlined />} placeholder="3-50 个字符，登录时使用" autoComplete="username" />
+          </Form.Item>
+
+          <Form.Item
+            name="email"
+            label="邮箱"
+            rules={[
+              { required: true, message: '请输入邮箱' },
+              { type: 'email', message: '请输入有效的邮箱地址' },
+            ]}
+          >
+            <Input prefix={<MailOutlined />} placeholder="用于找回账户" autoComplete="email" />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            label="密码"
+            rules={[
+              { required: true, message: '请输入密码' },
+              { min: 6, message: '密码至少 6 位' },
+            ]}
+          >
+            <Input.Password prefix={<LockOutlined />} placeholder="至少 6 位" autoComplete="new-password" />
+          </Form.Item>
+
+          <Form.Item
+            name="confirm"
+            label="确认密码"
+            dependencies={['password']}
+            rules={[
+              { required: true, message: '请再次输入密码' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('两次输入的密码不一致'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password prefix={<LockOutlined />} placeholder="再次输入密码" autoComplete="new-password" />
+          </Form.Item>
+
+          <Form.Item name="nickname" label="昵称（可选）">
+            <Input prefix={<SmileOutlined />} placeholder="展示给他人的称呼" />
+          </Form.Item>
+
+          <Form.Item
+            name="phone"
+            label="手机号（可选）"
+            rules={[{ pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号' }]}
+          >
+            <Input prefix={<PhoneOutlined />} placeholder="11 位手机号" autoComplete="tel" />
+          </Form.Item>
+
+          <Form.Item style={{ marginBottom: 14, marginTop: 4 }}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              loading={isLoading}
+              style={{
+                height: 46,
+                borderRadius: 12,
+                background: accent,
+                borderColor: accent,
+                fontWeight: 600,
+                boxShadow: `0 8px 20px ${accent}33`,
+              }}
+            >
+              注册
             </Button>
+          </Form.Item>
+        </Form>
+
+        <div style={{ textAlign: 'center', fontSize: 13, color: COLORS.textSecondary }}>
+          已有账号？
+          <Link href="/auth/login" style={{ color: COLORS.primary, fontWeight: 600, marginLeft: 4 }}>
+            去登录
           </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Spin size="large" />
+        </div>
+      }
+    >
+      <RegisterCard />
+    </Suspense>
   );
 }

@@ -1,116 +1,141 @@
 'use client';
 
-import React from 'react';
-import { Form, Input, Button, Card, Typography, message, Space, Divider } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import Link from 'next/link';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { App, Button, Form, Input } from 'antd';
 import { useAuthStore } from '@/store/auth';
 import { LoginForm } from '@/types';
-
-const { Title, Paragraph } = Typography;
+import { COLORS } from '@/lib/theme';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, error, clearError } = useAuthStore();
-  const [form] = Form.useForm();
+  const { message } = App.useApp();
+  const login = useAuthStore((s) => s.login);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (values: LoginForm) => {
+  const onFinish = async (values: LoginForm) => {
+    setSubmitting(true);
     try {
-      clearError();
-      await login(values);
-      message.success('登录成功！');
+      await login({ username: values.username.trim(), password: values.password });
+      message.success('登录成功');
       router.push('/dashboard');
-    } catch (error) {
-      message.error('登录失败，请检查用户名和密码');
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : '登录失败，请重试');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <Card className="shadow-lg">
-          <div className="text-center mb-8">
-            <Title level={2} className="text-gray-900">
-              登录账户
-            </Title>
-            <Paragraph className="text-gray-600">
-              登录您的陪玩平台账户
-            </Paragraph>
-          </div>
-
-          <Form
-            form={form}
-            name="login"
-            onFinish={handleSubmit}
-            layout="vertical"
-            size="large"
+    <div
+      className="animate-pop"
+      style={{
+        minHeight: '100vh',
+        width: '100%',
+        background: COLORS.bgPage,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px 20px',
+      }}
+    >
+      <div
+        className="pm-card"
+        style={{
+          width: 400,
+          maxWidth: '100%',
+          padding: '36px 34px 30px',
+          boxShadow: '0 24px 60px rgba(22,23,42,.10)',
+        }}
+      >
+        {/* logo + 标题 */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            marginBottom: 28,
+          }}
+        >
+          <div
+            className="font-display"
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 16,
+              background: `linear-gradient(135deg,${COLORS.primary},${COLORS.cyan})`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: 28,
+              color: '#fff',
+              boxShadow: '0 10px 24px rgba(91,84,240,.4)',
+            }}
           >
-            <Form.Item
-              name="username"
-              label="用户名或邮箱"
-              rules={[
-                { required: true, message: '请输入用户名或邮箱！' },
-              ]}
-            >
-              <Input
-                prefix={<UserOutlined />}
-                placeholder="请输入用户名或邮箱"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="password"
-              label="密码"
-              rules={[
-                { required: true, message: '请输入密码！' },
-              ]}
-            >
-              <Input.Password
-                prefix={<LockOutlined />}
-                placeholder="请输入密码"
-              />
-            </Form.Item>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-red-600 text-sm">{error}</p>
-              </div>
-            )}
-
-            <Form.Item>
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="w-full"
-                loading={isLoading}
-              >
-                登录
-              </Button>
-            </Form.Item>
-          </Form>
-
-          <Divider>或</Divider>
-
-          <div className="text-center">
-            <Space direction="vertical" size="small">
-              <Paragraph className="text-gray-600 mb-0">
-                还没有账户？
-              </Paragraph>
-              <Link href="/auth/register">
-                <Button type="link" className="p-0">
-                  立即注册
-                </Button>
-              </Link>
-            </Space>
+            陪
           </div>
-        </Card>
+          <h1
+            className="font-display"
+            style={{
+              margin: '18px 0 4px',
+              fontSize: 22,
+              fontWeight: 700,
+              color: COLORS.textPrimary,
+              letterSpacing: '.2px',
+            }}
+          >
+            欢迎回来
+          </h1>
+          <p style={{ margin: 0, fontSize: 13, color: COLORS.textSecondary }}>
+            登录陪玩平台，继续你的服务管理
+          </p>
+        </div>
 
-        <div className="mt-8 text-center">
-          <Link href="/">
-            <Button type="link">
-              返回首页
+        <Form<LoginForm>
+          layout="vertical"
+          requiredMark={false}
+          onFinish={onFinish}
+          disabled={submitting}
+          size="large"
+        >
+          <Form.Item
+            name="username"
+            label="用户名 / 邮箱"
+            rules={[{ required: true, message: '请输入用户名或邮箱' }]}
+          >
+            <Input placeholder="用户名或邮箱" autoComplete="username" />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            label="密码"
+            rules={[{ required: true, message: '请输入密码' }]}
+          >
+            <Input.Password placeholder="请输入密码" autoComplete="current-password" />
+          </Form.Item>
+
+          <Form.Item style={{ marginTop: 4, marginBottom: 12 }}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              loading={submitting}
+              style={{ height: 44, borderRadius: 12, fontWeight: 600 }}
+            >
+              登录
             </Button>
+          </Form.Item>
+        </Form>
+
+        <div style={{ textAlign: 'center', fontSize: 13, color: COLORS.textSecondary }}>
+          还没有账号？
+          <Link
+            href="/auth/register"
+            style={{ color: COLORS.primary, fontWeight: 600, marginLeft: 4 }}
+          >
+            去注册
           </Link>
         </div>
       </div>

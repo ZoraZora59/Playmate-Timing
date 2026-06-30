@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"strconv"
+	"errors"
 
 	"companion-platform-backend/config"
 	"companion-platform-backend/middleware"
@@ -9,18 +9,19 @@ import (
 	"companion-platform-backend/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
 type BalanceController struct{}
 
-// AddBalanceRequest 添加余额请求
-type AddBalanceRequest struct {
-	PlayerID   uint                `json:"player_id" binding:"required"`
-	ProviderID uint                `json:"provider_id" binding:"required"`
-	StudioID   uint                `json:"studio_id"`
-	Type       models.BalanceType  `json:"type" binding:"required,oneof=money time point"`
-	Amount     float64             `json:"amount" binding:"required,gt=0"`
+// BalanceOpRequest 余额操作请求（充值 / 扣费 / 退款共用）
+type BalanceOpRequest struct {
+	PlayerID    uint               `json:"player_id" binding:"required"`
+	ProviderID  uint               `json:"provider_id" binding:"required"`
+	StudioID    uint               `json:"studio_id"`
+	Type        models.BalanceType `json:"type" binding:"required,oneof=money time point"`
+	Amount      decimal.Decimal    `json:"amount"`
 	Description string             `json:"description"`
 }
 
@@ -33,20 +34,8 @@ func (bc *BalanceController) GetPlayerBalances(c *gin.Context) {
 	}
 
 	db := config.GetDB()
-
-	// 分页参数
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	page, pageSize, offset := paginate(c)
 	balanceType := c.Query("type")
-
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 || pageSize > 100 {
-		pageSize = 10
-	}
-
-	offset := (page - 1) * pageSize
 
 	query := db.Model(&models.Balance{}).Where("player_id = ?", userID)
 	if balanceType != "" {
@@ -73,19 +62,17 @@ func (bc *BalanceController) GetBalanceByProvider(c *gin.Context) {
 		return
 	}
 
-	providerID := c.Param("provider_id")
-	pid, err := strconv.ParseUint(providerID, 10, 32)
+	pid, err := parseUintParam(c.Param("provider_id"))
 	if err != nil {
 		utils.BadRequest(c, "Invalid provider ID")
 		return
 	}
 
-	studioID := c.DefaultQuery("studio_id", "0")
-	sid, _ := strconv.ParseUint(studioID, 10, 32)
+	sid, _ := parseUintParam(c.DefaultQuery("studio_id", "0"))
 
 	db := config.GetDB()
 	var balances []models.Balance
-	if err := db.Where("player_id = ? AND provider_id = ? AND studio_id = ?", userID, uint(pid), uint(sid)).
+	if err := db.Where("player_id = ? AND provider_id = ? AND studio_id = ?", userID, pid, sid).
 		Preload("Provider").Preload("Studio").Find(&balances).Error; err != nil {
 		utils.InternalServerError(c, "Failed to get balance")
 		return
@@ -94,8 +81,28 @@ func (bc *BalanceController) GetBalanceByProvider(c *gin.Context) {
 	utils.Success(c, balances)
 }
 
-// AddBalance 添加余额（工作室或服务者操作）
+// Recharge 充值（服务者 / 工作室操作）
+func (bc *BalanceController) Recharge(c *gin.Context) {
+	bc.operate(c, models.TransactionTypeRecharge)
+}
+
+// AddBalance 充值（保留旧路由别名）
 func (bc *BalanceController) AddBalance(c *gin.Context) {
+	bc.operate(c, models.TransactionTypeRecharge)
+}
+
+// Deduct 扣费 / 消费（服务者 / 工作室操作）
+func (bc *BalanceController) Deduct(c *gin.Context) {
+	bc.operate(c, models.TransactionTypeConsume)
+}
+
+// Refund 退款（服务者 / 工作室操作）
+func (bc *BalanceController) Refund(c *gin.Context) {
+	bc.operate(c, models.TransactionTypeRefund)
+}
+
+// operate 充值/扣费/退款的统一处理：鉴权 → 事务内加锁调整余额 → 落流水
+func (bc *BalanceController) operate(c *gin.Context, txType models.TransactionType) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
 		utils.Unauthorized(c, "User not found")
@@ -104,118 +111,80 @@ func (bc *BalanceController) AddBalance(c *gin.Context) {
 
 	userRole, err := middleware.GetCurrentUserRole(c)
 	if err != nil || (userRole != models.RoleProvider && userRole != models.RoleStudio) {
-		utils.Forbidden(c, "Only providers and studios can add balance")
+		utils.Forbidden(c, "只有服务者和工作室可以操作余额")
 		return
 	}
 
-	var req AddBalanceRequest
+	var req BalanceOpRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.BadRequest(c, err.Error())
+		return
+	}
+	if req.Amount.LessThanOrEqual(decimal.Zero) {
+		utils.BadRequest(c, "金额必须大于 0")
 		return
 	}
 
 	db := config.GetDB()
 
-	// 开始事务
-	tx := db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	// 验证权限：检查当前用户是否有权限为该服务者添加余额
+	// 鉴权：解析有效的 studio_id 并校验操作权限
+	studioID := req.StudioID
 	if userRole == models.RoleProvider {
-		// 如果是服务者，只能为自己添加余额
+		// 服务者只能操作「以自己为服务者」的余额
 		if req.ProviderID != userID {
-			tx.Rollback()
-			utils.Forbidden(c, "Providers can only add balance for themselves")
+			utils.Forbidden(c, "服务者只能操作自己名下的玩家余额")
 			return
 		}
-	} else if userRole == models.RoleStudio {
-		// 如果是工作室，需要检查服务者是否关联到该工作室
+	} else { // RoleStudio
 		var studio models.Studio
-		if err := tx.Where("owner_id = ?", userID).First(&studio).Error; err != nil {
-			tx.Rollback()
-			utils.NotFound(c, "Studio not found")
+		if err := db.Where("owner_id = ?", userID).First(&studio).Error; err != nil {
+			utils.NotFound(c, "未找到你的工作室")
 			return
 		}
-
-		// 检查服务者是否关联到该工作室
+		// 校验该服务者已通过审批加入本工作室
 		var relation models.ProviderStudioRelation
-		if err := tx.Where("provider_id = ? AND studio_id = ? AND status = ?", 
+		if err := db.Where("provider_id = ? AND studio_id = ? AND status = ?",
 			req.ProviderID, studio.ID, models.StatusApproved).First(&relation).Error; err != nil {
-			tx.Rollback()
-			utils.Forbidden(c, "Provider is not associated with your studio")
+			utils.Forbidden(c, "该服务者未加入你的工作室")
 			return
 		}
-
-		req.StudioID = studio.ID
+		studioID = studio.ID
 	}
 
-	// 查找或创建余额记录
-	var balance models.Balance
-	if err := tx.Where("player_id = ? AND provider_id = ? AND studio_id = ? AND type = ?",
-		req.PlayerID, req.ProviderID, req.StudioID, req.Type).First(&balance).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			// 创建新的余额记录
-			balance = models.Balance{
-				PlayerID:   req.PlayerID,
-				ProviderID: req.ProviderID,
-				StudioID:   req.StudioID,
-				Type:       req.Type,
-				Amount:     0,
-			}
-			if err := tx.Create(&balance).Error; err != nil {
-				tx.Rollback()
-				utils.InternalServerError(c, "Failed to create balance record")
-				return
-			}
-		} else {
-			tx.Rollback()
-			utils.InternalServerError(c, "Database error")
+	// 变动方向：消费为负，充值/退款为正
+	delta := req.Amount
+	if txType == models.TransactionTypeConsume {
+		delta = req.Amount.Neg()
+	}
+
+	var balance *models.Balance
+	txErr := db.Transaction(func(tx *gorm.DB) error {
+		b, err := adjustBalanceTx(tx, req.PlayerID, req.ProviderID, studioID, req.Type,
+			delta, txType, userID, req.Description)
+		if err != nil {
+			return err
+		}
+		balance = b
+		return nil
+	})
+
+	if txErr != nil {
+		if errors.Is(txErr, errInsufficientBalance) {
+			utils.BadRequest(c, "余额不足，无法扣费")
 			return
 		}
-	}
-
-	// 记录交易前余额
-	beforeAmount := balance.Amount
-
-	// 更新余额
-	balance.Amount += req.Amount
-	if err := tx.Save(&balance).Error; err != nil {
-		tx.Rollback()
-		utils.InternalServerError(c, "Failed to update balance")
+		utils.InternalServerError(c, "余额操作失败")
 		return
 	}
 
-	// 创建交易记录
-	transaction := models.BalanceTransaction{
-		BalanceID:    balance.ID,
-		Type:         models.TransactionTypeRecharge,
-		Amount:       req.Amount,
-		BeforeAmount: beforeAmount,
-		AfterAmount:  balance.Amount,
-		Description:  req.Description,
-		OperatorID:   userID,
-	}
+	db.Preload("Provider").Preload("Studio").First(balance, balance.ID)
 
-	if err := tx.Create(&transaction).Error; err != nil {
-		tx.Rollback()
-		utils.InternalServerError(c, "Failed to create transaction record")
-		return
-	}
-
-	// 提交事务
-	if err := tx.Commit().Error; err != nil {
-		utils.InternalServerError(c, "Failed to commit transaction")
-		return
-	}
-
-	// 预加载关联数据
-	db.Preload("Provider").Preload("Studio").First(&balance, balance.ID)
-
-	utils.SuccessWithMessage(c, "Balance added successfully", balance)
+	verb := map[models.TransactionType]string{
+		models.TransactionTypeRecharge: "充值成功",
+		models.TransactionTypeConsume:  "扣费成功",
+		models.TransactionTypeRefund:   "退款成功",
+	}[txType]
+	utils.SuccessWithMessage(c, verb, balance)
 }
 
 // GetBalanceTransactions 获取余额变动记录
@@ -226,8 +195,7 @@ func (bc *BalanceController) GetBalanceTransactions(c *gin.Context) {
 		return
 	}
 
-	id := c.Param("id")
-	balanceID, err := strconv.ParseUint(id, 10, 32)
+	balanceID, err := parseUintParam(c.Param("id"))
 	if err != nil {
 		utils.BadRequest(c, "Invalid balance ID")
 		return
@@ -235,30 +203,26 @@ func (bc *BalanceController) GetBalanceTransactions(c *gin.Context) {
 
 	db := config.GetDB()
 
-	// 检查余额记录是否属于当前用户
+	// 校验余额记录归属：玩家本人，或该余额对应的服务者
+	role, _ := middleware.GetCurrentUserRole(c)
 	var balance models.Balance
-	if err := db.Where("id = ? AND player_id = ?", uint(balanceID), userID).First(&balance).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			utils.Forbidden(c, "Access denied")
+	q := db.Where("id = ?", balanceID)
+	if role == models.RoleProvider {
+		q = q.Where("provider_id = ?", userID)
+	} else {
+		q = q.Where("player_id = ?", userID)
+	}
+	if err := q.First(&balance).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			utils.Forbidden(c, "无权访问该余额记录")
 			return
 		}
 		utils.InternalServerError(c, "Database error")
 		return
 	}
 
-	// 分页参数
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	page, pageSize, offset := paginate(c)
 	transactionType := c.Query("type")
-
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 || pageSize > 100 {
-		pageSize = 10
-	}
-
-	offset := (page - 1) * pageSize
 
 	query := db.Model(&models.BalanceTransaction{}).Where("balance_id = ?", balanceID)
 	if transactionType != "" {
@@ -277,6 +241,13 @@ func (bc *BalanceController) GetBalanceTransactions(c *gin.Context) {
 	utils.PageSuccess(c, transactions, total, page, pageSize)
 }
 
+// BalanceSummaryRow 余额汇总行
+type BalanceSummaryRow struct {
+	Type        models.BalanceType `json:"type"`
+	TotalAmount decimal.Decimal    `json:"total_amount"`
+	PlayerCount int64              `json:"player_count"`
+}
+
 // GetProviderBalanceSummary 获取服务者的余额汇总（服务者查看）
 func (bc *BalanceController) GetProviderBalanceSummary(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
@@ -287,19 +258,12 @@ func (bc *BalanceController) GetProviderBalanceSummary(c *gin.Context) {
 
 	userRole, err := middleware.GetCurrentUserRole(c)
 	if err != nil || userRole != models.RoleProvider {
-		utils.Forbidden(c, "Only providers can view balance summary")
+		utils.Forbidden(c, "只有服务者可以查看收益汇总")
 		return
 	}
 
 	db := config.GetDB()
-
-	type BalanceSummary struct {
-		Type         models.BalanceType `json:"type"`
-		TotalAmount  float64            `json:"total_amount"`
-		PlayerCount  int64              `json:"player_count"`
-	}
-
-	var summary []BalanceSummary
+	var summary []BalanceSummaryRow
 	if err := db.Model(&models.Balance{}).
 		Select("type, SUM(amount) as total_amount, COUNT(DISTINCT player_id) as player_count").
 		Where("provider_id = ?", userID).

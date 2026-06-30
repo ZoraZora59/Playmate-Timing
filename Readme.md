@@ -51,65 +51,55 @@
 - **框架**: Gin Web Framework
 - **数据库**: MySQL 8.0+
 - **ORM**: GORM
+- **金额**: shopspring/decimal（列 `decimal(14,2)`，JSON 序列化为字符串）
 - **认证**: JWT (golang-jwt/jwt)
 - **缓存**: go-cache (内存缓存)
 - **跨域**: gin-contrib/cors
 - **密码加密**: bcrypt
+- **配置**: godotenv 自动加载 `.env`
+- **测试**: 标准 `testing` + 内存 SQLite 的用户故事级集成测试
 
 ### 前端 (TypeScript)
-- **框架**: Next.js 14 (App Router)
+- **框架**: Next.js 15 (App Router, Turbopack)
 - **语言**: TypeScript
-- **UI库**: Ant Design 5
-- **状态管理**: Zustand
+- **UI库**: Ant Design 5（自定义设计主题）
+- **状态管理**: Zustand (persist)
 - **HTTP客户端**: Axios
-- **样式**: Tailwind CSS
+- **样式**: Tailwind CSS v4 + 设计令牌 (`lib/theme.ts`)
 - **图标**: Ant Design Icons
+- **测试**: Vitest（单测）+ Playwright（用户故事 E2E）
 
 ## 🏗 项目结构
 
 ```
-/workspace
-├── backend/                 # 后端项目
-│   ├── main.go             # 应用入口
-│   ├── config/             # 配置管理
-│   │   ├── config.go       # 配置结构和加载
-│   │   └── database.go     # 数据库连接
-│   ├── models/             # 数据模型
-│   │   └── models.go       # 所有数据模型定义
-│   ├── controllers/        # 控制器
-│   │   ├── user.go         # 用户相关API
-│   │   ├── studio.go       # 工作室相关API
-│   │   └── balance.go      # 余额相关API
-│   ├── middleware/         # 中间件
-│   │   └── auth.go         # JWT认证中间件
-│   ├── routes/             # 路由配置
-│   │   └── routes.go       # API路由定义
-│   ├── utils/              # 工具函数
-│   │   ├── auth.go         # JWT和密码处理
-│   │   ├── response.go     # 统一响应格式
-│   │   └── cache.go        # 缓存工具
-│   ├── go.mod              # Go模块依赖
-│   └── .env.example        # 环境变量示例
-├── frontend/               # 前端项目
+Playmate-Timing/
+├── backend/                 # 后端项目 (Go + Gin)
+│   ├── main.go             # 入口（godotenv 加载 .env → 初始化 → 路由 → 启动）
+│   ├── config/             # config.go(环境变量) + database.go(连接/迁移, 关闭迁移期外键)
+│   ├── models/models.go    # 全部 GORM 模型（金额用 decimal，复合唯一索引）
+│   ├── controllers/        # user / studio / balance / playrecord / review / dashboard / helpers
+│   ├── middleware/auth.go  # JWT 认证 + RequireRole 鉴权
+│   ├── routes/routes.go    # 全部路由 + CORS
+│   ├── utils/              # auth(JWT/bcrypt) response cache + *_test.go
+│   ├── integration_test.go # 用户故事级集成测试（内存 sqlite 跑全路由）
+│   └── .env / .env.example # 环境变量（.env 已 gitignore）
+├── frontend/               # 前端项目 (Next.js 15)
 │   ├── src/
-│   │   ├── app/            # Next.js App Router页面
-│   │   │   ├── page.tsx    # 首页
-│   │   │   ├── layout.tsx  # 根布局
-│   │   │   ├── auth/       # 认证页面
-│   │   │   ├── dashboard/  # 控制台
-│   │   │   └── studios/    # 工作室相关页面
-│   │   ├── types/          # TypeScript类型定义
-│   │   │   └── index.ts    # 所有类型定义
-│   │   ├── lib/            # 库和工具
-│   │   │   └── api.ts      # API客户端
-│   │   ├── store/          # 状态管理
-│   │   │   └── auth.ts     # 认证状态
-│   │   └── components/     # 可复用组件
-│   ├── package.json        # 依赖配置
-│   ├── tailwind.config.ts  # Tailwind配置
-│   ├── tsconfig.json       # TypeScript配置
-│   └── .env.local          # 环境变量
-└── README.md               # 项目说明
+│   │   ├── app/
+│   │   │   ├── (app)/      # 认证后应用壳：dashboard / player/* / provider/* / studio/* / studios / settings
+│   │   │   ├── page.tsx    # 落地首页
+│   │   │   ├── layout.tsx  # 根布局（注入设计主题 + 字体）
+│   │   │   └── auth/       # 登录 / 注册
+│   │   ├── components/     # AppShell / BalanceOpModal / ui.tsx / dashboards/*View.tsx
+│   │   ├── lib/            # api.ts(全端点) theme.ts(设计令牌) format.ts(金额格式化)
+│   │   ├── store/auth.ts   # Zustand 认证 store
+│   │   └── types/index.ts  # 全部 TS 类型（decimal 金额为 string）
+│   ├── e2e/                # Playwright 用户故事 E2E
+│   ├── vitest.config.ts / playwright.config.ts
+│   └── .env.local          # 环境变量（已 gitignore）
+├── docs/                   # 产品与前端设计说明
+├── AGENTS.md / CLAUDE.md   # AI 助手共享指南（CLAUDE.md 是软链接）
+└── Readme.md               # 项目说明
 ```
 
 ## 🚀 快速开始
@@ -137,20 +127,21 @@ go mod tidy
 #### 配置环境变量
 ```bash
 cp .env.example .env
-# 编辑 .env 文件，配置数据库连接等信息
+# 编辑 .env 配置数据库连接等；启动时由 godotenv 自动加载（无需手动 export）
 ```
 
 #### 创建数据库
 ```sql
 CREATE DATABASE companion_platform CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
+> 表结构在启动时由 `AutoMigrate` 自动创建，只需保证目标库已存在且可连接。
 
 #### 启动后端服务
 ```bash
 go run main.go
 ```
 
-后端服务将在 `http://localhost:8080` 启动
+后端服务在 `SERVER_PORT` 指定端口启动（默认 8080；本地开发用 8090，因 8080 常被占用）。前端 `NEXT_PUBLIC_API_URL` 需与之一致。
 
 ### 3. 前端设置
 
@@ -190,11 +181,36 @@ npm run dev
 - `PUT /api/v1/studio/:id` - 更新工作室信息
 - `POST /api/v1/studio/:id/apply` - 申请加入工作室
 
+### 控制台聚合接口
+- `GET /api/v1/player/dashboard` - 玩家控制台（余额合计、最近流水、进行中陪玩）
+- `GET /api/v1/provider/dashboard` - 服务者控制台（收益、活跃玩家、近 7 天趋势、待办）
+- `GET /api/v1/studio/dashboard` - 工作室控制台（成员数、流水、评分、待审批）
+
 ### 余额接口
 - `GET /api/v1/player/balances` - 获取玩家余额列表
-- `GET /api/v1/player/balances/provider/:id` - 获取指定服务者余额
-- `POST /api/v1/provider/balances` - 服务者添加余额
-- `POST /api/v1/studio/balances` - 工作室添加余额
+- `GET /api/v1/player/balances/:id/transactions` - 获取某条余额的流水
+- `GET /api/v1/provider/balance-summary` - 服务者收益汇总
+- `POST /api/v1/provider|studio/balances` - 充值
+- `POST /api/v1/provider|studio/balances/deduct` - 扣费/消费（含透支校验）
+- `POST /api/v1/provider|studio/balances/refund` - 退款
+
+### 游玩记录接口
+- `POST /api/v1/provider/play-records` - 服务者发起一局陪玩
+- `PUT /api/v1/provider/play-records/:id/complete` - 完成（可同时结算扣费）
+- `PUT /api/v1/provider/play-records/:id/cancel` - 取消
+- `GET /api/v1/player/records` - 玩家查看自己的游玩记录
+- `GET /api/v1/provider/play-records` - 服务者查看主持的记录
+
+### 评价接口
+- `POST /api/v1/player/reviews` - 玩家创建评价
+- `GET /api/v1/reviews?target_type=&target_id=` - 查看某对象的评价（公开）
+- `GET /api/v1/reviews/summary?target_type=&target_id=` - 评分汇总（平均分/数量/分布）
+
+### 工作室与成员接口
+- `GET /api/v1/studio/:id/applications` - 待审批申请
+- `PUT /api/v1/studio/applications/:id` - 审批（approved/rejected）
+- `GET /api/v1/studio/members` - 工作室成员（含聚合统计）
+- `GET /api/v1/provider/relations` - 服务者的工作室归属与申请进度
 
 ## 🔧 配置说明
 
@@ -251,14 +267,17 @@ NEXT_PUBLIC_APP_NAME=陪玩服务信息平台
 ### 后端测试
 ```bash
 cd backend
-go test ./...
+go test ./...        # utils 单测 + integration_test.go 用户故事级集成测试（内存 sqlite）
 ```
 
 ### 前端测试
 ```bash
 cd frontend
-npm run test
+npm test             # Vitest 单测（格式化/纯逻辑）
+npm run e2e          # Playwright 用户故事 E2E（需后端 :8090 + 前端 :3000 运行）
 ```
+
+> 三类测试已覆盖：**单测** + **功能测试（用户故事视角）** + **UE / E2E**。
 
 ## 📦 部署
 
@@ -307,11 +326,12 @@ npm run start
 
 ## 🔮 未来计划
 
+- [x] 单元测试 / 集成测试 / E2E 三层测试体系
+- [x] 按设计稿重建前端（深色侧栏 + 设计令牌 + 角色化控制台）
+- [x] 余额事务一致性（行锁 + 透支校验 + decimal）
+- [ ] 余额冻结/解冻（freeze/unfreeze）完整流程
 - [ ] 添加实时消息通知
 - [ ] 集成第三方支付系统
 - [ ] 移动端适配优化
-- [ ] 数据统计和分析功能
-- [ ] API文档自动生成
-- [ ] 单元测试覆盖率提升
-- [ ] Docker容器化部署
-- [ ] 微服务架构重构
+- [ ] API 文档自动生成（OpenAPI）
+- [ ] Docker 容器化部署

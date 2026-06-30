@@ -8,9 +8,13 @@ import (
 	"companion-platform-backend/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// 加载 .env（若存在）。已存在的进程环境变量优先，不会被覆盖。
+	_ = godotenv.Load()
+
 	// 加载配置
 	cfg := config.GetConfig()
 
