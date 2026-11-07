@@ -130,7 +130,7 @@ npm run e2e        # Playwright 用户故事 E2E（需后端在 8090 + 前端在
 2. **测试已就位**：后端 `go test ./...`（utils 单测 + `integration_test.go` 用户故事集成测试，内存 sqlite）；前端 `npm test`（Vitest）+ `npm run e2e`（Playwright）。新增逻辑请同步补测试。
 3. **默认 `JWT_SECRET`** 生产必须覆盖（`.env` 里是开发用值）。
 4. **Tailwind v4**：通过 `@tailwindcss/postcss` 集成，仓库里**没有 `tailwind.config.ts`**（Readme 提到的是旧写法），配置看 `postcss.config.mjs` 和 `globals.css`。
-5. CORS 在 `routes.go` 里硬编码只允许 `localhost:3000` / `127.0.0.1:3000`，换前端域名要同步改。
+5. **CORS 可配置**：来源由 `CORS_ORIGINS` 环境变量控制（默认 `localhost:3000` / `127.0.0.1:3000`）；生产已配置域名与 IP 入口。换前端域名时同步更新服务器 `.env`。
 6. 当前没有独立 admin 角色，`/admin` 组复用了 `studio` 角色做权限校验。
 
 ## 修改文件后
