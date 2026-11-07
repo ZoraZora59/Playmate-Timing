@@ -108,10 +108,10 @@ function TransactionsView() {
         <Avatar name={headName} seed={active?.provider_id ?? 0} size={40} hue={meta?.color} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 15, fontWeight: 600 }}>
-            {headName} · {meta?.label}账户
+            {headName}的{meta?.label}账户
           </div>
           <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
-            当前余额 {active ? formatBalance(active.type, active.amount) : '—'} · 共 {txList.length} 条记录
+            当前余额 {active ? formatBalance(active.type, active.amount) : '—'}，共 {txList.length} 条记录
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -123,13 +123,13 @@ function TransactionsView() {
                 onClick={() => setFilter(f.key)}
                 style={{
                   padding: '7px 13px',
-                  borderRadius: 9,
+                  borderRadius: 3,
                   fontSize: 12.5,
                   fontWeight: on ? 500 : 400,
                   cursor: 'pointer',
-                  background: on ? COLORS.sidebar : COLORS.bgCard,
+                  background: on ? COLORS.textPrimary : COLORS.bgCard,
                   color: on ? '#fff' : COLORS.textSecondary,
-                  border: on ? '1px solid ' + COLORS.sidebar : '1px solid ' + COLORS.border,
+                  border: on ? '1px solid ' + COLORS.textPrimary : '1px solid ' + COLORS.border,
                 }}
               >
                 {f.label}
@@ -158,7 +158,7 @@ function TransactionsView() {
                   alignItems: 'center',
                   gap: 7,
                   padding: '7px 13px',
-                  borderRadius: 20,
+                  borderRadius: 4,
                   fontSize: 12.5,
                   cursor: 'pointer',
                   background: on ? bm.softBg : COLORS.bgCard,
@@ -168,7 +168,7 @@ function TransactionsView() {
                 }}
               >
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: bm.color, flex: 'none' }} />
-                {name} · {bm.label}
+                {name} / {bm.label}
               </span>
             );
           })}
@@ -176,7 +176,7 @@ function TransactionsView() {
       )}
 
       {/* 流水列表 */}
-      <div style={{ background: COLORS.bgCard, border: '1px solid ' + COLORS.border, borderRadius: 16, overflow: 'hidden' }}>
+      <div style={{ background: COLORS.bgCard, border: '1px solid ' + COLORS.border, borderRadius: 4, overflow: 'hidden' }}>
         <div
           style={{
             display: 'grid',
@@ -226,7 +226,7 @@ function TransactionsView() {
                     style={{
                       width: 32,
                       height: 32,
-                      borderRadius: 9,
+                      borderRadius: 3,
                       background: COLORS.bgPage,
                       display: 'flex',
                       alignItems: 'center',

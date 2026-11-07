@@ -137,7 +137,7 @@ func (pc *PlayRecordController) Complete(c *gin.Context) {
 		if settle && req.Amount.GreaterThan(decimal.Zero) {
 			desc := record.GameName
 			if record.GameMode != "" {
-				desc += " · " + record.GameMode
+				desc += " / " + record.GameMode
 			}
 			if _, err := adjustBalanceTx(tx, record.PlayerID, record.ProviderID, record.StudioID,
 				record.SettleType, req.Amount.Neg(), models.TransactionTypeConsume, userID, desc); err != nil {

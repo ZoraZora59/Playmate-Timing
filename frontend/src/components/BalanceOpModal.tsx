@@ -88,7 +88,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
         key={t}
         onClick={() => { setType(t); setAmount(''); }}
         style={{
-          flex: 1, padding: '11px 0', borderRadius: 11, font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer',
+          flex: 1, padding: '11px 0', borderRadius: 3, font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer',
           border: `1.5px solid ${active ? m.color : COLORS.border}`,
           background: active ? m.softBg : '#fff',
           color: active ? m.color : COLORS.textSecondary,
@@ -107,11 +107,11 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
       <div
         onClick={(e) => e.stopPropagation()}
         className="animate-pop"
-        style={{ width: 440, maxWidth: '92vw', background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 30px 80px rgba(0,0,0,.35)' }}
+        style={{ width: 440, maxWidth: '92vw', background: '#fff', borderRadius: 4, overflow: 'hidden', border: '1px solid ' + COLORS.border }}
       >
         {/* header */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid ' + COLORS.divider, display: 'flex', alignItems: 'center', gap: 11 }}>
-          <div style={{ width: 38, height: 38, borderRadius: 11, background: accent, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+          <div style={{ width: 38, height: 38, borderRadius: 3, background: accent, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               {mode === 'recharge' ? <path d="M12 5v14M5 12h14" /> : mode === 'refund' ? <path d="M12 19V5M5 12l7-7 7 7" /> : <path d="M5 12h14" />}
             </svg>
@@ -120,7 +120,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
             <div style={{ fontSize: 16, fontWeight: 600 }}>{modeLabel} · {player.nickname}</div>
             <div style={{ fontSize: 12, color: COLORS.textMuted }}>当前{meta.label}余额 {formatBalance(type, before)}</div>
           </div>
-          <button onClick={onClose} style={{ border: 'none', background: COLORS.bgPage, width: 30, height: 30, borderRadius: 9, color: COLORS.textSecondary, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>✕</button>
+          <button onClick={onClose} style={{ border: 'none', background: COLORS.bgPage, width: 30, height: 30, borderRadius: 3, color: COLORS.textSecondary, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>✕</button>
         </div>
 
         {step === 'edit' ? (
@@ -130,7 +130,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
               <div style={{ display: 'flex', gap: 9, marginBottom: 20 }}>{TYPES.map(typeBtn)}</div>
 
               <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textSecondary, marginBottom: 9 }}>{modeLabel}数量</div>
-              <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid ' + COLORS.border, borderRadius: 12, padding: '0 16px', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid ' + COLORS.border, borderRadius: 3, padding: '0 16px', marginBottom: 20 }}>
                 {type === BalanceType.MONEY && <span className="font-display" style={{ fontSize: 22, color: COLORS.textMuted, marginRight: 6 }}>¥</span>}
                 <input
                   value={amount}
@@ -149,15 +149,15 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="例如：微信收款 / 排位陪练"
-                style={{ width: '100%', border: '1.5px solid ' + COLORS.border, borderRadius: 12, padding: '12px 14px', fontSize: 13.5, color: COLORS.textPrimary, outline: 'none', background: 'none' }}
+                style={{ width: '100%', border: '1.5px solid ' + COLORS.border, borderRadius: 3, padding: '12px 14px', fontSize: 13.5, color: COLORS.textPrimary, outline: 'none', background: 'none' }}
               />
             </div>
             <div style={{ padding: '0 24px 22px', display: 'flex', gap: 11 }}>
-              <button onClick={onClose} style={{ flex: 1, padding: 13, border: '1px solid ' + COLORS.border, borderRadius: 12, background: '#fff', color: COLORS.textSecondary, font: "600 14px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}>取消</button>
+              <button onClick={onClose} style={{ flex: 1, padding: 13, border: '1px solid ' + COLORS.border, borderRadius: 3, background: '#fff', color: COLORS.textSecondary, font: "600 14px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}>取消</button>
               <button
                 disabled={!canNext}
                 onClick={() => canNext && setStep('review')}
-                style={{ flex: 1.6, padding: 13, border: 'none', borderRadius: 12, background: canNext ? COLORS.primary : '#C7C9D9', color: '#fff', font: "600 14px 'Noto Sans SC',sans-serif", cursor: canNext ? 'pointer' : 'not-allowed' }}
+                style={{ flex: 1.6, padding: 13, border: 'none', borderRadius: 3, background: canNext ? COLORS.primary : '#C7C9D9', color: '#fff', font: "600 14px 'Noto Sans SC',sans-serif", cursor: canNext ? 'pointer' : 'not-allowed' }}
               >
                 下一步 · 确认
               </button>
@@ -166,7 +166,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
         ) : (
           <>
             <div style={{ padding: '22px 24px' }}>
-              <div style={{ background: COLORS.bgSubtle, border: '1px solid ' + COLORS.divider, borderRadius: 14, padding: '18px 20px', marginBottom: 16 }}>
+              <div style={{ background: COLORS.bgSubtle, border: '1px solid ' + COLORS.divider, borderRadius: 4, padding: '18px 20px', marginBottom: 16 }}>
                 <Row label="操作"><span style={{ fontSize: 14, fontWeight: 600, color: accent }}>{modeLabel} · {meta.label}</span></Row>
                 <Row label={`${modeLabel}数量`}><span className="font-display" style={{ fontSize: 20, fontWeight: 700, color: accent }}>{formatBalance(type, amt)}</span></Row>
                 <Row label="余额变化" last>
@@ -177,14 +177,14 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
                   </span>
                 </Row>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', background: COLORS.warnBg, borderRadius: 11, color: COLORS.warnText, fontSize: 12.5, lineHeight: 1.5 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', background: COLORS.warnBg, borderRadius: 3, color: COLORS.warnText, fontSize: 12.5, lineHeight: 1.5 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flex: 'none' }}><path d="M12 9v4M12 17h.01" /><circle cx="12" cy="12" r="10" /></svg>
                 请确认数额无误，提交后将立即写入 {player.nickname} 的账户流水。
               </div>
             </div>
             <div style={{ padding: '0 24px 22px', display: 'flex', gap: 11 }}>
-              <button onClick={() => setStep('edit')} style={{ flex: 1, padding: 13, border: '1px solid ' + COLORS.border, borderRadius: 12, background: '#fff', color: COLORS.textSecondary, font: "600 14px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}>返回修改</button>
-              <button disabled={submitting} onClick={submit} style={{ flex: 1.6, padding: 13, border: 'none', borderRadius: 12, background: accent, color: '#fff', font: "600 14px 'Noto Sans SC',sans-serif", cursor: 'pointer', opacity: submitting ? 0.7 : 1 }}>
+              <button onClick={() => setStep('edit')} style={{ flex: 1, padding: 13, border: '1px solid ' + COLORS.border, borderRadius: 3, background: '#fff', color: COLORS.textSecondary, font: "600 14px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}>返回修改</button>
+              <button disabled={submitting} onClick={submit} style={{ flex: 1.6, padding: 13, border: 'none', borderRadius: 3, background: accent, color: '#fff', font: "600 14px 'Noto Sans SC',sans-serif", cursor: 'pointer', opacity: submitting ? 0.7 : 1 }}>
                 {submitting ? '提交中…' : '确认提交'}
               </button>
             </div>

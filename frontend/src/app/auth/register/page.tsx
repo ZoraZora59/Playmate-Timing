@@ -76,9 +76,8 @@ function RegisterCard() {
           maxWidth: '100%',
           background: COLORS.bgCard,
           border: `1px solid ${COLORS.border}`,
-          borderRadius: 20,
+          borderRadius: 4,
           padding: '34px 34px 30px',
-          boxShadow: '0 24px 70px rgba(22,23,42,.10)',
         }}
       >
         {/* logo + 标题 */}
@@ -87,8 +86,8 @@ function RegisterCard() {
             style={{
               width: 52,
               height: 52,
-              borderRadius: 15,
-              background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.cyan})`,
+              borderRadius: 4,
+              background: COLORS.textPrimary,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -96,7 +95,6 @@ function RegisterCard() {
               fontWeight: 700,
               fontSize: 25,
               color: '#fff',
-              boxShadow: '0 10px 24px rgba(91,84,240,.4)',
             }}
           >
             陪
@@ -205,11 +203,10 @@ function RegisterCard() {
               loading={isLoading}
               style={{
                 height: 46,
-                borderRadius: 12,
+                borderRadius: 3,
                 background: accent,
                 borderColor: accent,
                 fontWeight: 600,
-                boxShadow: `0 8px 20px ${accent}33`,
               }}
             >
               注册

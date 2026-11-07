@@ -78,19 +78,19 @@ export default function ProviderAccountsPage() {
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={() => openModal(p, 'recharge')}
-                  style={{ flex: 1, padding: '10px 4px', border: 'none', borderRadius: 10, background: COLORS.money, color: '#fff', font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '10px 4px', border: 'none', borderRadius: 3, background: COLORS.money, color: '#fff', font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
                 >
                   充值
                 </button>
                 <button
                   onClick={() => openModal(p, 'deduct')}
-                  style={{ flex: 1, padding: '10px 4px', border: '1px solid #F2C2CD', borderRadius: 10, background: '#fff', color: COLORS.danger, font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '10px 4px', border: '1px solid #F2C2CD', borderRadius: 3, background: '#fff', color: COLORS.danger, font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
                 >
                   扣费
                 </button>
                 <button
                   onClick={() => openModal(p, 'refund')}
-                  style={{ flex: 1, padding: '10px 4px', border: '1px solid #CFE3FC', borderRadius: 10, background: '#fff', color: COLORS.time, font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '10px 4px', border: '1px solid #CFE3FC', borderRadius: 3, background: '#fff', color: COLORS.time, font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
                 >
                   退款
                 </button>
@@ -114,7 +114,7 @@ export default function ProviderAccountsPage() {
 
 function MiniStat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div style={{ flex: 1, background: COLORS.bgSubtle, border: '1px solid ' + COLORS.divider, borderRadius: 11, padding: '11px 12px' }}>
+    <div style={{ flex: 1, background: COLORS.bgSubtle, border: '1px solid ' + COLORS.divider, borderRadius: 3, padding: '11px 12px' }}>
       <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 3 }}>{label}</div>
       <div className="font-display" style={{ fontWeight: 600, fontSize: 15, color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {value}

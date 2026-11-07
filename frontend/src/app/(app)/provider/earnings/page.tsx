@@ -79,7 +79,8 @@ export default function ProviderEarningsPage() {
                   overflow: 'hidden',
                   background: COLORS.bgCard,
                   border: `1px solid ${COLORS.border}`,
-                  borderRadius: 16,
+                  borderTop: `3px solid ${meta.color}`,
+                  borderRadius: 4,
                   padding: '22px 24px',
                 }}
               >
@@ -93,32 +94,20 @@ export default function ProviderEarningsPage() {
                   {formatBalance(a.type, a.total_amount)}
                 </div>
                 <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 6 }}>
-                  本月 · {a.player_count} 位玩家
+                  本月，{a.player_count} 位玩家
                 </div>
-                <div
-                  style={{
-                    position: 'absolute',
-                    right: -20,
-                    bottom: -20,
-                    width: 90,
-                    height: 90,
-                    borderRadius: '50%',
-                    background: meta.color,
-                    opacity: 0.08,
-                  }}
-                />
-              </div>
-            );
-          })}
+                </div>
+                );
+              })}
         </div>
       )}
 
-      {/* 近 7 天 · 陪玩局数 柱状图 */}
+      {/* 近 7 天陪玩局数柱状图 */}
       <div
         style={{
           background: COLORS.bgCard,
           border: `1px solid ${COLORS.border}`,
-          borderRadius: 16,
+          borderRadius: 4,
           padding: '22px 24px',
         }}
       >
@@ -132,10 +121,10 @@ export default function ProviderEarningsPage() {
         >
           <div>
             <div style={{ fontSize: 15, fontWeight: 600, color: COLORS.textPrimary }}>
-              近 7 天 · 陪玩局数
+              近 7 天陪玩局数
             </div>
             <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>
-              单位 局 · 反映接单局数趋势
+              单位：局。反映接单局数趋势
             </div>
           </div>
         </div>
@@ -168,8 +157,8 @@ export default function ProviderEarningsPage() {
                   <div
                     style={{
                       width: '100%',
-                      borderRadius: '7px 7px 0 0',
-                      background: 'linear-gradient(180deg,#1FB573,#34D38C)',
+                      borderRadius: '2px 2px 0 0',
+                      background: COLORS.money,
                       height: `${pct}%`,
                       minHeight: w.count > 0 ? 4 : 0,
                     }}

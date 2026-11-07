@@ -94,7 +94,7 @@ export default function SettingsPage() {
         padding: '13px 16px',
         background: COLORS.bgSubtle,
         border: '1px solid ' + COLORS.divider,
-        borderRadius: 12,
+        borderRadius: 3,
       }}
     >
       <span style={{ fontSize: 13, color: COLORS.textSecondary }}>{label}</span>
@@ -109,24 +109,14 @@ export default function SettingsPage() {
         style={{
           position: 'relative',
           overflow: 'hidden',
-          borderRadius: 18,
+          borderRadius: 4,
           padding: '24px 26px',
           marginBottom: 18,
-          background: `linear-gradient(135deg, ${COLORS.sidebar} 0%, ${roleHue} 140%)`,
+          background: COLORS.textPrimary,
+          borderTop: `3px solid ${roleHue}`,
           color: '#fff',
         }}
       >
-        <div
-          style={{
-            position: 'absolute',
-            right: -40,
-            top: -40,
-            width: 180,
-            height: 180,
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,.10)',
-          }}
-        />
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, position: 'relative' }}>
           <Avatar name={displayName} hue="rgba(255,255,255,.22)" size={56} />
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -134,14 +124,14 @@ export default function SettingsPage() {
               {displayName}
             </div>
             <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.78)', marginTop: 3 }}>
-              @{profile.username} · {ROLE_LABEL[profile.role]}
+              @{profile.username} / {ROLE_LABEL[profile.role]}
             </div>
           </div>
           <span
             style={{
               background: 'rgba(255,255,255,.22)',
               padding: '6px 14px',
-              borderRadius: 20,
+              borderRadius: 4,
               fontSize: 12.5,
               fontWeight: 600,
             }}

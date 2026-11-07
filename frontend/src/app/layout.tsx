@@ -6,8 +6,8 @@ import zhCN from 'antd/locale/zh_CN'
 import { antdTheme } from '@/lib/theme'
 
 export const metadata: Metadata = {
-  title: '陪玩平台 · Companion Hub',
-  description: '陪玩工作室、服务者、玩家信息管理平台',
+  title: '陪玩平台',
+  description: '陪玩工作室、服务者、玩家的账目与战绩平台',
 }
 
 export default function RootLayout({

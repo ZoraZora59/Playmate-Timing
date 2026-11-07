@@ -11,11 +11,20 @@ import {
   formatPoint,
   formatBalance,
   txIsCredit,
+  txTypeLabel,
   formatDateTime,
-  initialOf,
 } from '@/lib/format';
-import { StatCard, SectionCard, EmptyState } from '@/components/ui';
+import { StatCard, ScoreStrip, SectionCard, EmptyState, Pill } from '@/components/ui';
 import type { PlayerDashboard } from '@/types';
+
+const TX_GRID = '1.6fr .8fr .9fr';
+
+const QUICK_LINKS = [
+  { label: '余额账户', to: '/player/balances', color: COLORS.money },
+  { label: '余额流水', to: '/player/transactions', color: COLORS.time },
+  { label: '游玩记录', to: '/player/records', color: COLORS.point },
+  { label: '我的评价', to: '/player/reviews', color: COLORS.primary },
+];
 
 export default function PlayerDashboardView() {
   const { message } = App.useApp();
@@ -56,275 +65,172 @@ export default function PlayerDashboardView() {
 
   const ongoing = data.ongoing_records[0];
   const ongoingProviderName = ongoing?.provider?.nickname || ongoing?.provider?.username;
+  const recent = data.recent_transactions.slice(0, 6);
 
   return (
     <div className="animate-pop">
-      {/* hero balance + ongoing */}
-      <div className="pm-grid-2" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 18, marginBottom: 18 }}>
-        {/* 余额合计 hero 卡 */}
-        <div
-          style={{
-            position: 'relative',
-            overflow: 'hidden',
-            borderRadius: 18,
-            padding: '26px 28px',
-            background: 'linear-gradient(135deg,#16172A 0%,#2E2A6B 60%,#3D3490 100%)',
-            color: '#fff',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              right: -40,
-              top: -40,
-              width: 200,
-              height: 200,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle,rgba(21,200,216,.35),transparent 70%)',
-            }}
-          />
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,.6)', marginBottom: 6 }}>
-            可用余额合计 · 折算金额
-          </div>
-          <div className="font-display" style={{ fontWeight: 700, fontSize: 46, letterSpacing: '-1px' }}>
-            {formatMoney(data.money_total)}
-          </div>
-          <div style={{ display: 'flex', gap: 22, marginTop: 18 }}>
-            <div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,.55)' }}>时间余额</div>
-              <div className="font-display" style={{ fontWeight: 600, fontSize: 18, marginTop: 2 }}>
-                {formatTimeMinutes(data.time_total).replace(' 分钟', '')}{' '}
-                <span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,.6)' }}>分钟</span>
-              </div>
-            </div>
-            <div style={{ width: 1, background: 'rgba(255,255,255,.15)' }} />
-            <div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,.55)' }}>点数余额</div>
-              <div className="font-display" style={{ fontWeight: 600, fontSize: 18, marginTop: 2 }}>
-                {formatPoint(data.point_total).replace(' 点', '')}{' '}
-                <span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,.6)' }}>点</span>
-              </div>
-            </div>
-            <div style={{ width: 1, background: 'rgba(255,255,255,.15)' }} />
-            <div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,.55)' }}>服务者</div>
-              <div className="font-display" style={{ fontWeight: 600, fontSize: 18, marginTop: 2 }}>
-                {data.provider_count}{' '}
-                <span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,.6)' }}>位</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 进行中的陪玩 */}
-        <div
-          style={{
-            background: COLORS.bgCard,
-            border: '1px solid ' + COLORS.border,
-            borderRadius: 18,
-            padding: '22px 24px',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>进行中的陪玩</div>
-          <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 16 }}>
-            {data.ongoing_records.length} 局正在进行
-          </div>
-
-          {ongoing ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: 13,
-                borderRadius: 13,
-                background: COLORS.bgPage,
-              }}
-            >
-              <div
-                className="font-display"
-                style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 11,
-                  background: COLORS.primary,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontWeight: 700,
-                  flex: 'none',
-                }}
-              >
-                {initialOf(ongoingProviderName || ongoing.game_name)}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600 }}>
-                  {ongoing.game_name || '未命名对局'}
-                  {ongoing.game_mode ? ` · ${ongoing.game_mode}` : ''}
-                </div>
-                <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>
-                  {ongoingProviderName ? `服务者 ${ongoingProviderName}` : '陪玩中'}
-                </div>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  color: COLORS.money,
-                  fontSize: 12,
-                  fontWeight: 600,
-                }}
-              >
-                <span
-                  className="live-dot"
-                  style={{ width: 7, height: 7, borderRadius: '50%', background: COLORS.money }}
-                />
-                进行中
-              </div>
-            </div>
-          ) : (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 13,
-                borderRadius: 13,
-                background: COLORS.bgPage,
-                fontSize: 13,
-                color: COLORS.textMuted,
-              }}
-            >
-              暂无进行中的陪玩
-            </div>
-          )}
-
-          <button
-            onClick={() => router.push('/player/balances')}
-            style={{
-              marginTop: 16,
-              padding: 11,
-              border: '1px solid ' + COLORS.border,
-              background: COLORS.bgCard,
-              borderRadius: 11,
-              fontWeight: 600,
-              fontSize: 13,
-              color: COLORS.primary,
-              cursor: 'pointer',
-            }}
-          >
-            查看我的全部余额 →
-          </button>
-        </div>
-      </div>
-
-      {/* aggregate cards */}
-      <div className="pm-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 18 }}>
+      <ScoreStrip>
+        <StatCard label="金额余额" value={formatMoney(data.money_total)} sub="可用余额" color={COLORS.money} />
         <StatCard
-          label="金额合计"
-          value={formatMoney(data.money_total)}
-          sub={`${data.provider_count} 位服务者`}
-          color={COLORS.money}
-        />
-        <StatCard
-          label="时间合计"
+          label="时间余额"
           value={formatTimeMinutes(data.time_total).replace(' 分钟', '')}
           unit="分钟"
-          sub={`${data.provider_count} 位服务者`}
+          sub="按服务者累计"
           color={COLORS.time}
         />
         <StatCard
-          label="点数合计"
+          label="点数余额"
           value={formatPoint(data.point_total).replace(' 点', '')}
           unit="点"
-          sub={`${data.provider_count} 位服务者`}
+          sub="按服务者累计"
           color={COLORS.point}
         />
-      </div>
+        <StatCard label="服务者" value={data.provider_count} unit="位" sub="有余额往来" color={COLORS.primary} />
+      </ScoreStrip>
 
-      {/* recent transactions */}
-      <SectionCard
-        title="最近流水"
-        bodyPad={false}
-        extra={
-          <button
-            onClick={() => router.push('/player/transactions')}
-            style={{
-              border: 'none',
-              background: 'none',
-              color: COLORS.primary,
-              fontWeight: 600,
-              fontSize: 13,
-              cursor: 'pointer',
-            }}
-          >
-            查看全部
-          </button>
-        }
-      >
-        {data.recent_transactions.length === 0 ? (
-          <EmptyState title="暂无流水记录" hint="充值或消费后会显示在这里" />
-        ) : (
-          data.recent_transactions.map((t) => {
-            const credit = txIsCredit(t.type);
-            const by = t.operator?.nickname || t.balance?.provider?.nickname;
-            const type = t.balance?.type;
-            const sign = credit ? '+' : '-';
-            return (
-              <div
-                key={t.id}
+      <div className="pm-grid-2" style={{ display: 'grid', gridTemplateColumns: '1.55fr 1fr', gap: 16, marginTop: 16 }}>
+        <SectionCard
+          title="最近流水"
+          bodyPad={false}
+          extra={
+            <button className="pm-link" onClick={() => router.push('/player/transactions')}>
+              查看全部
+            </button>
+          }
+        >
+          {recent.length === 0 ? (
+            <EmptyState title="暂无流水记录" hint="充值或消费后会显示在这里" />
+          ) : (
+            <div className="pm-table-scroll">
+              <div className="pm-tx-table">
+                <div
+                  className="pm-tx-grid"
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: TX_GRID,
+                    gap: 12,
+                    padding: '9px 18px',
+                    background: COLORS.bgSubtle,
+                    borderBottom: `1px solid ${COLORS.divider}`,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: COLORS.textMuted,
+                  }}
+                >
+                  <div>说明</div>
+                  <div className="pm-tx-type">类型</div>
+                  <div style={{ textAlign: 'right' }}>变动</div>
+                </div>
+                {recent.map((t) => {
+                  const credit = txIsCredit(t.type);
+                  const by = t.operator?.nickname || t.balance?.provider?.nickname;
+                  const type = t.balance?.type;
+                  return (
+                    <div
+                      key={t.id}
+                      className="pm-row pm-tx-grid"
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: TX_GRID,
+                        gap: 12,
+                        alignItems: 'center',
+                        padding: '12px 18px',
+                        borderBottom: `1px solid ${COLORS.divider}`,
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {t.description || '余额变动'}
+                        </div>
+                        <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginTop: 2 }}>
+                          {[by, formatDateTime(t.created_at)].filter(Boolean).join('，')}
+                        </div>
+                      </div>
+                      <div className="pm-tx-type">
+                        <Pill color={credit ? COLORS.money : COLORS.textSecondary}>{txTypeLabel(t.type)}</Pill>
+                      </div>
+                      <div
+                        className="font-display num"
+                        style={{ textAlign: 'right', fontWeight: 700, fontSize: 14, color: credit ? COLORS.money : COLORS.danger }}
+                      >
+                        {credit ? '+' : '-'}
+                        {type ? formatBalance(type, t.amount) : formatMoney(t.amount)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </SectionCard>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <SectionCard title="进行中的陪玩" bodyPad={false}>
+            {ongoing ? (
+              <div style={{ padding: '16px 18px', borderLeft: `3px solid ${COLORS.primary}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: COLORS.textPrimary }}>
+                    {ongoing.game_name || '未命名对局'}
+                  </span>
+                  {ongoing.game_mode && <Pill color={COLORS.primary}>{ongoing.game_mode}</Pill>}
+                </div>
+                <div style={{ fontSize: 12.5, color: COLORS.textSecondary, marginTop: 8 }}>
+                  {ongoingProviderName ? `服务者 ${ongoingProviderName}` : '陪玩中'}
+                </div>
+                <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginTop: 3 }}>
+                  开始于 {formatDateTime(ongoing.start_time)}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, fontSize: 12, fontWeight: 600, color: COLORS.money }}>
+                  <span className="live-dot" style={{ width: 7, height: 7, borderRadius: 1, background: COLORS.money }} />
+                  进行中
+                </div>
+              </div>
+            ) : (
+              <EmptyState title="暂无进行中的陪玩" hint="服务者开局后会显示在这里" />
+            )}
+          </SectionCard>
+
+          <div className="pm-panel" style={{ padding: '16px 18px' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.textPrimary }}>余额按服务者分开记</div>
+            <div style={{ fontSize: 12.5, lineHeight: 1.7, color: COLORS.textSecondary, marginTop: 6 }}>
+              你在不同服务者处的账户互不通用，充值、消费与退款只影响对应账户。
+            </div>
+            <button
+              className="pm-btn pm-btn-ghost"
+              style={{ width: '100%', height: 36, marginTop: 14 }}
+              onClick={() => router.push('/player/balances')}
+            >
+              查看我的余额
+            </button>
+          </div>
+
+          <SectionCard title="快速入口" bodyPad={false}>
+            {QUICK_LINKS.map((link) => (
+              <button
+                key={link.to}
+                className="pm-row"
+                onClick={() => router.push(link.to)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 14,
-                  padding: '12px 16px',
-                  borderTop: '1px solid ' + COLORS.divider,
+                  gap: 9,
+                  width: '100%',
+                  padding: '10px 18px',
+                  border: 'none',
+                  borderTop: `1px solid ${COLORS.divider}`,
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  textAlign: 'left',
                 }}
               >
-                <div
-                  style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 9,
-                    background: COLORS.bgPage,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flex: 'none',
-                  }}
-                >
-                  {credit ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={COLORS.money} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 19V5M5 12l7-7 7 7" />
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={COLORS.danger} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 5v14M5 12l7 7 7-7" />
-                    </svg>
-                  )}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 500 }}>{t.description || '余额变动'}</div>
-                  <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>
-                    {[by, formatDateTime(t.created_at)].filter(Boolean).join(' · ')}
-                  </div>
-                </div>
-                <div
-                  className="font-display"
-                  style={{ fontWeight: 600, fontSize: 15, color: credit ? COLORS.money : COLORS.danger }}
-                >
-                  {sign}
-                  {type ? formatBalance(type, t.amount) : formatMoney(t.amount)}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </SectionCard>
+                <span style={{ width: 6, height: 6, borderRadius: 1, background: link.color, flex: 'none' }} />
+                <span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: COLORS.textPrimary }}>{link.label}</span>
+                <span style={{ fontSize: 11.5, color: COLORS.textMuted }}>查看</span>
+              </button>
+            ))}
+          </SectionCard>
+        </div>
+      </div>
     </div>
   );
 }

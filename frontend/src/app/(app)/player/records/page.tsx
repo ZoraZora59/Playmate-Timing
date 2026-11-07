@@ -131,7 +131,7 @@ export default function PlayerRecordsPage() {
                 marginBottom: 14,
                 background: COLORS.bgCard,
                 border: `1px solid ${COLORS.border}`,
-                borderRadius: 15,
+                borderRadius: 4,
                 padding: '17px 20px',
               }}
             >
@@ -172,7 +172,7 @@ export default function PlayerRecordsPage() {
                         border: `1px solid ${COLORS.primary}`,
                         background: '#fff',
                         color: COLORS.primary,
-                        borderRadius: 9,
+                        borderRadius: 3,
                         padding: '6px 14px',
                         fontSize: 12.5,
                         fontWeight: 600,
@@ -187,7 +187,7 @@ export default function PlayerRecordsPage() {
                       fontSize: 12.5,
                       fontWeight: 600,
                       padding: '5px 13px',
-                      borderRadius: 20,
+                      borderRadius: 4,
                       background: meta.color,
                       color: '#fff',
                       opacity: 0.92,
@@ -210,14 +210,13 @@ export default function PlayerRecordsPage() {
         okText="提交评价"
         cancelText="取消"
         confirmLoading={submitting}
-        okButtonProps={{ style: { borderRadius: 10 } }}
-        cancelButtonProps={{ style: { borderRadius: 10 } }}
+        okButtonProps={{ style: { borderRadius: 3 } }}
+        cancelButtonProps={{ style: { borderRadius: 3 } }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4 }}>
           <div style={{ fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.6 }}>
             {reviewTarget?.game_name || '未命名对局'}
-            {reviewTarget?.game_mode ? ` · ${reviewTarget.game_mode}` : ''}
-            {' · '}
+            {reviewTarget?.game_mode ? ` / ${reviewTarget.game_mode}` : ''}
             {targetType === ReviewTargetType.PROVIDER
               ? reviewTarget?.provider?.nickname || reviewTarget?.provider?.username || '服务者'
               : reviewTarget?.studio?.name || '工作室'}

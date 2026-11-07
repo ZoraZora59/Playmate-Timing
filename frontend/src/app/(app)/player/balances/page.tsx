@@ -78,7 +78,7 @@ export default function PlayerBalancesPage() {
               style={{
                 background: COLORS.bgCard,
                 border: `1px solid ${COLORS.border}`,
-                borderRadius: 16,
+                borderRadius: 4,
                 overflow: 'hidden',
               }}
             >
@@ -103,7 +103,7 @@ export default function PlayerBalancesPage() {
                   style={{
                     border: `1px solid ${COLORS.border}`,
                     background: COLORS.bgCard,
-                    borderRadius: 10,
+                    borderRadius: 3,
                     padding: '8px 14px',
                     font: "600 12.5px 'Noto Sans SC',sans-serif",
                     color: COLORS.primary,
@@ -123,7 +123,7 @@ export default function PlayerBalancesPage() {
                         flex: 1,
                         minWidth: 160,
                         border: `1px solid ${COLORS.divider}`,
-                        borderRadius: 13,
+                        borderRadius: 4,
                         padding: '15px 17px',
                         background: COLORS.bgSubtle,
                       }}

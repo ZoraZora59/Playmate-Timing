@@ -65,7 +65,7 @@ export default function StudioMembersPage() {
           style={{
             background: COLORS.bgCard,
             border: '1px solid ' + COLORS.border,
-            borderRadius: 16,
+            borderRadius: 4,
             overflow: 'hidden',
           }}
         >
@@ -139,7 +139,7 @@ export default function StudioMembersPage() {
                       border: '1px solid #F2C2CD',
                       background: '#fff',
                       color: COLORS.danger,
-                      borderRadius: 8,
+                      borderRadius: 3,
                       padding: '6px 12px',
                       fontSize: 12,
                       fontWeight: 600,

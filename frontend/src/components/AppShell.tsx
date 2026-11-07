@@ -7,16 +7,17 @@ import { useAuthStore } from '@/store/auth';
 import { COLORS, ROLE_HUE } from '@/lib/theme';
 import { UserRole } from '@/types';
 import { initialOf } from '@/lib/format';
+import { Pill } from '@/components/ui';
 
 // ---- 图标 ----
 function Icon({ name }: { name: string }) {
   const common = {
-    width: 18,
-    height: 18,
+    width: 17,
+    height: 17,
     viewBox: '0 0 24 24',
     fill: 'none',
     stroke: 'currentColor',
-    strokeWidth: 2,
+    strokeWidth: 1.8,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
   };
@@ -24,12 +25,12 @@ function Icon({ name }: { name: string }) {
     case 'grid':
       return (
         <svg {...common}>
-          <rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" />
-          <rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" />
+          <rect x="3" y="3" width="7" height="8" /><rect x="14" y="3" width="7" height="5" />
+          <rect x="14" y="12" width="7" height="9" /><rect x="3" y="15" width="7" height="6" />
         </svg>
       );
     case 'wallet':
-      return <svg {...common}><rect x="2" y="6" width="20" height="13" rx="2.5" /><path d="M16 12h2" /><path d="M2 10h20" /></svg>;
+      return <svg {...common}><rect x="2" y="6" width="20" height="13" /><path d="M16 12h2" /><path d="M2 10h20" /></svg>;
     case 'list':
       return <svg {...common}><path d="M3 6h18M3 12h18M3 18h12" /></svg>;
     case 'clock':
@@ -59,7 +60,7 @@ interface NavItem {
 
 const NAV: Record<string, { group: string; items: NavItem[] }> = {
   player: {
-    group: '玩家 PLAYER',
+    group: '玩家工作台',
     items: [
       { key: '/dashboard', label: '控制台', icon: 'grid' },
       { key: '/player/balances', label: '我的余额', icon: 'wallet' },
@@ -69,7 +70,7 @@ const NAV: Record<string, { group: string; items: NavItem[] }> = {
     ],
   },
   provider: {
-    group: '服务者 PROVIDER',
+    group: '服务者工作台',
     items: [
       { key: '/dashboard', label: '控制台', icon: 'grid' },
       { key: '/provider/accounts', label: '玩家账户管理', icon: 'users' },
@@ -79,7 +80,7 @@ const NAV: Record<string, { group: string; items: NavItem[] }> = {
     ],
   },
   studio: {
-    group: '工作室 STUDIO',
+    group: '工作室工作台',
     items: [
       { key: '/dashboard', label: '控制台', icon: 'grid' },
       { key: '/studio/approvals', label: '入驻申请审批', icon: 'check' },
@@ -94,7 +95,7 @@ const SUBTITLE: Record<string, string> = {
   '/player/transactions': '每一笔余额变动，含变动前后金额',
   '/player/records': '你的陪玩历史，区分进行中与已完成',
   '/player/reviews': '你对服务者与工作室的评价',
-  '/provider/accounts': '管理你服务的玩家余额，发起充值或扣费',
+  '/provider/accounts': '管理你服务的玩家余额，发起充值、扣费或退款',
   '/provider/play-records': '开局、完成结算与取消记录',
   '/provider/earnings': '按余额类型统计你的收益',
   '/provider/studios': '当前归属状态与加入申请进度',
@@ -109,10 +110,10 @@ function titleFor(pathname: string, role?: UserRole): { title: string; sub: stri
   if (pathname === '/dashboard') {
     const sub =
       role === UserRole.PLAYER
-        ? '欢迎回来，这里是你的余额与陪玩概览'
+        ? '你的余额、对局与流水'
         : role === UserRole.PROVIDER
-        ? '今日待办与玩家活跃概览'
-        : '入驻审批与工作室经营概览';
+        ? '玩家账户、待办与近 7 天局数'
+        : '成员、流水与待审批申请';
     return { title: '控制台', sub };
   }
   for (const role0 of Object.values(NAV)) {
@@ -144,104 +145,103 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
-      {/* SIDEBAR */}
-      <aside
-        className={`pm-sidebar${mobileOpen ? ' open' : ''}`}
-        style={{
-          background: COLORS.sidebar,
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '22px 16px 18px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '4px 8px 22px' }}>
+      <aside className={`pm-sidebar${mobileOpen ? ' open' : ''}`}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '18px 14px 16px' }}>
           <div
-            className="font-display"
             style={{
-              width: 38,
-              height: 38,
-              borderRadius: 11,
-              background: 'linear-gradient(135deg,#5B54F0,#15C8D8)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: 19,
-              color: '#fff',
-              boxShadow: '0 6px 16px rgba(91,84,240,.4)',
+              gap: 10,
+              padding: '2px 6px 16px',
+              borderBottom: `1px solid ${COLORS.divider}`,
+              marginBottom: 14,
             }}
           >
-            陪
+            <div
+              className="font-display"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 4,
+                background: COLORS.textPrimary,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                fontSize: 18,
+                color: '#fff',
+                flex: 'none',
+              }}
+            >
+              陪
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: 15, color: COLORS.textPrimary }}>陪玩平台</div>
+              <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 1 }}>账目与战绩</div>
+            </div>
           </div>
-          <div>
-            <div className="font-display" style={{ fontWeight: 700, fontSize: 16, color: '#fff', letterSpacing: 0.2 }}>陪玩平台</div>
-            <div className="font-display" style={{ fontSize: 10.5, color: 'rgba(255,255,255,.4)', letterSpacing: 2 }}>COMPANION HUB</div>
-          </div>
-        </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-          <div className="font-display" style={{ fontSize: 10.5, fontWeight: 600, letterSpacing: 1.5, color: 'rgba(255,255,255,.32)', padding: '8px 14px 6px' }}>
-            {nav.group}
-          </div>
-          {nav.items.map((item) => {
-            const active = isActive(item.key);
-            return (
-              <button
-                key={item.key}
-                onClick={() => router.push(item.key)}
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: COLORS.textMuted, padding: '0 10px 8px' }}>
+              {nav.group}
+            </div>
+            {nav.items.map((item) => {
+              const active = isActive(item.key);
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => router.push(item.key)}
+                  className={`pm-nav-item${active ? ' active' : ''}`}
+                >
+                  <Icon name={item.icon} />
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          {role === UserRole.PROVIDER && (
+            <button
+              onClick={() => router.push('/studios')}
+              className="pm-btn pm-btn-ghost"
+              style={{ width: '100%', height: 36, fontSize: 12.5, marginTop: 8 }}
+            >
+              <Icon name="compass" /> 浏览工作室
+            </button>
+          )}
+
+          <div style={{ marginTop: 14, padding: 10, background: COLORS.bgSubtle, borderRadius: 3 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+              <div
+                className="font-display"
                 style={{
-                  position: 'relative',
+                  width: 30,
+                  height: 30,
+                  borderRadius: 3,
+                  background: meHue,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12,
-                  width: '100%',
-                  padding: '11px 14px 11px 16px',
-                  border: 'none',
-                  borderRadius: 11,
-                  font: "500 14px 'Noto Sans SC', sans-serif",
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: '.15s',
-                  background: active ? 'rgba(124,117,255,0.20)' : 'transparent',
-                  color: active ? '#fff' : 'rgba(255,255,255,0.58)',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  flex: 'none',
                 }}
               >
-                <span style={{ position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)', width: 3, height: 18, borderRadius: 3, background: active ? '#8B83FF' : 'transparent' }} />
-                <Icon name={item.icon} />
-                {item.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        {role === UserRole.PROVIDER && (
-          <button
-            onClick={() => router.push('/studios')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: '11px 14px', marginTop: 8,
-              border: '1px dashed rgba(255,255,255,0.18)', borderRadius: 11, background: 'transparent',
-              color: 'rgba(255,255,255,0.6)', font: "600 13px 'Noto Sans SC', sans-serif", cursor: 'pointer',
-            }}
-          >
-            <Icon name="compass" /> 浏览工作室
-          </button>
-        )}
-
-        <div style={{ marginTop: 14, padding: 12, background: 'rgba(255,255,255,.05)', borderRadius: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <div className="font-display" style={{ width: 32, height: 32, borderRadius: 9, background: meHue, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>
-              {initialOf(user?.nickname || user?.username)}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.nickname || user?.username}</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,.45)' }}>{roleLabel}</div>
+                {initialOf(user?.nickname || user?.username)}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {user?.nickname || user?.username}
+                </div>
+                <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 1 }}>{roleLabel}</div>
+              </div>
             </div>
           </div>
         </div>
       </aside>
       <div className={`pm-overlay${mobileOpen ? ' open' : ''}`} onClick={() => setMobileOpen(false)} />
 
-      {/* MAIN */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <header
           className="pm-topbar"
@@ -253,10 +253,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 20,
-            padding: '18px 34px',
-            background: 'rgba(244,245,250,.82)',
-            backdropFilter: 'blur(12px)',
-            borderBottom: '1px solid ' + COLORS.border,
+            padding: '13px 28px',
+            background: COLORS.bgCard,
+            borderBottom: `1px solid ${COLORS.border}`,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
@@ -265,26 +264,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               aria-label="打开菜单"
               onClick={() => setMobileOpen(true)}
               style={{
-                border: '1px solid ' + COLORS.border,
-                background: '#fff',
-                borderRadius: 10,
-                width: 38,
-                height: 38,
+                border: `1px solid ${COLORS.border}`,
+                background: COLORS.bgCard,
+                borderRadius: 3,
+                width: 36,
+                height: 36,
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 flex: 'none',
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={COLORS.textPrimary} strokeWidth="2" strokeLinecap="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={COLORS.textPrimary} strokeWidth="1.8" strokeLinecap="round">
                 <path d="M3 6h18M3 12h18M3 18h18" />
               </svg>
             </button>
             <div style={{ minWidth: 0 }}>
-              <h1 className="font-display" style={{ margin: 0, fontWeight: 700, fontSize: 23, color: COLORS.textPrimary }}>{title}</h1>
-              {sub && <p style={{ margin: '3px 0 0', fontSize: 13, color: COLORS.textSecondary }}>{sub}</p>}
+              <h1 className="font-display" style={{ margin: 0, fontWeight: 700, fontSize: 20, letterSpacing: '-0.02em', color: COLORS.textPrimary }}>
+                {title}
+              </h1>
+              {sub && <p style={{ margin: '2px 0 0', fontSize: 12.5, color: COLORS.textSecondary }}>{sub}</p>}
             </div>
           </div>
+
           <Dropdown
             menu={{
               items: [
@@ -293,19 +295,48 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               ],
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid ' + COLORS.border, borderRadius: 12, padding: '6px 14px 6px 7px', cursor: 'pointer' }}>
-              <div className="font-display" style={{ width: 34, height: 34, borderRadius: 9, background: meHue, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>
+            <button
+              className="pm-row"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 9,
+                padding: '4px 6px',
+                border: 'none',
+                background: 'transparent',
+                borderRadius: 3,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <div
+                className="font-display"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 3,
+                  background: meHue,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 13,
+                }}
+              >
                 {initialOf(user?.nickname || user?.username)}
               </div>
               <div style={{ lineHeight: 1.2 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600 }}>{user?.nickname || user?.username}</div>
-                <div style={{ fontSize: 11, color: COLORS.textMuted }}>{roleLabel}</div>
+                <div style={{ fontSize: 12.5, fontWeight: 600 }}>{user?.nickname || user?.username}</div>
+                <div style={{ marginTop: 3 }}>
+                  <Pill color={meHue}>{roleLabel}</Pill>
+                </div>
               </div>
-            </div>
+            </button>
           </Dropdown>
         </header>
 
-        <main className="pm-content" style={{ flex: 1, padding: '30px 34px 60px', maxWidth: 1180, width: '100%' }}>{children}</main>
+        <main className="pm-content" style={{ flex: 1, padding: '26px 32px 64px', maxWidth: 1220, width: '100%' }}>{children}</main>
       </div>
     </div>
   );

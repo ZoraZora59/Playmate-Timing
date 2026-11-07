@@ -105,36 +105,26 @@ export default function StudioDetailPage() {
 
   return (
     <div className="animate-pop">
-      {/* 工作室头卡 · 青紫渐变 */}
+      {/* 工作室头卡 */}
       <div
         style={{
           position: 'relative',
           overflow: 'hidden',
-          borderRadius: 18,
+          borderRadius: 4,
           padding: '26px 28px',
           marginBottom: 18,
-          background: 'linear-gradient(135deg,#16172A 0%,#2E2A6B 55%,#3D3490 100%)',
+          background: COLORS.textPrimary,
+          borderTop: `3px solid ${COLORS.primary}`,
           color: '#fff',
         }}
       >
-        <div
-          style={{
-            position: 'absolute',
-            right: -36,
-            top: -36,
-            width: 190,
-            height: 190,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle,rgba(21,200,216,.35),transparent 70%)',
-          }}
-        />
         <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
           <div
             className="font-display"
             style={{
               width: 60,
               height: 60,
-              borderRadius: 16,
+              borderRadius: 4,
               background: 'rgba(255,255,255,.18)',
               display: 'flex',
               alignItems: 'center',
@@ -162,7 +152,7 @@ export default function StudioDetailPage() {
               {studio.description || '这家工作室还没有填写简介。'}
             </div>
             <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.55)', marginTop: 10 }}>
-              负责人 · {studio.owner?.nickname || studio.owner?.username || '未知'}
+              负责人：{studio.owner?.nickname || studio.owner?.username || '未知'}
             </div>
           </div>
           {canApply && (
@@ -175,7 +165,7 @@ export default function StudioDetailPage() {
                 borderColor: '#fff',
                 color: COLORS.primaryDark,
                 fontWeight: 600,
-                borderRadius: 11,
+                borderRadius: 3,
                 height: 40,
               }}
             >
@@ -217,7 +207,7 @@ export default function StudioDetailPage() {
 
       {/* 成员区 */}
       <div style={{ marginBottom: 18 }}>
-        <SectionCard title={`工作室成员 · ${memberCount}`}>
+        <SectionCard title={`工作室成员（${memberCount}）`}>
           {memberCount === 0 ? (
             <EmptyState title="暂无成员" hint="还没有服务者加入这家工作室。" />
           ) : (
@@ -233,7 +223,7 @@ export default function StudioDetailPage() {
                       gap: 11,
                       padding: '11px 16px 11px 11px',
                       border: '1px solid ' + COLORS.divider,
-                      borderRadius: 13,
+                      borderRadius: 4,
                       background: COLORS.bgSubtle,
                     }}
                   >
@@ -248,7 +238,7 @@ export default function StudioDetailPage() {
       </div>
 
       {/* 评价区 */}
-      <SectionCard title={`玩家评价 · ${reviewCount}`} bodyPad={false}>
+      <SectionCard title={`玩家评价（${reviewCount}）`} bodyPad={false}>
         {reviews.length === 0 ? (
           <EmptyState title="暂无评价" hint="还没有玩家评价过这家工作室。" />
         ) : (
@@ -289,15 +279,15 @@ export default function StudioDetailPage() {
 
       {/* 申请加入弹窗 */}
       <Modal
-        title={`申请加入 · ${studio.name}`}
+        title={`申请加入：${studio.name}`}
         open={applyOpen}
         onCancel={() => setApplyOpen(false)}
         onOk={submitApply}
         okText="提交申请"
         cancelText="取消"
         confirmLoading={submitting}
-        okButtonProps={{ style: { borderRadius: 10 } }}
-        cancelButtonProps={{ style: { borderRadius: 10 } }}
+        okButtonProps={{ style: { borderRadius: 3 } }}
+        cancelButtonProps={{ style: { borderRadius: 3 } }}
       >
         <div style={{ fontSize: 13, color: COLORS.textSecondary, margin: '8px 0 10px' }}>
           填写一段备注，向工作室说明你的主玩游戏与经验（可选）。

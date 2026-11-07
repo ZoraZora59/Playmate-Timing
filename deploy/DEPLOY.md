@@ -80,6 +80,8 @@ scp deploy/nginx-locations.inc deploy/proxy-headers.inc aliyun:/www/wwwroot/play
 ssh aliyun 'nginx -t && nginx -s reload'
 ```
 
+> 宝塔全局 `http` 段启用了 `proxy_cache`。`proxy-headers.inc` 中显式写了 `proxy_cache off;`，避免首页静态 HTML 与 API 被缓存旧内容，请勿删除。
+
 ### 宝塔登记（首次部署）
 
 ```bash

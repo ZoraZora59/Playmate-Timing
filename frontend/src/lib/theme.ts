@@ -1,61 +1,62 @@
-// 设计令牌 —— 源自设计师交付的「陪玩平台」高保真原型。
-// 单一事实来源：颜色、圆角、字体均在此定义，组件与页面统一引用。
+// 设计令牌 —— Squad Desk（车队前台）
+// 冷灰战术底板 + 藏青文字 + 三种余额功能色；不使用渐变与装饰性光斑。
 import type { ThemeConfig } from 'antd';
 
 export const COLORS = {
   // 中性
-  bgPage: '#F4F5FA',
+  bgPage: '#EDF0F4',
   bgCard: '#FFFFFF',
-  bgSubtle: '#FBFBFE',
-  sidebar: '#16172A',
+  bgSubtle: '#F5F7F9',
+  sidebar: '#FFFFFF',
 
-  textPrimary: '#1B1C33',
-  textSecondary: '#6B6D85',
-  textMuted: '#9AA0B5',
+  textPrimary: '#0E1A2B',
+  textSecondary: '#4E5D6E',
+  textMuted: '#7C8897',
 
-  border: '#EAEBF2',
-  divider: '#F1F2F7',
+  border: '#D3DBE4',
+  divider: '#E4E9EF',
 
-  // 主色（紫）+ 青
-  primary: '#5B54F0',
-  primaryHover: '#7C75FF',
-  primaryDark: '#4B45C9',
-  primarySoft: '#ECEBFE',
-  cyan: '#15C8D8',
-  teal: '#0FB6A8',
+  // 主色（钴蓝）+ 功能色
+  primary: '#1F4BFF',
+  primaryHover: '#3D63FF',
+  primaryDark: '#1637C4',
+  primarySoft: '#E7EDFF',
+  cyan: '#0B8A63',
+  teal: '#0B8A63',
+  signal: '#E8501F',
 
-  // 语义 / 余额类型
-  money: '#1FB573',
-  moneySoft: '#E7F7EF',
-  time: '#2E90FA',
-  timeSoft: '#E7F1FE',
-  point: '#F5A524',
-  pointSoft: '#FEF4E2',
-  danger: '#F0476A',
-  dangerSoft: '#FFF1F4',
+  // 余额类型
+  money: '#0B8A63',
+  moneySoft: '#E4F2EC',
+  time: '#1F4BFF',
+  timeSoft: '#E7EDFF',
+  point: '#B7791F',
+  pointSoft: '#F6ECD9',
+  danger: '#C42B1C',
+  dangerSoft: '#FBE9E7',
 
-  warnBg: '#FFF4E5',
-  warnText: '#A9701A',
-  infoBg: '#ECEBFE',
-  infoText: '#4B45C9',
+  warnBg: '#FBF0DC',
+  warnText: '#8A5A12',
+  infoBg: '#E7EDFF',
+  infoText: '#1637C4',
 } as const;
 
 // 角色主色
 export const ROLE_HUE: Record<string, string> = {
   player: COLORS.primary,
   provider: COLORS.teal,
-  studio: COLORS.point,
+  studio: COLORS.signal,
 };
 
 // 头像取色盘（按 id/名称稳定取色）
 export const AVATAR_HUES = [
-  '#5B54F0', '#0FB6A8', '#2E90FA', '#F5A524', '#F0476A', '#1FB573', '#8B83FF', '#15C8D8',
+  '#0E1A2B', '#1F4BFF', '#0B8A63', '#B7791F', '#E8501F', '#355070', '#5C6B7A', '#3D63FF',
 ];
 
 export const FONT_DISPLAY =
-  "'Space Grotesk', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif";
+  "'Archivo', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif";
 export const FONT_BODY =
-  "'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', system-ui, -apple-system, sans-serif";
+  "'Archivo', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', system-ui, sans-serif";
 
 export const antdTheme: ThemeConfig = {
   token: {
@@ -70,18 +71,23 @@ export const antdTheme: ThemeConfig = {
     colorBorder: COLORS.border,
     colorBorderSecondary: COLORS.divider,
     colorBgLayout: COLORS.bgPage,
-    borderRadius: 12,
+    colorBgContainer: COLORS.bgCard,
+    borderRadius: 4,
     fontFamily: FONT_BODY,
     fontSize: 14,
+    controlHeight: 38,
   },
   components: {
-    Button: { controlHeight: 40, borderRadius: 10, fontWeight: 600, primaryShadow: 'none' },
-    Card: { borderRadiusLG: 16, paddingLG: 22 },
-    Input: { controlHeight: 42, borderRadius: 11 },
-    InputNumber: { controlHeight: 42, borderRadius: 11 },
-    Select: { controlHeight: 42, borderRadius: 11 },
-    Modal: { borderRadiusLG: 20 },
-    Table: { borderRadiusLG: 16, headerBg: COLORS.bgSubtle, headerColor: COLORS.textMuted },
-    Tag: { borderRadiusSM: 20 },
+    Button: { controlHeight: 38, borderRadius: 4, fontWeight: 600, primaryShadow: 'none', defaultShadow: 'none' },
+    Card: { borderRadiusLG: 4, paddingLG: 20 },
+    Input: { controlHeight: 40, borderRadius: 4 },
+    InputNumber: { controlHeight: 40, borderRadius: 4 },
+    Select: { controlHeight: 40, borderRadius: 4 },
+    Modal: { borderRadiusLG: 6 },
+    Table: { borderRadiusLG: 4, headerBg: COLORS.bgSubtle, headerColor: COLORS.textMuted, headerSplitColor: COLORS.divider },
+    Tag: { borderRadiusSM: 3 },
+    Segmented: { borderRadius: 4, itemSelectedBg: COLORS.textPrimary, itemSelectedColor: '#ffffff', trackBg: COLORS.bgSubtle },
+    Dropdown: { borderRadiusLG: 4 },
+    Message: { borderRadiusLG: 4 },
   },
 };

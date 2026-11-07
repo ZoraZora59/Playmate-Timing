@@ -46,7 +46,6 @@ export default function LoginPage() {
           width: 400,
           maxWidth: '100%',
           padding: '36px 34px 30px',
-          boxShadow: '0 24px 60px rgba(22,23,42,.10)',
         }}
       >
         {/* logo + 标题 */}
@@ -63,15 +62,14 @@ export default function LoginPage() {
             style={{
               width: 56,
               height: 56,
-              borderRadius: 16,
-              background: `linear-gradient(135deg,${COLORS.primary},${COLORS.cyan})`,
+              borderRadius: 4,
+              background: COLORS.textPrimary,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 700,
               fontSize: 28,
               color: '#fff',
-              boxShadow: '0 10px 24px rgba(91,84,240,.4)',
             }}
           >
             陪
@@ -122,7 +120,7 @@ export default function LoginPage() {
               htmlType="submit"
               block
               loading={submitting}
-              style={{ height: 44, borderRadius: 12, fontWeight: 600 }}
+              style={{ height: 44, borderRadius: 3, fontWeight: 600 }}
             >
               登录
             </Button>

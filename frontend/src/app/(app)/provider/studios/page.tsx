@@ -7,6 +7,7 @@ import apiClient from '@/lib/api';
 import { ProviderStudioRelation, RelationStatus } from '@/types';
 import { EmptyState } from '@/components/ui';
 import { initialOf, formatDateTime } from '@/lib/format';
+import { COLORS } from '@/lib/theme';
 
 export default function ProviderStudiosPage() {
   const { message } = App.useApp();
@@ -52,7 +53,7 @@ export default function ProviderStudiosPage() {
           style={{
             background: '#fff',
             border: '1px solid #EAEBF2',
-            borderRadius: 18,
+            borderRadius: 4,
             padding: '40px 24px',
           }}
         >
@@ -68,8 +69,8 @@ export default function ProviderStudiosPage() {
               padding: 14,
               border: '1px dashed #C7C9D9',
               background: '#fff',
-              borderRadius: 14,
-              color: '#5B54F0',
+              borderRadius: 4,
+              color: COLORS.primary,
               font: "600 14px 'Noto Sans SC', sans-serif",
               cursor: 'pointer',
             }}
@@ -84,8 +85,9 @@ export default function ProviderStudiosPage() {
         <div
           key={r.id}
           style={{
-            background: 'linear-gradient(135deg,#0FB6A8,#15C8D8)',
-            borderRadius: 18,
+            background: COLORS.money,
+            borderTop: '3px solid rgba(255,255,255,.35)',
+            borderRadius: 4,
             padding: '24px 26px',
             color: '#fff',
             marginBottom: 18,
@@ -93,17 +95,6 @@ export default function ProviderStudiosPage() {
             overflow: 'hidden',
           }}
         >
-          <div
-            style={{
-              position: 'absolute',
-              right: -30,
-              top: -30,
-              width: 160,
-              height: 160,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,.12)',
-            }}
-          />
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,.8)', marginBottom: 6 }}>
             当前归属
           </div>
@@ -112,14 +103,14 @@ export default function ProviderStudiosPage() {
               style={{
                 width: 48,
                 height: 48,
-                borderRadius: 13,
+                borderRadius: 4,
                 background: 'rgba(255,255,255,.2)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 700,
                 fontSize: 20,
-                fontFamily: "'Space Grotesk', sans-serif",
+                fontFamily: 'var(--font-display)',
               }}
             >
               {initialOf(r.studio?.name)}
@@ -129,7 +120,7 @@ export default function ProviderStudiosPage() {
                 {r.studio?.name ?? `工作室 #${r.studio_id}`}
               </div>
               <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.8)' }}>
-                已加入{r.processed_at ? ` · ${formatDateTime(r.processed_at)}` : ''}
+                已加入{r.processed_at ? `，${formatDateTime(r.processed_at)}` : ''}
               </div>
             </div>
             <span
@@ -137,7 +128,7 @@ export default function ProviderStudiosPage() {
                 marginLeft: 'auto',
                 background: 'rgba(255,255,255,.22)',
                 padding: '6px 14px',
-                borderRadius: 20,
+                borderRadius: 4,
                 fontSize: 12.5,
                 fontWeight: 600,
               }}
@@ -155,7 +146,7 @@ export default function ProviderStudiosPage() {
           style={{
             background: '#fff',
             border: '1px solid #EAEBF2',
-            borderRadius: 16,
+            borderRadius: 4,
             padding: '22px 24px',
             marginBottom: 18,
           }}
@@ -166,14 +157,14 @@ export default function ProviderStudiosPage() {
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 11,
-                background: '#5B54F0',
+                borderRadius: 3,
+                background: COLORS.primary,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#fff',
                 fontWeight: 700,
-                fontFamily: "'Space Grotesk', sans-serif",
+                fontFamily: 'var(--font-display)',
               }}
             >
               {initialOf(r.studio?.name)}
@@ -184,7 +175,7 @@ export default function ProviderStudiosPage() {
               </div>
               <div style={{ fontSize: 12, color: '#9AA0B5' }}>
                 申请于 {formatDateTime(r.applied_at)}
-                {r.notes ? ` · 备注「${r.notes}」` : ''}
+                {r.notes ? `，备注「${r.notes}」` : ''}
               </div>
             </div>
             <span
@@ -192,7 +183,7 @@ export default function ProviderStudiosPage() {
                 background: '#FFF4E5',
                 color: '#A9701A',
                 padding: '6px 14px',
-                borderRadius: 20,
+                borderRadius: 4,
                 fontSize: 12.5,
                 fontWeight: 600,
               }}
@@ -214,7 +205,7 @@ export default function ProviderStudiosPage() {
                   width: 26,
                   height: 26,
                   borderRadius: '50%',
-                  background: '#1FB573',
+                  background: COLORS.money,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -240,7 +231,7 @@ export default function ProviderStudiosPage() {
               </span>
             </div>
             <div
-              style={{ height: 2, flex: 1, background: '#1FB573', marginBottom: 22 }}
+              style={{ height: 2, flex: 1, background: COLORS.money, marginBottom: 22 }}
             />
             <div
               style={{
@@ -314,7 +305,7 @@ export default function ProviderStudiosPage() {
           style={{
             background: '#fff',
             border: '1px solid #EAEBF2',
-            borderRadius: 16,
+            borderRadius: 4,
             padding: '22px 24px',
             marginBottom: 18,
           }}
@@ -324,14 +315,14 @@ export default function ProviderStudiosPage() {
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 11,
+                borderRadius: 3,
                 background: '#EAEBF2',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#9AA0B5',
                 fontWeight: 700,
-                fontFamily: "'Space Grotesk', sans-serif",
+                fontFamily: 'var(--font-display)',
               }}
             >
               {initialOf(r.studio?.name)}
@@ -341,7 +332,7 @@ export default function ProviderStudiosPage() {
                 {r.studio?.name ?? `工作室 #${r.studio_id}`}
               </div>
               <div style={{ fontSize: 12, color: '#9AA0B5' }}>
-                {r.processed_at ? `${formatDateTime(r.processed_at)} · ` : ''}
+                {r.processed_at ? `${formatDateTime(r.processed_at)}，` : ''}
                 {r.notes ? `备注「${r.notes}」` : removed ? '已被移出工作室' : '申请未通过'}
               </div>
             </div>
@@ -350,7 +341,7 @@ export default function ProviderStudiosPage() {
                 background: '#F1F2F7',
                 color: '#9AA0B5',
                 padding: '6px 14px',
-                borderRadius: 20,
+                borderRadius: 4,
                 fontSize: 12.5,
                 fontWeight: 600,
               }}
@@ -370,7 +361,7 @@ export default function ProviderStudiosPage() {
             padding: 14,
             border: '1px dashed #C7C9D9',
             background: '#fff',
-            borderRadius: 14,
+            borderRadius: 4,
             color: '#5B54F0',
             font: "600 14px 'Noto Sans SC', sans-serif",
             cursor: 'pointer',

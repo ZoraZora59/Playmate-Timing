@@ -116,7 +116,7 @@ export default function StudiosPage() {
                           textOverflow: 'ellipsis',
                         }}
                       >
-                        负责人 · {studio.owner.nickname}
+                        负责人：{studio.owner.nickname}
                       </div>
                     )}
                   </div>
@@ -145,13 +145,13 @@ export default function StudiosPage() {
                     padding: 11,
                     border: `1px solid ${COLORS.border}`,
                     background: COLORS.bgCard,
-                    borderRadius: 11,
+                    borderRadius: 3,
                     color: COLORS.primary,
                     font: "600 13px 'Noto Sans SC', sans-serif",
                     cursor: 'pointer',
                   }}
                 >
-                  查看详情 →
+                  查看详情
                 </button>
               </div>
             ))}

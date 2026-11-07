@@ -2,52 +2,74 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from 'antd';
 import { COLORS } from '@/lib/theme';
 import { UserRole } from '@/types';
 import { useAuthStore } from '@/store/auth';
+import { Avatar, Pill } from '@/components/ui';
 
 interface RoleEntry {
   role: UserRole;
-  badge: string;
-  title: string;
-  en: string;
+  name: string;
   desc: string;
-  points: string[];
   hue: string;
-  hueSoft: string;
 }
 
 const ROLE_ENTRIES: RoleEntry[] = [
   {
     role: UserRole.PLAYER,
-    badge: '玩',
-    title: '玩家',
-    en: 'PLAYER',
-    desc: '查看每位服务者处的独立余额、游玩记录与历史流水，随时给服务打分评价。',
-    points: ['多账户余额一目了然', '游玩记录时间轴', '匿名 / 实名评价'],
+    name: '玩家',
+    desc: '查看在每位服务者处的余额、对局与评价。',
     hue: COLORS.primary,
-    hueSoft: COLORS.primarySoft,
   },
   {
     role: UserRole.PROVIDER,
-    badge: '服',
-    title: '陪玩服务者',
-    en: 'PROVIDER',
-    desc: '管理玩家余额、充值扣费、查看收益走势，并申请加入心仪的工作室。',
-    points: ['玩家账户充值 / 扣费', '收益汇总与趋势', '申请加入工作室'],
+    name: '服务者',
+    desc: '管理玩家账户，开局、结算与收益。',
     hue: COLORS.teal,
-    hueSoft: '#E3F8F5',
   },
   {
     role: UserRole.STUDIO,
-    badge: '室',
-    title: '工作室',
-    en: 'STUDIO',
-    desc: '统一运营多名服务者，审批入驻申请，掌握成员表现与整体经营数据。',
-    points: ['入驻申请审批', '成员与服务者管理', '整体经营看板'],
+    name: '工作室',
+    desc: '审批入驻、管理成员与经营数据。',
+    hue: COLORS.signal,
+  },
+];
+
+interface BoardRow {
+  name: string;
+  game: string;
+  mode: string;
+  money: string;
+  time: string;
+  point: string;
+  status: string;
+  statusColor: string;
+}
+
+const BOARD_ROWS: BoardRow[] = [
+  { name: '晚风', game: '王者荣耀', mode: '排位赛', money: '328.50', time: '240', point: '1,500', status: '活跃', statusColor: COLORS.money },
+  { name: '青野', game: '无畏契约', mode: '匹配', money: '86.00', time: '90', point: '320', status: '昨日', statusColor: COLORS.textMuted },
+  { name: '小满', game: '永劫无间', mode: '三排', money: '0.00', time: '45', point: '0', status: '待充值', statusColor: COLORS.signal },
+];
+
+const RULES = [
+  {
+    label: '分开记',
+    title: '每位服务者一个账户',
+    desc: '同一玩家在不同服务者处的余额互不混用。',
+    hue: COLORS.money,
+  },
+  {
+    label: '连起来',
+    title: '对局与结算同一条记录',
+    desc: '开局、时长、消费与状态，都落在同一局上。',
+    hue: COLORS.time,
+  },
+  {
+    label: '可追溯',
+    title: '评价跟着对局走',
+    desc: '评价来自真实完成的对局，也可以匿名。',
     hue: COLORS.point,
-    hueSoft: COLORS.pointSoft,
   },
 ];
 
@@ -61,363 +83,268 @@ export default function Home() {
     }
   }, [isAuthenticated, user, loadProfile]);
 
-  return (
-    <div className="animate-pop" style={{ minHeight: '100vh', background: COLORS.bgPage }}>
-      {/* ===== 顶部导航（落地页自带） ===== */}
-      <header
+  const brand = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div
+        className="font-display"
         style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 20,
+          width: 32,
+          height: 32,
+          borderRadius: 4,
+          background: COLORS.textPrimary,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 20,
-          padding: '16px 34px',
-          background: 'rgba(244,245,250,.82)',
-          backdropFilter: 'blur(12px)',
-          borderBottom: `1px solid ${COLORS.border}`,
+          justifyContent: 'center',
+          fontWeight: 700,
+          fontSize: 16,
+          color: '#fff',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-          <div
-            className="font-display"
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 11,
-              background: `linear-gradient(135deg,${COLORS.primary},${COLORS.cyan})`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: 19,
-              color: '#fff',
-              boxShadow: '0 6px 16px rgba(91,84,240,.4)',
-            }}
-          >
-            陪
-          </div>
-          <div>
-            <div
-              className="font-display"
-              style={{ fontWeight: 700, fontSize: 16, color: COLORS.textPrimary, letterSpacing: '.2px' }}
-            >
-              陪玩平台
-            </div>
-            <div
-              className="font-display"
-              style={{ fontSize: 10.5, color: COLORS.textMuted, letterSpacing: 2 }}
-            >
-              COMPANION HUB
-            </div>
-          </div>
-        </div>
+        陪
+      </div>
+      <div>
+        <div style={{ fontWeight: 700, fontSize: 15, color: COLORS.textPrimary }}>陪玩平台</div>
+        <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 1 }}>账目与战绩</div>
+      </div>
+    </div>
+  );
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {isAuthenticated ? (
-            <Button
-              type="primary"
-              size="large"
-              style={{ borderRadius: 11, fontWeight: 600, paddingInline: 22 }}
-              onClick={() => router.push('/dashboard')}
-            >
-              进入控制台
-            </Button>
-          ) : (
-            <>
-              <Button
-                size="large"
-                style={{
-                  borderRadius: 11,
-                  fontWeight: 600,
-                  borderColor: COLORS.border,
-                  color: COLORS.textPrimary,
-                }}
-                onClick={() => router.push('/auth/login')}
-              >
-                登录
-              </Button>
-              <Button
-                type="primary"
-                size="large"
-                style={{ borderRadius: 11, fontWeight: 600, paddingInline: 22 }}
-                onClick={() => router.push('/auth/register')}
-              >
-                注册
-              </Button>
-            </>
-          )}
+  return (
+    <div style={{ minHeight: '100vh', background: COLORS.bgPage }}>
+      <header style={{ background: COLORS.bgCard, borderBottom: `1px solid ${COLORS.border}` }}>
+        <div
+          style={{
+            maxWidth: 1180,
+            margin: '0 auto',
+            padding: '0 clamp(16px, 4vw, 32px)',
+            height: 64,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 20,
+          }}
+        >
+          {brand}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {isAuthenticated ? (
+              <button className="pm-btn pm-btn-primary" onClick={() => router.push('/dashboard')}>
+                进入控制台
+              </button>
+            ) : (
+              <>
+                <button className="pm-btn pm-btn-ghost" onClick={() => router.push('/auth/login')}>
+                  登录
+                </button>
+                <button className="pm-btn pm-btn-primary" onClick={() => router.push('/auth/register')}>
+                  注册账号
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
-      <main style={{ maxWidth: 1180, width: '100%', margin: '0 auto', padding: '40px 34px 72px' }}>
-        {/* ===== Hero ===== */}
-        <section
-          style={{
-            position: 'relative',
-            overflow: 'hidden',
-            borderRadius: 22,
-            padding: '54px 48px 58px',
-            marginBottom: 40,
-            background: `linear-gradient(135deg, ${COLORS.sidebar} 0%, #2E2A6B 60%, #3D3490 100%)`,
-            color: '#fff',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              right: -60,
-              top: -60,
-              width: 280,
-              height: 280,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle,rgba(21,200,216,.35),transparent 70%)',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              left: -40,
-              bottom: -80,
-              width: 240,
-              height: 240,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle,rgba(91,84,240,.4),transparent 70%)',
-            }}
-          />
-          <div style={{ position: 'relative', maxWidth: 720 }}>
-            <span
-              style={{
-                display: 'inline-block',
-                padding: '6px 14px',
-                borderRadius: 20,
-                background: 'rgba(255,255,255,.12)',
-                fontSize: 12.5,
-                fontWeight: 600,
-                letterSpacing: '.5px',
-                marginBottom: 22,
-              }}
-            >
-              陪玩工作室 · 服务者 · 玩家 三方信息平台
-            </span>
+      <main style={{ maxWidth: 1180, margin: '0 auto', padding: '0 clamp(16px, 4vw, 32px)' }}>
+        <section className="pm-hero">
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', marginBottom: 24 }}>
+              {ROLE_ENTRIES.map((r) => (
+                <span key={r.role} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, fontWeight: 600, color: COLORS.textSecondary }}>
+                  <span style={{ width: 7, height: 7, borderRadius: 1, background: r.hue }} />
+                  {r.name}
+                </span>
+              ))}
+            </div>
+
             <h1
               className="font-display"
               style={{
                 margin: 0,
                 fontWeight: 700,
-                fontSize: 50,
-                lineHeight: 1.12,
-                letterSpacing: '-1px',
+                fontSize: 'clamp(36px, 5vw, 50px)',
+                lineHeight: 1.1,
+                letterSpacing: '-0.045em',
+                color: COLORS.textPrimary,
+                maxWidth: 540,
               }}
             >
-              让陪玩服务的每一笔
+              把每一局，
               <br />
-              余额、记录与评价都<span style={{ color: COLORS.cyan }}>清清楚楚</span>
+              记成一本明白账。
             </h1>
-            <p
-              style={{
-                margin: '20px 0 0',
-                fontSize: 16,
-                lineHeight: 1.7,
-                color: 'rgba(255,255,255,.72)',
-                maxWidth: 600,
-              }}
-            >
-              一站式管理玩家余额、陪玩记录、收益结算与工作室协作。玩家看得明白，服务者算得清楚，工作室管得高效。
+
+            <p style={{ margin: '20px 0 0', fontSize: 15, lineHeight: 1.8, color: COLORS.textSecondary, maxWidth: 450 }}>
+              玩家在每位服务者处的余额、每一局的时间与消费、每一次评价，都在同一个地方对齐。
             </p>
-            <div style={{ display: 'flex', gap: 14, marginTop: 32, flexWrap: 'wrap' }}>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 30, flexWrap: 'wrap' }}>
               {isAuthenticated ? (
-                <Button
-                  type="primary"
-                  size="large"
-                  style={{ borderRadius: 12, fontWeight: 600, height: 46, paddingInline: 28 }}
-                  onClick={() => router.push('/dashboard')}
-                >
-                  进入控制台 →
-                </Button>
+                <button className="pm-btn pm-btn-primary" style={{ height: 44, padding: '0 22px' }} onClick={() => router.push('/dashboard')}>
+                  继续到控制台
+                </button>
               ) : (
                 <>
-                  <Button
-                    size="large"
-                    style={{
-                      borderRadius: 12,
-                      fontWeight: 600,
-                      height: 46,
-                      paddingInline: 28,
-                      background: '#fff',
-                      color: COLORS.primary,
-                      border: 'none',
-                    }}
-                    onClick={() => router.push('/auth/register')}
-                  >
-                    免费注册 →
-                  </Button>
-                  <Button
-                    size="large"
-                    style={{
-                      borderRadius: 12,
-                      fontWeight: 600,
-                      height: 46,
-                      paddingInline: 28,
-                      background: 'rgba(255,255,255,.1)',
-                      color: '#fff',
-                      border: '1px solid rgba(255,255,255,.25)',
-                    }}
-                    onClick={() => router.push('/auth/login')}
-                  >
+                  <button className="pm-btn pm-btn-primary" style={{ height: 44, padding: '0 22px' }} onClick={() => router.push('/auth/register')}>
+                    注册账号
+                  </button>
+                  <button className="pm-btn pm-btn-ghost" style={{ height: 44, padding: '0 22px' }} onClick={() => router.push('/auth/login')}>
                     已有账号登录
-                  </Button>
+                  </button>
                 </>
               )}
+            </div>
+
+            {!isAuthenticated && (
+              <div style={{ marginTop: 38 }}>
+                {ROLE_ENTRIES.map((r) => (
+                  <button
+                    key={r.role}
+                    className="pm-role-row"
+                    onClick={() => router.push(`/auth/register?role=${r.role}`)}
+                  >
+                    <span style={{ width: 4, height: 34, borderRadius: 1, background: r.hue }} />
+                    <span>
+                      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: COLORS.textPrimary }}>{r.name}</span>
+                      <span style={{ display: 'block', fontSize: 12.5, color: COLORS.textSecondary, marginTop: 2 }}>{r.desc}</span>
+                    </span>
+                    <span style={{ fontSize: 12.5, fontWeight: 600, color: r.hue }}>注册</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="pm-board">
+              <div
+                style={{
+                  height: 48,
+                  padding: '0 16px',
+                  background: COLORS.primary,
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                }}
+              >
+                <span style={{ fontSize: 12.5, fontWeight: 700 }}>玩家账户</span>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: 'rgba(255,255,255,.72)' }}>3 处余额</span>
+              </div>
+
+              {BOARD_ROWS.map((row, i) => (
+                <div key={row.name} className="pm-board-row board-row" style={{ animationDelay: `${i * 70}ms` }}>
+                  <div className="pm-board-name">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                      <Avatar name={row.name} seed={i + 11} size={28} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.textPrimary }}>{row.name}</div>
+                        <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 1 }}>
+                          {row.game} / {row.mode}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="pm-board-cell">
+                    <div style={{ fontSize: 10.5, fontWeight: 600, color: COLORS.textMuted }}>金额</div>
+                    <div className="num" style={{ fontSize: 19, fontWeight: 700, color: COLORS.money, marginTop: 4 }}>
+                      {row.money}
+                      <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 2 }}>元</span>
+                    </div>
+                  </div>
+                  <div className="pm-board-cell">
+                    <div style={{ fontSize: 10.5, fontWeight: 600, color: COLORS.textMuted }}>时间</div>
+                    <div className="num" style={{ fontSize: 19, fontWeight: 700, color: COLORS.time, marginTop: 4 }}>
+                      {row.time}
+                      <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 2 }}>分</span>
+                    </div>
+                  </div>
+                  <div className="pm-board-cell">
+                    <div style={{ fontSize: 10.5, fontWeight: 600, color: COLORS.textMuted }}>点数</div>
+                    <div className="num" style={{ fontSize: 19, fontWeight: 700, color: COLORS.point, marginTop: 4 }}>
+                      {row.point}
+                      <span style={{ fontSize: 11, fontWeight: 600, marginLeft: 2 }}>点</span>
+                    </div>
+                  </div>
+                  <div className="pm-board-status">
+                    <Pill color={row.statusColor}>{row.status}</Pill>
+                  </div>
+                </div>
+              ))}
+
+              <div
+                style={{
+                  padding: '11px 16px',
+                  background: COLORS.bgSubtle,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <span style={{ fontSize: 11, color: COLORS.textMuted }}>最近一局</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.textPrimary, marginLeft: 8 }}>
+                    王者荣耀 / 排位赛
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span className="num" style={{ fontSize: 12, fontWeight: 600, color: COLORS.textSecondary }}>60 分钟</span>
+                  <span style={{ width: 1, height: 12, background: COLORS.border }} />
+                  <span className="num" style={{ fontSize: 12, fontWeight: 700, color: COLORS.money }}>¥50.00</span>
+                  <Pill color={COLORS.textMuted}>已完成</Pill>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginTop: 12, fontSize: 11.5, color: COLORS.textMuted }}>
+              <span>示例账户</span>
+              <span>余额按服务者独立记账</span>
             </div>
           </div>
         </section>
 
-        {/* ===== 角色入口 ===== */}
-        <div style={{ marginBottom: 22 }}>
-          <h2
-            className="font-display"
-            style={{ margin: 0, fontSize: 24, fontWeight: 700, color: COLORS.textPrimary }}
-          >
-            选择你的身份，立即开始
-          </h2>
-          <p style={{ margin: '6px 0 0', fontSize: 14, color: COLORS.textSecondary }}>
-            三种角色对应不同的工作台，注册后即可进入对应控制台。
-          </p>
-        </div>
+        <section style={{ padding: '0 0 64px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16, marginBottom: 2 }}>
+            <h2 className="font-display" style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: COLORS.textPrimary }}>
+              账目怎么记
+            </h2>
+            <span style={{ fontSize: 12, color: COLORS.textMuted }}>玩家 / 服务者 / 工作室</span>
+          </div>
+          <div className="pm-rule-strip">
+            {RULES.map((rule) => (
+              <div key={rule.label} className="pm-rule">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, fontWeight: 600, color: rule.hue }}>
+                  <span style={{ width: 7, height: 7, borderRadius: 1, background: rule.hue }} />
+                  {rule.label}
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.textPrimary, marginTop: 9 }}>{rule.title}</div>
+                <div style={{ fontSize: 12.5, lineHeight: 1.7, color: COLORS.textSecondary, marginTop: 5, maxWidth: 300 }}>{rule.desc}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
 
+      <footer style={{ borderTop: `1px solid ${COLORS.border}`, background: COLORS.bgCard }}>
         <div
-          className="pm-grid-3"
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3,1fr)',
-            gap: 18,
+            maxWidth: 1180,
+            margin: '0 auto',
+            padding: '18px clamp(16px, 4vw, 32px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            fontSize: 12,
+            color: COLORS.textMuted,
+            flexWrap: 'wrap',
           }}
         >
-          {ROLE_ENTRIES.map((entry) => (
-            <button
-              key={entry.role}
-              onClick={() => router.push(`/auth/register?role=${entry.role}`)}
-              style={{
-                textAlign: 'left',
-                cursor: 'pointer',
-                background: COLORS.bgCard,
-                border: `1px solid ${COLORS.border}`,
-                borderRadius: 18,
-                padding: '24px 24px 26px',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: '.18s',
-                boxShadow: '0 1px 2px rgba(27,28,51,.03)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = entry.hue;
-                e.currentTarget.style.boxShadow = '0 12px 28px rgba(27,28,51,.08)';
-                e.currentTarget.style.transform = 'translateY(-3px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = COLORS.border;
-                e.currentTarget.style.boxShadow = '0 1px 2px rgba(27,28,51,.03)';
-                e.currentTarget.style.transform = 'none';
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginBottom: 16 }}>
-                <div
-                  className="font-display"
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 13,
-                    background: entry.hue,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    fontWeight: 700,
-                    fontSize: 20,
-                  }}
-                >
-                  {entry.badge}
-                </div>
-                <div>
-                  <div style={{ fontSize: 17, fontWeight: 700, color: COLORS.textPrimary }}>
-                    {entry.title}
-                  </div>
-                  <div
-                    className="font-display"
-                    style={{ fontSize: 11, letterSpacing: 1.5, color: COLORS.textMuted }}
-                  >
-                    {entry.en}
-                  </div>
-                </div>
-              </div>
-
-              <p
-                style={{
-                  margin: '0 0 16px',
-                  fontSize: 13.5,
-                  lineHeight: 1.7,
-                  color: COLORS.textSecondary,
-                  flex: 1,
-                }}
-              >
-                {entry.desc}
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
-                {entry.points.map((p) => (
-                  <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                    <span
-                      style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: 7,
-                        background: entry.hueSoft,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flex: 'none',
-                      }}
-                    >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke={entry.hue}
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M20 6L9 17l-5-5" />
-                      </svg>
-                    </span>
-                    <span style={{ fontSize: 13, color: COLORS.textPrimary }}>{p}</span>
-                  </div>
-                ))}
-              </div>
-
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  alignSelf: 'flex-start',
-                  padding: '9px 16px',
-                  borderRadius: 11,
-                  background: entry.hueSoft,
-                  color: entry.hue,
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
-              >
-                注册为{entry.title} →
-              </span>
-            </button>
-          ))}
+          <span>陪玩平台</span>
+          <span>玩家 / 服务者 / 工作室</span>
         </div>
-      </main>
+      </footer>
     </div>
   );
 }

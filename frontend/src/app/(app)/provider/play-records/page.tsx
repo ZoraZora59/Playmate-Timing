@@ -171,13 +171,13 @@ export default function ProviderPlayRecordsPage() {
                 onClick={() => setFilter(f.key)}
                 style={{
                   padding: '8px 15px',
-                  borderRadius: 10,
+                  borderRadius: 3,
                   fontSize: 12.5,
                   fontWeight: on ? 600 : 400,
                   cursor: 'pointer',
-                  background: on ? COLORS.sidebar : COLORS.bgCard,
+                  background: on ? COLORS.textPrimary : COLORS.bgCard,
                   color: on ? '#fff' : COLORS.textSecondary,
-                  border: `1px solid ${on ? COLORS.sidebar : COLORS.border}`,
+                  border: `1px solid ${on ? COLORS.textPrimary : COLORS.border}`,
                 }}
               >
                 {f.label}
@@ -185,7 +185,7 @@ export default function ProviderPlayRecordsPage() {
             );
           })}
         </div>
-        <Button type="primary" onClick={openCreate} style={{ marginLeft: 'auto', borderRadius: 11, fontWeight: 600 }}>
+        <Button type="primary" onClick={openCreate} style={{ marginLeft: 'auto', borderRadius: 3, fontWeight: 600 }}>
           ＋ 开始一局
         </Button>
       </div>
@@ -263,13 +263,13 @@ export default function ProviderPlayRecordsPage() {
                       <>
                         <button
                           onClick={() => openComplete(r)}
-                          style={{ border: 'none', borderRadius: 8, padding: '7px 11px', background: COLORS.money, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                          style={{ border: 'none', borderRadius: 3, padding: '7px 11px', background: COLORS.money, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
                         >
                           完成
                         </button>
                         <button
                           onClick={() => cancelRecord(r)}
-                          style={{ border: '1px solid #F2C2CD', borderRadius: 8, padding: '7px 11px', background: '#fff', color: COLORS.danger, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                          style={{ border: '1px solid #F2C2CD', borderRadius: 3, padding: '7px 11px', background: '#fff', color: COLORS.danger, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
                         >
                           取消
                         </button>
@@ -293,11 +293,11 @@ export default function ProviderPlayRecordsPage() {
         okText="开始"
         cancelText="取消"
         confirmLoading={creating}
-        okButtonProps={{ style: { borderRadius: 10 } }}
-        cancelButtonProps={{ style: { borderRadius: 10 } }}
+        okButtonProps={{ style: { borderRadius: 3 } }}
+        cancelButtonProps={{ style: { borderRadius: 3 } }}
       >
         {players.length === 0 && (
-          <div style={{ marginBottom: 14, padding: '10px 12px', borderRadius: 10, background: COLORS.warnBg, color: COLORS.warnText, fontSize: 12.5 }}>
+          <div style={{ marginBottom: 14, padding: '10px 12px', borderRadius: 3, background: COLORS.warnBg, color: COLORS.warnText, fontSize: 12.5 }}>
             还没有可选的玩家。请先在「玩家账户管理」为玩家充值，玩家才会出现在这里。
           </div>
         )}
@@ -335,15 +335,15 @@ export default function ProviderPlayRecordsPage() {
       </Modal>
 
       <Modal
-        title={`完成并结算 · ${completeTarget?.game_name || '本局'}`}
+        title={`完成并结算：${completeTarget?.game_name || '本局'}`}
         open={!!completeTarget}
         onCancel={() => setCompleteTarget(null)}
         onOk={submitComplete}
         okText="确认完成"
         cancelText="返回"
         confirmLoading={completing}
-        okButtonProps={{ style: { borderRadius: 10 } }}
-        cancelButtonProps={{ style: { borderRadius: 10 } }}
+        okButtonProps={{ style: { borderRadius: 3 } }}
+        cancelButtonProps={{ style: { borderRadius: 3 } }}
       >
         <Form form={completeForm} layout="vertical" requiredMark={false}>
           <Form.Item name="duration" label="游玩时长（分钟）" rules={[{ required: true, message: '请输入时长' }]}>

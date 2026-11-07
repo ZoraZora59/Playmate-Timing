@@ -79,7 +79,7 @@ export default function StudioApprovalsPage() {
             style={{
               width: 64,
               height: 64,
-              borderRadius: 18,
+              borderRadius: 4,
               background: COLORS.primarySoft,
               display: 'flex',
               alignItems: 'center',
@@ -109,7 +109,7 @@ export default function StudioApprovalsPage() {
             onClick={() => router.push('/studio/manage')}
             style={{
               border: 'none',
-              borderRadius: 11,
+              borderRadius: 3,
               padding: '11px 24px',
               background: COLORS.primary,
               color: '#fff',
@@ -144,7 +144,7 @@ export default function StudioApprovalsPage() {
             style={{
               background: COLORS.bgCard,
               border: `1px solid ${COLORS.border}`,
-              borderRadius: 16,
+              borderRadius: 4,
               padding: '20px 22px',
             }}
           >
@@ -169,7 +169,7 @@ export default function StudioApprovalsPage() {
                       padding: '12px 14px',
                       background: COLORS.bgSubtle,
                       border: `1px solid ${COLORS.divider}`,
-                      borderRadius: 11,
+                      borderRadius: 3,
                       fontSize: 13,
                       color: '#4A4C63',
                       lineHeight: 1.6,
@@ -185,7 +185,7 @@ export default function StudioApprovalsPage() {
                     style={{
                       padding: '10px 22px',
                       border: 'none',
-                      borderRadius: 10,
+                      borderRadius: 3,
                       background: COLORS.money,
                       color: '#fff',
                       font: "600 13px 'Noto Sans SC', sans-serif",
@@ -201,7 +201,7 @@ export default function StudioApprovalsPage() {
                     style={{
                       padding: '10px 22px',
                       border: '1px solid #F2C2CD',
-                      borderRadius: 10,
+                      borderRadius: 3,
                       background: COLORS.bgCard,
                       color: COLORS.danger,
                       font: "600 13px 'Noto Sans SC', sans-serif",

@@ -130,7 +130,7 @@ export default function StudioManagePage() {
               htmlType="submit"
               loading={submitting}
               size="large"
-              style={{ borderRadius: 10 }}
+              style={{ borderRadius: 3 }}
             >
               {isEdit ? '保存修改' : '创建工作室'}
             </Button>
