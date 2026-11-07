@@ -40,7 +40,9 @@ export default function ProviderStudiosPage() {
   const list = relations ?? [];
   const approved = list.filter((r) => r.status === RelationStatus.APPROVED);
   const pending = list.filter((r) => r.status === RelationStatus.PENDING);
-  const rejected = list.filter((r) => r.status === RelationStatus.REJECTED);
+  const ended = list.filter(
+    (r) => r.status === RelationStatus.REJECTED || r.status === RelationStatus.REMOVED,
+  );
   const hasAny = list.length > 0;
 
   return (
@@ -303,8 +305,10 @@ export default function ProviderStudiosPage() {
         </div>
       ))}
 
-      {/* 已拒绝 */}
-      {rejected.map((r) => (
+      {/* 已拒绝 / 已移除 */}
+      {ended.map((r) => {
+        const removed = r.status === RelationStatus.REMOVED;
+        return (
         <div
           key={r.id}
           style={{
@@ -338,7 +342,7 @@ export default function ProviderStudiosPage() {
               </div>
               <div style={{ fontSize: 12, color: '#9AA0B5' }}>
                 {r.processed_at ? `${formatDateTime(r.processed_at)} · ` : ''}
-                {r.notes ? `备注「${r.notes}」` : '申请未通过'}
+                {r.notes ? `备注「${r.notes}」` : removed ? '已被移出工作室' : '申请未通过'}
               </div>
             </div>
             <span
@@ -351,11 +355,12 @@ export default function ProviderStudiosPage() {
                 fontWeight: 600,
               }}
             >
-              已拒绝
+              {removed ? '已移除' : '已拒绝'}
             </span>
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {hasAny && (
         <button

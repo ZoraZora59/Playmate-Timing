@@ -115,7 +115,7 @@ export default function StudioDashboardView() {
   return (
     <div className="animate-pop">
       {/* 四个数据卡 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 18 }}>
+      <div className="pm-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 18 }}>
         <StatCard label="活跃成员" value={data.member_count} unit="人" sub="工作室成员" color={COLORS.primary} />
         <StatCard label="服务玩家" value={data.served_player_count} unit="人" sub="累计服务" color={COLORS.teal} />
         <StatCard label="经营流水" value={formatMoney(data.monthly_flow)} sub="本月累计" color={COLORS.money} />

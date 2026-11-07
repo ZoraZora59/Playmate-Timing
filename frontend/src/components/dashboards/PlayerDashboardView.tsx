@@ -60,7 +60,7 @@ export default function PlayerDashboardView() {
   return (
     <div className="animate-pop">
       {/* hero balance + ongoing */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 18, marginBottom: 18 }}>
+      <div className="pm-grid-2" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 18, marginBottom: 18 }}>
         {/* 余额合计 hero 卡 */}
         <div
           style={{
@@ -223,7 +223,7 @@ export default function PlayerDashboardView() {
       </div>
 
       {/* aggregate cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 18 }}>
+      <div className="pm-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 18 }}>
         <StatCard
           label="金额合计"
           value={formatMoney(data.money_total)}

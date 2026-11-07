@@ -18,8 +18,8 @@ import (
 	"companion-platform-backend/routes"
 	"companion-platform-backend/utils"
 
-	"github.com/glebarez/sqlite"
 	"github.com/gin-gonic/gin"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 )
@@ -316,6 +316,177 @@ func TestReviewFlow(t *testing.T) {
 	}
 }
 
+// --- 用户故事 6：工作室移除成员后可重新申请 ---
+
+func TestStudioRemoveAndReapply(t *testing.T) {
+	r := newTestApp(t)
+	vtok, vid := register(t, r, "provider", "prov6", "晚风")
+	stok, _ := register(t, r, "studio", "studio6", "星轨")
+
+	_, resp := doReq(t, r, "POST", "/api/v1/studio/", stok, map[string]any{"name": "星轨六号"})
+	sid := uint(mustData(t, resp)["id"].(float64))
+
+	doReq(t, r, "POST", fmt.Sprintf("/api/v1/studio/%d/apply", sid), vtok, map[string]any{"notes": "想加入"})
+	_, resp = doReq(t, r, "GET", fmt.Sprintf("/api/v1/studio/%d/applications", sid), stok, nil)
+	relID := uint(mustData(t, resp)["list"].([]any)[0].(map[string]any)["id"].(float64))
+	doReq(t, r, "PUT", fmt.Sprintf("/api/v1/studio/applications/%d", relID), stok, map[string]any{"status": "approved"})
+
+	// 移除成员
+	code, resp := doReq(t, r, "DELETE", fmt.Sprintf("/api/v1/studio/members/%d", vid), stok, nil)
+	if code != http.StatusOK || resp["code"].(float64) != 0 {
+		t.Fatalf("remove member failed: %d %v", code, resp)
+	}
+	_, resp = doReq(t, r, "GET", "/api/v1/studio/members", stok, nil)
+	if len(resp["data"].([]any)) != 0 {
+		t.Fatal("member should be removed")
+	}
+
+	// 移除后可重新申请
+	code, resp = doReq(t, r, "POST", fmt.Sprintf("/api/v1/studio/%d/apply", sid), vtok, map[string]any{"notes": "重新申请"})
+	if code != http.StatusOK || resp["code"].(float64) != 0 {
+		t.Fatalf("re-apply after removal failed: %d %v", code, resp)
+	}
+	_, resp = doReq(t, r, "GET", fmt.Sprintf("/api/v1/studio/%d/applications?status=pending", sid), stok, nil)
+	if mustData(t, resp)["total"].(float64) != 1 {
+		t.Fatalf("pending applications = %v, want 1", mustData(t, resp)["total"])
+	}
+}
+
+// --- 安全：公开接口不泄露联系方式 ---
+
+func TestPublicResponsesHideContact(t *testing.T) {
+	r := newTestApp(t)
+	_, pid := register(t, r, "player", "player7", "小柚")
+	vtok, vid := register(t, r, "provider", "prov7", "晚风")
+	stok, _ := register(t, r, "studio", "studio7", "星轨")
+
+	// 公开用户资料
+	_, resp := doReq(t, r, "GET", fmt.Sprintf("/api/v1/users/%d", pid), "", nil)
+	d := mustData(t, resp)
+	if _, exists := d["email"]; exists {
+		t.Fatalf("public user leaked email: %v", d)
+	}
+	if _, exists := d["phone"]; exists {
+		t.Fatalf("public user leaked phone: %v", d)
+	}
+
+	// 工作室详情里的 owner / 成员
+	_, resp = doReq(t, r, "POST", "/api/v1/studio/", stok, map[string]any{"name": "星轨七号"})
+	sid := uint(mustData(t, resp)["id"].(float64))
+	doReq(t, r, "POST", fmt.Sprintf("/api/v1/studio/%d/apply", sid), vtok, map[string]any{"notes": "加入"})
+	_, resp = doReq(t, r, "GET", fmt.Sprintf("/api/v1/studio/%d/applications", sid), stok, nil)
+	relID := uint(mustData(t, resp)["list"].([]any)[0].(map[string]any)["id"].(float64))
+	doReq(t, r, "PUT", fmt.Sprintf("/api/v1/studio/applications/%d", relID), stok, map[string]any{"status": "approved"})
+
+	_, resp = doReq(t, r, "GET", fmt.Sprintf("/api/v1/studios/%d", sid), "", nil)
+	sd := mustData(t, resp)
+	if owner := sd["owner"].(map[string]any); owner["email"] != "" || owner["phone"] != "" {
+		t.Fatalf("studio owner contact leaked: %v", owner)
+	}
+	for _, rel := range sd["relations"].([]any) {
+		provider := rel.(map[string]any)["provider"].(map[string]any)
+		if provider["email"] != "" || provider["phone"] != "" {
+			t.Fatalf("studio member contact leaked: %v", provider)
+		}
+	}
+
+	// 公开评价里的玩家资料
+	doReq(t, r, "POST", "/api/v1/player/reviews", ptokOfName(t, r, "player7"), map[string]any{
+		"target_type": "provider", "target_id": vid, "rating": 5, "content": "好",
+	})
+	_, resp = doReq(t, r, "GET", fmt.Sprintf("/api/v1/reviews?target_type=provider&target_id=%d", vid), "", nil)
+	review := mustData(t, resp)["list"].([]any)[0].(map[string]any)
+	player := review["player"].(map[string]any)
+	if player["email"] != "" || player["phone"] != "" {
+		t.Fatalf("review player contact leaked: %v", player)
+	}
+}
+
+// --- 安全：服务者不能把余额写进他人工作室账本 ---
+
+func TestProviderCannotWriteOtherStudioBalance(t *testing.T) {
+	r := newTestApp(t)
+	_, pid := register(t, r, "player", "player8", "小柚")
+	vtok, vid := register(t, r, "provider", "prov8", "晚风")
+
+	code, resp := doReq(t, r, "POST", "/api/v1/provider/balances", vtok, map[string]any{
+		"player_id": pid, "provider_id": vid, "studio_id": 999, "type": "money", "amount": 100,
+	})
+	if code != http.StatusOK || resp["code"].(float64) != 0 {
+		t.Fatalf("recharge itself should succeed: %d %v", code, resp)
+	}
+
+	var b models.Balance
+	config.DB.Where("player_id = ? AND provider_id = ? AND studio_id = ?", pid, vid, 999).First(&b)
+	if b.ID != 0 {
+		t.Fatal("provider must not write balance into an arbitrary studio")
+	}
+	b = models.Balance{}
+	config.DB.Where("player_id = ? AND provider_id = ? AND studio_id = ?", pid, vid, 0).First(&b)
+	if b.ID == 0 {
+		t.Fatal("provider balance should be recorded under studio_id=0")
+	}
+}
+
+// --- 安全：游玩记录与评价的归属校验 ---
+
+func TestPlayRecordAndReviewOwnership(t *testing.T) {
+	r := newTestApp(t)
+	vtok, vid := register(t, r, "provider", "prov9", "晚风")
+	_, pid := register(t, r, "player", "player9", "小柚")
+	atok, _ := register(t, r, "player", "player9b", "小橘")
+
+	// 不存在的玩家不能开局
+	_, resp := doReq(t, r, "POST", "/api/v1/provider/play-records", vtok, map[string]any{
+		"player_id": 99999, "game_name": "王者荣耀",
+	})
+	if resp["code"].(float64) == 0 {
+		t.Fatal("play record with unknown player should fail")
+	}
+
+	// 未加入的工作室不能作为归属
+	_, resp = doReq(t, r, "POST", "/api/v1/provider/play-records", vtok, map[string]any{
+		"player_id": pid, "studio_id": 12345, "game_name": "王者荣耀",
+	})
+	if resp["code"].(float64) == 0 {
+		t.Fatal("play record with unjoined studio should fail")
+	}
+
+	// 正常开局并完成
+	_, resp = doReq(t, r, "POST", "/api/v1/provider/play-records", vtok, map[string]any{
+		"player_id": pid, "game_name": "王者荣耀", "settle_type": "money",
+	})
+	recID := uint(mustData(t, resp)["id"].(float64))
+	_, resp = doReq(t, r, "PUT", fmt.Sprintf("/api/v1/provider/play-records/%d/complete", recID), vtok, map[string]any{
+		"duration": 30, "amount": 0, "settle": false,
+	})
+	if mustData(t, resp)["status"].(string) != "completed" {
+		t.Fatal("record should be completed")
+	}
+
+	// 另一个玩家不能拿别人的记录评价
+	_, resp = doReq(t, r, "POST", "/api/v1/player/reviews", atok, map[string]any{
+		"target_type": "provider", "target_id": vid, "rating": 5, "play_record_id": recID,
+	})
+	if resp["code"].(float64) == 0 {
+		t.Fatal("reviewing another player's record should fail")
+	}
+
+	// 本人可以评价一次，重复评价失败
+	_, resp = doReq(t, r, "POST", "/api/v1/player/reviews", ptokOfName(t, r, "player9"), map[string]any{
+		"target_type": "provider", "target_id": vid, "rating": 5, "play_record_id": recID,
+	})
+	if resp["code"].(float64) != 0 {
+		t.Fatalf("owner review should succeed: %v", resp)
+	}
+	_, resp = doReq(t, r, "POST", "/api/v1/player/reviews", ptokOfName(t, r, "player9"), map[string]any{
+		"target_type": "provider", "target_id": vid, "rating": 4, "play_record_id": recID,
+	})
+	if resp["code"].(float64) == 0 {
+		t.Fatal("duplicate review for the same record should fail")
+	}
+}
+
 // --- 并发：N 次充值不丢失更新 ---
 
 func TestConcurrentRechargeNoLostUpdate(t *testing.T) {
@@ -351,6 +522,11 @@ func TestConcurrentRechargeNoLostUpdate(t *testing.T) {
 
 // ptokOf 重新登录拿到玩家 token（并发测试里玩家未保存 token）
 func ptokOf(t *testing.T, r *gin.Engine, _ uint) string {
-	_, resp := doReq(t, r, "POST", "/api/v1/login", "", map[string]any{"username": "player5", "password": "pass123"})
+	return ptokOfName(t, r, "player5")
+}
+
+// ptokOfName 按用户名重新登录，返回 token
+func ptokOfName(t *testing.T, r *gin.Engine, username string) string {
+	_, resp := doReq(t, r, "POST", "/api/v1/login", "", map[string]any{"username": username, "password": "pass123"})
 	return mustData(t, resp)["token"].(string)
 }

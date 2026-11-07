@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"companion-platform-backend/config"
 	"companion-platform-backend/controllers"
 	"companion-platform-backend/middleware"
 	"companion-platform-backend/models"
@@ -11,14 +12,19 @@ import (
 
 // SetupRoutes 设置路由
 func SetupRoutes(r *gin.Engine) {
-	// CORS中间件
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://127.0.0.1:3000"},
+	// CORS中间件：来源由 CORS_ORIGINS 配置，生产同源部署时可留空。
+	cfg := config.GetConfig()
+	corsCfg := cors.Config{
+		AllowOrigins:     cfg.CORS.Origins,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-	}))
+	}
+	if len(corsCfg.AllowOrigins) == 0 {
+		corsCfg.AllowAllOrigins = false
+	}
+	r.Use(cors.New(corsCfg))
 
 	// 初始化控制器
 	userController := &controllers.UserController{}
@@ -92,8 +98,8 @@ func SetupRoutes(r *gin.Engine) {
 		// 工作室路由
 		studio := auth.Group("/studio")
 		{
-			// 任何认证用户都可以申请加入工作室
-			studio.POST("/:id/apply", studioController.ApplyToJoinStudio)
+			// 只有服务者可以申请加入工作室
+			studio.POST("/:id/apply", middleware.RequireRole(models.RoleProvider), studioController.ApplyToJoinStudio)
 
 			// 只有工作室角色可以创建和管理工作室
 			studioOnly := studio.Group("/")
@@ -101,6 +107,7 @@ func SetupRoutes(r *gin.Engine) {
 			{
 				studioOnly.GET("/dashboard", dashboardController.StudioDashboard)
 				studioOnly.GET("/members", studioController.GetStudioMembers)
+				studioOnly.DELETE("/members/:provider_id", studioController.RemoveMember)
 				studioOnly.POST("/", studioController.CreateStudio)
 				studioOnly.PUT("/:id", studioController.UpdateStudio)
 				studioOnly.GET("/:id/applications", studioController.GetStudioApplications)

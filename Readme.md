@@ -163,6 +163,17 @@ npm run dev
 
 前端服务将在 `http://localhost:3000` 启动
 
+## 🌐 生产部署
+
+当前生产环境已部署在宝塔服务器：
+
+- 正式入口：<https://playmate.zorazora.cn>
+- 宝塔面板：`网站` → `playmate.zorazora.cn`
+- 架构：Nginx → Next.js standalone (`127.0.0.1:3002`) + Go API (`127.0.0.1:8090`) → MySQL (`127.0.0.1:3204`)
+- 详细构建、发布、回滚与安全说明见 [deploy/DEPLOY.md](deploy/DEPLOY.md)
+
+> Go API 与 Next.js 由 systemd 托管（`playmate-api` / `playmate-web`），宝塔站点负责反向代理与 HTTPS。
+
 ## 📋 API文档
 
 ### 认证接口
@@ -329,6 +340,8 @@ npm run start
 - [x] 单元测试 / 集成测试 / E2E 三层测试体系
 - [x] 按设计稿重建前端（深色侧栏 + 设计令牌 + 角色化控制台）
 - [x] 余额事务一致性（行锁 + 透支校验 + decimal）
+- [x] 玩家评价 UI、服务者游玩记录管理、退款、工作室成员移除
+- [x] 生产部署（Nginx + systemd + 宝塔站点 + HTTPS）
 - [ ] 余额冻结/解冻（freeze/unfreeze）完整流程
 - [ ] 添加实时消息通知
 - [ ] 集成第三方支付系统

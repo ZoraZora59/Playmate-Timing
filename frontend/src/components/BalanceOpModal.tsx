@@ -17,7 +17,7 @@ export interface PlayerLite {
 
 interface Props {
   open: boolean;
-  mode: 'recharge' | 'deduct';
+  mode: 'recharge' | 'deduct' | 'refund';
   player: PlayerLite | null;
   providerId: number;
   asStudio?: boolean;
@@ -47,12 +47,13 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
   if (!open || !player) return null;
 
   const meta = balanceMeta(type);
-  const accent = mode === 'recharge' ? COLORS.money : COLORS.danger;
-  const modeLabel = mode === 'recharge' ? '充值' : '扣费';
+  const isCredit = mode !== 'deduct';
+  const accent = mode === 'deduct' ? COLORS.danger : mode === 'refund' ? COLORS.time : COLORS.money;
+  const modeLabel = mode === 'recharge' ? '充值' : mode === 'refund' ? '退款' : '扣费';
   const current = type === BalanceType.MONEY ? player.money : type === BalanceType.TIME ? player.time : player.point;
   const before = toNum(current);
   const amt = toNum(amount);
-  const after = mode === 'recharge' ? before + amt : Math.max(0, before - amt);
+  const after = isCredit ? before + amt : Math.max(0, before - amt);
   const canNext = amt > 0;
 
   const submit = async () => {
@@ -66,6 +67,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
         description: note,
       };
       if (mode === 'recharge') await apiClient.recharge(form, asStudio);
+      else if (mode === 'refund') await apiClient.refund(form, asStudio);
       else await apiClient.deduct(form, asStudio);
       message.success(`已为 ${player.nickname} ${modeLabel} ${formatBalance(type, amt)}`);
       onDone();
@@ -111,7 +113,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
         <div style={{ padding: '20px 24px', borderBottom: '1px solid ' + COLORS.divider, display: 'flex', alignItems: 'center', gap: 11 }}>
           <div style={{ width: 38, height: 38, borderRadius: 11, background: accent, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              {mode === 'recharge' ? <path d="M12 5v14M5 12h14" /> : <path d="M5 12h14" />}
+              {mode === 'recharge' ? <path d="M12 5v14M5 12h14" /> : mode === 'refund' ? <path d="M12 19V5M5 12l7-7 7 7" /> : <path d="M5 12h14" />}
             </svg>
           </div>
           <div style={{ flex: 1 }}>

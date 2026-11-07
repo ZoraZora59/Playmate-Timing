@@ -52,8 +52,14 @@ func (sc *StudioController) CreateStudio(c *gin.Context) {
 
 	db := config.GetDB()
 
-	// 检查工作室名称是否已存在
+	// 一个账号只允许创建一个工作室，避免 dashboard/成员接口按 owner_id 取到多条记录
 	var existingStudio models.Studio
+	if err := db.Where("owner_id = ?", userID).First(&existingStudio).Error; err == nil {
+		utils.BadRequest(c, "你已创建过工作室")
+		return
+	}
+
+	// 检查工作室名称是否已存在
 	if err := db.Where("name = ?", req.Name).First(&existingStudio).Error; err == nil {
 		utils.BadRequest(c, "Studio name already exists")
 		return
@@ -111,6 +117,9 @@ func (sc *StudioController) GetStudioList(c *gin.Context) {
 		utils.InternalServerError(c, "Failed to get studio list")
 		return
 	}
+	for i := range studios {
+		studios[i].Owner.Sanitize()
+	}
 
 	utils.PageSuccess(c, studios, total, page, pageSize)
 }
@@ -133,6 +142,10 @@ func (sc *StudioController) GetStudioByID(c *gin.Context) {
 		}
 		utils.InternalServerError(c, "Database error")
 		return
+	}
+	studio.Owner.Sanitize()
+	for i := range studio.Relations {
+		studio.Relations[i].Provider.Sanitize()
 	}
 
 	utils.Success(c, studio)
@@ -213,17 +226,46 @@ func (sc *StudioController) ApplyToJoinStudio(c *gin.Context) {
 
 	db := config.GetDB()
 
-	// 检查工作室是否存在
+	// 只有服务者可以申请加入工作室
+	userRole, err := middleware.GetCurrentUserRole(c)
+	if err != nil || userRole != models.RoleProvider {
+		utils.Forbidden(c, "只有服务者可以申请加入工作室")
+		return
+	}
+
+	// 检查工作室是否存在且可用
 	var studio models.Studio
 	if err := db.First(&studio, uint(studioID)).Error; err != nil {
 		utils.NotFound(c, "Studio not found")
 		return
 	}
+	if !studio.IsActive {
+		utils.BadRequest(c, "该工作室已停止运营")
+		return
+	}
 
-	// 检查是否已经有关联关系
+	// 已有申请/已加入时拒绝重复提交；被拒绝或已移出的关系允许重新申请。
 	var existingRelation models.ProviderStudioRelation
 	if err := db.Where("provider_id = ? AND studio_id = ?", userID, studioID).First(&existingRelation).Error; err == nil {
-		utils.BadRequest(c, "Application already exists")
+		if existingRelation.Status == models.StatusPending || existingRelation.Status == models.StatusApproved {
+			utils.BadRequest(c, "Application already exists")
+			return
+		}
+		now := time.Now()
+		if err := db.Model(&existingRelation).Updates(map[string]interface{}{
+			"status":       models.StatusPending,
+			"applied_at":   &now,
+			"processed_at": nil,
+			"notes":        req.Notes,
+		}).Error; err != nil {
+			utils.InternalServerError(c, "Failed to create application")
+			return
+		}
+		existingRelation.Status = models.StatusPending
+		existingRelation.AppliedAt = now
+		existingRelation.ProcessedAt = nil
+		existingRelation.Notes = req.Notes
+		utils.SuccessWithMessage(c, "Application submitted successfully", existingRelation)
 		return
 	}
 
@@ -299,6 +341,9 @@ func (sc *StudioController) GetStudioApplications(c *gin.Context) {
 	if err := query.Preload("Provider").Offset(offset).Limit(pageSize).Find(&relations).Error; err != nil {
 		utils.InternalServerError(c, "Failed to get applications")
 		return
+	}
+	for i := range relations {
+		relations[i].Provider.Sanitize()
 	}
 
 	utils.PageSuccess(c, relations, total, page, pageSize)
@@ -396,10 +441,12 @@ func (sc *StudioController) GetStudioMembers(c *gin.Context) {
 
 	members := make([]StudioMember, 0, len(relations))
 	for _, rel := range relations {
+		provider := rel.Provider
+		provider.Sanitize()
 		m := StudioMember{
-			Provider: rel.Provider,
-			Status:   rel.Status,
-			JoinedAt: rel.ProcessedAt,
+			Provider:  provider,
+			Status:    rel.Status,
+			JoinedAt:  rel.ProcessedAt,
 			MoneyFlow: decimal.Zero,
 		}
 		db.Model(&models.Balance{}).
@@ -421,6 +468,48 @@ func (sc *StudioController) GetStudioMembers(c *gin.Context) {
 	utils.Success(c, members)
 }
 
+// RemoveMember 工作室移除已加入的服务者（关系置为 removed，可再次申请）
+func (sc *StudioController) RemoveMember(c *gin.Context) {
+	userID, err := middleware.GetCurrentUserID(c)
+	if err != nil {
+		utils.Unauthorized(c, "User not found")
+		return
+	}
+
+	providerID, err := parseUintParam(c.Param("provider_id"))
+	if err != nil {
+		utils.BadRequest(c, "Invalid provider ID")
+		return
+	}
+
+	db := config.GetDB()
+	var studio models.Studio
+	if err := db.Where("owner_id = ?", userID).First(&studio).Error; err != nil {
+		utils.NotFound(c, "未找到你的工作室，请先创建")
+		return
+	}
+
+	var relation models.ProviderStudioRelation
+	if err := db.Where("studio_id = ? AND provider_id = ? AND status = ?",
+		studio.ID, providerID, models.StatusApproved).First(&relation).Error; err != nil {
+		utils.NotFound(c, "该服务者不在工作室中")
+		return
+	}
+
+	now := time.Now()
+	if err := db.Model(&relation).Updates(map[string]interface{}{
+		"status":       models.StatusRemoved,
+		"processed_at": &now,
+	}).Error; err != nil {
+		utils.InternalServerError(c, "移除成员失败")
+		return
+	}
+
+	relation.Status = models.StatusRemoved
+	relation.ProcessedAt = &now
+	utils.SuccessWithMessage(c, "已移除该成员", relation)
+}
+
 // GetMyRelations 服务者查看自己的工作室归属与申请记录
 func (sc *StudioController) GetMyRelations(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
@@ -435,6 +524,9 @@ func (sc *StudioController) GetMyRelations(c *gin.Context) {
 		Preload("Studio").Preload("Studio.Owner").Order("applied_at DESC").Find(&relations).Error; err != nil {
 		utils.InternalServerError(c, "Failed to get relations")
 		return
+	}
+	for i := range relations {
+		relations[i].Studio.Owner.Sanitize()
 	}
 
 	utils.Success(c, relations)

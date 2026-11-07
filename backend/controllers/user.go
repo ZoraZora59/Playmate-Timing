@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"strconv"
+	"time"
 
 	"companion-platform-backend/config"
 	"companion-platform-backend/middleware"
@@ -16,12 +17,12 @@ type UserController struct{}
 
 // RegisterRequest 注册请求
 type RegisterRequest struct {
-	Username string           `json:"username" binding:"required,min=3,max=50"`
-	Email    string           `json:"email" binding:"required,email"`
-	Password string           `json:"password" binding:"required,min=6"`
-	Phone    string           `json:"phone"`
-	Nickname string           `json:"nickname"`
-	Role     models.UserRole  `json:"role" binding:"required,oneof=player provider studio"`
+	Username string          `json:"username" binding:"required,min=3,max=50"`
+	Email    string          `json:"email" binding:"required,email"`
+	Password string          `json:"password" binding:"required,min=6"`
+	Phone    string          `json:"phone"`
+	Nickname string          `json:"nickname"`
+	Role     models.UserRole `json:"role" binding:"required,oneof=player provider studio"`
 }
 
 // LoginRequest 登录请求
@@ -208,12 +209,12 @@ func (uc *UserController) UpdateProfile(c *gin.Context) {
 // GetUserList 获取用户列表（管理员功能）
 func (uc *UserController) GetUserList(c *gin.Context) {
 	db := config.GetDB()
-	
+
 	// 分页参数
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
 	role := c.Query("role")
-	
+
 	if page < 1 {
 		page = 1
 	}
@@ -240,7 +241,30 @@ func (uc *UserController) GetUserList(c *gin.Context) {
 	utils.PageSuccess(c, users, total, page, pageSize)
 }
 
-// GetUserByID 根据ID获取用户信息
+// PublicUser 对外公开的用户信息（不含邮箱、手机号等联系方式）
+type PublicUser struct {
+	ID        uint            `json:"id"`
+	Username  string          `json:"username"`
+	Nickname  string          `json:"nickname"`
+	Avatar    string          `json:"avatar"`
+	Role      models.UserRole `json:"role"`
+	IsActive  bool            `json:"is_active"`
+	CreatedAt time.Time       `json:"created_at"`
+}
+
+func toPublicUser(u models.User) PublicUser {
+	return PublicUser{
+		ID:        u.ID,
+		Username:  u.Username,
+		Nickname:  u.Nickname,
+		Avatar:    u.Avatar,
+		Role:      u.Role,
+		IsActive:  u.IsActive,
+		CreatedAt: u.CreatedAt,
+	}
+}
+
+// GetUserByID 根据ID获取用户公开信息
 func (uc *UserController) GetUserByID(c *gin.Context) {
 	id := c.Param("id")
 	userID, err := strconv.ParseUint(id, 10, 32)
@@ -260,5 +284,5 @@ func (uc *UserController) GetUserByID(c *gin.Context) {
 		return
 	}
 
-	utils.Success(c, user)
+	utils.Success(c, toPublicUser(user))
 }

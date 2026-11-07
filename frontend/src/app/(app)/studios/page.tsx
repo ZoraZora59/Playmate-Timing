@@ -74,6 +74,7 @@ export default function StudiosPage() {
       ) : (
         <>
           <div
+            className="pm-grid-3"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',

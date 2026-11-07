@@ -50,6 +50,9 @@ func (bc *BalanceController) GetPlayerBalances(c *gin.Context) {
 		utils.InternalServerError(c, "Failed to get balances")
 		return
 	}
+	for i := range balances {
+		balances[i].Provider.Sanitize()
+	}
 
 	utils.PageSuccess(c, balances, total, page, pageSize)
 }
@@ -76,6 +79,9 @@ func (bc *BalanceController) GetBalanceByProvider(c *gin.Context) {
 		Preload("Provider").Preload("Studio").Find(&balances).Error; err != nil {
 		utils.InternalServerError(c, "Failed to get balance")
 		return
+	}
+	for i := range balances {
+		balances[i].Provider.Sanitize()
 	}
 
 	utils.Success(c, balances)
@@ -127,6 +133,12 @@ func (bc *BalanceController) operate(c *gin.Context, txType models.TransactionTy
 
 	db := config.GetDB()
 
+	// 玩家必须存在、启用且角色为 player，避免向任意用户 ID 记账
+	if err := ensureUserRole(db, req.PlayerID, models.RolePlayer); err != nil {
+		utils.BadRequest(c, "玩家不存在或状态异常")
+		return
+	}
+
 	// 鉴权：解析有效的 studio_id 并校验操作权限
 	studioID := req.StudioID
 	if userRole == models.RoleProvider {
@@ -135,7 +147,13 @@ func (bc *BalanceController) operate(c *gin.Context, txType models.TransactionTy
 			utils.Forbidden(c, "服务者只能操作自己名下的玩家余额")
 			return
 		}
+		// 服务者独立记账固定落到 studio_id=0，防止通过请求参数写入他人工作室账本
+		studioID = 0
 	} else { // RoleStudio
+		if err := ensureUserRole(db, req.ProviderID, models.RoleProvider); err != nil {
+			utils.BadRequest(c, "服务者不存在或状态异常")
+			return
+		}
 		var studio models.Studio
 		if err := db.Where("owner_id = ?", userID).First(&studio).Error; err != nil {
 			utils.NotFound(c, "未找到你的工作室")
@@ -178,6 +196,7 @@ func (bc *BalanceController) operate(c *gin.Context, txType models.TransactionTy
 	}
 
 	db.Preload("Provider").Preload("Studio").First(balance, balance.ID)
+	balance.Provider.Sanitize()
 
 	verb := map[models.TransactionType]string{
 		models.TransactionTypeRecharge: "充值成功",
@@ -236,6 +255,11 @@ func (bc *BalanceController) GetBalanceTransactions(c *gin.Context) {
 	if err := query.Preload("Operator").Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&transactions).Error; err != nil {
 		utils.InternalServerError(c, "Failed to get transactions")
 		return
+	}
+	for i := range transactions {
+		if transactions[i].Operator != nil {
+			transactions[i].Operator.Sanitize()
+		}
 	}
 
 	utils.PageSuccess(c, transactions, total, page, pageSize)

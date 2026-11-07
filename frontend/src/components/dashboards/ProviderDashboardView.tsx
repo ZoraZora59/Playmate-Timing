@@ -61,7 +61,7 @@ export default function ProviderDashboardView() {
   return (
     <div className="animate-pop">
       {/* ① 三个收益数据卡 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 18 }}>
+      <div className="pm-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 18 }}>
         {data.earnings.map((e) => (
           <StatCard
             key={e.type}
@@ -73,7 +73,7 @@ export default function ProviderDashboardView() {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 18 }}>
+      <div className="pm-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginBottom: 18 }}>
         {/* ② 今日待办 */}
         <div className="pm-card" style={{ padding: '20px 22px' }}>
           <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 14 }}>今日待办</div>

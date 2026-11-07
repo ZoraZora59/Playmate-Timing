@@ -15,7 +15,7 @@ export default function ProviderAccountsPage() {
   const { user } = useAuthStore();
   const [data, setData] = useState<ProviderDashboard | null>(null);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState<{ open: boolean; mode: 'recharge' | 'deduct'; player: PlayerLite | null }>({
+  const [modal, setModal] = useState<{ open: boolean; mode: 'recharge' | 'deduct' | 'refund'; player: PlayerLite | null }>({
     open: false,
     mode: 'recharge',
     player: null,
@@ -35,7 +35,7 @@ export default function ProviderAccountsPage() {
     load();
   }, [load]);
 
-  const openModal = (p: ProviderPlayerAgg, mode: 'recharge' | 'deduct') => {
+  const openModal = (p: ProviderPlayerAgg, mode: 'recharge' | 'deduct' | 'refund') => {
     setModal({
       open: true,
       mode,
@@ -58,7 +58,7 @@ export default function ProviderAccountsPage() {
           <EmptyState title="还没有服务中的玩家" hint="为玩家充值后，他们会出现在这里" />
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 16 }}>
+        <div className="pm-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 16 }}>
           {players.map((p) => (
             <div key={p.player_id} className="pm-card" style={{ padding: '18px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
@@ -75,18 +75,24 @@ export default function ProviderAccountsPage() {
                 <MiniStat label="时间" value={toNum(p.time) > 0 ? formatTimeMinutes(p.time) : '—'} color={COLORS.time} />
                 <MiniStat label="点数" value={toNum(p.point) > 0 ? formatPoint(p.point) : '—'} color={COLORS.point} />
               </div>
-              <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={() => openModal(p, 'recharge')}
-                  style={{ flex: 1, padding: 10, border: 'none', borderRadius: 10, background: COLORS.money, color: '#fff', font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '10px 4px', border: 'none', borderRadius: 10, background: COLORS.money, color: '#fff', font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
                 >
                   充值
                 </button>
                 <button
                   onClick={() => openModal(p, 'deduct')}
-                  style={{ flex: 1, padding: 10, border: '1px solid #F2C2CD', borderRadius: 10, background: '#fff', color: COLORS.danger, font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '10px 4px', border: '1px solid #F2C2CD', borderRadius: 10, background: '#fff', color: COLORS.danger, font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
                 >
                   扣费
+                </button>
+                <button
+                  onClick={() => openModal(p, 'refund')}
+                  style={{ flex: 1, padding: '10px 4px', border: '1px solid #CFE3FC', borderRadius: 10, background: '#fff', color: COLORS.time, font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
+                >
+                  退款
                 </button>
               </div>
             </div>

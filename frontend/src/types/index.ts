@@ -10,6 +10,7 @@ export enum RelationStatus {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
+  REMOVED = 'removed',
 }
 
 // 余额类型枚举

@@ -8,10 +8,10 @@ import { COLORS } from '@/lib/theme';
 import { Avatar, EmptyState, Stars } from '@/components/ui';
 import { formatMoney, formatDateTime } from '@/lib/format';
 
-const GRID_COLUMNS = '1.8fr .8fr 1fr .8fr 1fr';
+const GRID_COLUMNS = '1.8fr .8fr 1fr .8fr 1fr .6fr';
 
 export default function StudioMembersPage() {
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [members, setMembers] = useState<StudioMember[] | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,6 +29,26 @@ export default function StudioMembersPage() {
     load();
   }, [load]);
 
+  const removeMember = (m: StudioMember) => {
+    const name = m.provider.nickname || m.provider.username;
+    modal.confirm({
+      title: `移除 ${name}？`,
+      content: '移除后该服务者将不再属于本工作室，可重新申请加入。历史账目不会被删除。',
+      okText: '确认移除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          await apiClient.removeStudioMember(m.provider.id);
+          message.success('已移除该成员');
+          await load();
+        } catch (e) {
+          message.error(e instanceof Error ? e.message : '移除失败');
+        }
+      },
+    });
+  };
+
   if (loading) return <div style={{ padding: 60, textAlign: 'center' }}><Spin size="large" /></div>;
 
   const list = members || [];
@@ -41,6 +61,7 @@ export default function StudioMembersPage() {
         </div>
       ) : (
         <div
+          className="pm-table-scroll"
           style={{
             background: COLORS.bgCard,
             border: '1px solid ' + COLORS.border,
@@ -48,6 +69,7 @@ export default function StudioMembersPage() {
             overflow: 'hidden',
           }}
         >
+          <div style={{ minWidth: 760 }}>
           <div
             style={{
               display: 'grid',
@@ -67,6 +89,7 @@ export default function StudioMembersPage() {
             <div style={{ textAlign: 'right' }}>本月流水</div>
             <div style={{ textAlign: 'right' }}>评分</div>
             <div style={{ textAlign: 'right' }}>加入时间</div>
+            <div style={{ textAlign: 'right' }}>操作</div>
           </div>
 
           {list.map((m) => {
@@ -109,9 +132,27 @@ export default function StudioMembersPage() {
                 <div style={{ textAlign: 'right', fontSize: 13, color: COLORS.textSecondary }}>
                   {m.joined_at ? formatDateTime(m.joined_at) : '—'}
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => removeMember(m)}
+                    style={{
+                      border: '1px solid #F2C2CD',
+                      background: '#fff',
+                      color: COLORS.danger,
+                      borderRadius: 8,
+                      padding: '6px 12px',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    移除
+                  </button>
+                </div>
               </div>
             );
           })}
+          </div>
         </div>
       )}
     </div>

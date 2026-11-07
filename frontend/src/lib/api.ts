@@ -115,6 +115,8 @@ class ApiClient {
   processApplication = (id: number, status: 'approved' | 'rejected', notes?: string) =>
     this.request<ProviderStudioRelation>('put', `/studio/applications/${id}`, { status, notes });
   getStudioMembers = () => this.request<StudioMember[]>('get', '/studio/members');
+  removeStudioMember = (providerId: number) =>
+    this.request<ProviderStudioRelation>('delete', `/studio/members/${providerId}`);
   getMyRelations = () => this.request<ProviderStudioRelation[]>('get', '/provider/relations');
 
   // ---------------- 余额 ----------------

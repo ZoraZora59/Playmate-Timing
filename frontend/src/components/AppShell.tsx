@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Dropdown } from 'antd';
 import { useAuthStore } from '@/store/auth';
@@ -44,6 +44,8 @@ function Icon({ name }: { name: string }) {
       return <svg {...common}><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>;
     case 'compass':
       return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M16 8l-2 6-6 2 2-6z" /></svg>;
+    case 'star':
+      return <svg {...common}><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z" /></svg>;
     default:
       return null;
   }
@@ -63,6 +65,7 @@ const NAV: Record<string, { group: string; items: NavItem[] }> = {
       { key: '/player/balances', label: '我的余额', icon: 'wallet' },
       { key: '/player/transactions', label: '余额流水', icon: 'list' },
       { key: '/player/records', label: '游玩记录', icon: 'clock' },
+      { key: '/player/reviews', label: '我的评价', icon: 'star' },
     ],
   },
   provider: {
@@ -70,6 +73,7 @@ const NAV: Record<string, { group: string; items: NavItem[] }> = {
     items: [
       { key: '/dashboard', label: '控制台', icon: 'grid' },
       { key: '/provider/accounts', label: '玩家账户管理', icon: 'users' },
+      { key: '/provider/play-records', label: '游玩记录', icon: 'clock' },
       { key: '/provider/earnings', label: '收益汇总', icon: 'chart' },
       { key: '/provider/studios', label: '工作室归属', icon: 'home' },
     ],
@@ -89,7 +93,9 @@ const SUBTITLE: Record<string, string> = {
   '/player/balances': '按服务者分别记账，点击查看明细',
   '/player/transactions': '每一笔余额变动，含变动前后金额',
   '/player/records': '你的陪玩历史，区分进行中与已完成',
+  '/player/reviews': '你对服务者与工作室的评价',
   '/provider/accounts': '管理你服务的玩家余额，发起充值或扣费',
+  '/provider/play-records': '开局、完成结算与取消记录',
   '/provider/earnings': '按余额类型统计你的收益',
   '/provider/studios': '当前归属状态与加入申请进度',
   '/studio/approvals': '审核服务者的加入申请',
@@ -123,11 +129,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const role = user?.role || UserRole.PLAYER;
   const nav = NAV[role];
   const meHue = ROLE_HUE[role] || COLORS.primary;
   const roleLabel = role === UserRole.PLAYER ? '玩家' : role === UserRole.PROVIDER ? '服务者' : '工作室';
   const { title, sub } = titleFor(pathname, role);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   const isActive = (key: string) => (key === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(key));
 
@@ -135,16 +146,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
       {/* SIDEBAR */}
       <aside
+        className={`pm-sidebar${mobileOpen ? ' open' : ''}`}
         style={{
-          width: 248,
-          flex: 'none',
           background: COLORS.sidebar,
           display: 'flex',
           flexDirection: 'column',
           padding: '22px 16px 18px',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '4px 8px 22px' }}>
@@ -232,10 +239,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </aside>
+      <div className={`pm-overlay${mobileOpen ? ' open' : ''}`} onClick={() => setMobileOpen(false)} />
 
       {/* MAIN */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <header
+          className="pm-topbar"
           style={{
             position: 'sticky',
             top: 0,
@@ -250,9 +259,31 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             borderBottom: '1px solid ' + COLORS.border,
           }}
         >
-          <div>
-            <h1 className="font-display" style={{ margin: 0, fontWeight: 700, fontSize: 23, color: COLORS.textPrimary }}>{title}</h1>
-            {sub && <p style={{ margin: '3px 0 0', fontSize: 13, color: COLORS.textSecondary }}>{sub}</p>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+            <button
+              className="pm-mobile-btn"
+              aria-label="打开菜单"
+              onClick={() => setMobileOpen(true)}
+              style={{
+                border: '1px solid ' + COLORS.border,
+                background: '#fff',
+                borderRadius: 10,
+                width: 38,
+                height: 38,
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flex: 'none',
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={COLORS.textPrimary} strokeWidth="2" strokeLinecap="round">
+                <path d="M3 6h18M3 12h18M3 18h18" />
+              </svg>
+            </button>
+            <div style={{ minWidth: 0 }}>
+              <h1 className="font-display" style={{ margin: 0, fontWeight: 700, fontSize: 23, color: COLORS.textPrimary }}>{title}</h1>
+              {sub && <p style={{ margin: '3px 0 0', fontSize: 13, color: COLORS.textSecondary }}>{sub}</p>}
+            </div>
           </div>
           <Dropdown
             menu={{
@@ -274,7 +305,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </Dropdown>
         </header>
 
-        <main style={{ flex: 1, padding: '30px 34px 60px', maxWidth: 1180, width: '100%' }}>{children}</main>
+        <main className="pm-content" style={{ flex: 1, padding: '30px 34px 60px', maxWidth: 1180, width: '100%' }}>{children}</main>
       </div>
     </div>
   );

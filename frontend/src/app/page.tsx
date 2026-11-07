@@ -288,6 +288,7 @@ export default function Home() {
         </div>
 
         <div
+          className="pm-grid-3"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3,1fr)',

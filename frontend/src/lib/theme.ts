@@ -52,8 +52,10 @@ export const AVATAR_HUES = [
   '#5B54F0', '#0FB6A8', '#2E90FA', '#F5A524', '#F0476A', '#1FB573', '#8B83FF', '#15C8D8',
 ];
 
-export const FONT_DISPLAY = "'Space Grotesk', 'Noto Sans SC', sans-serif";
-export const FONT_BODY = "'Noto Sans SC', system-ui, -apple-system, sans-serif";
+export const FONT_DISPLAY =
+  "'Space Grotesk', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif";
+export const FONT_BODY =
+  "'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', system-ui, -apple-system, sans-serif";
 
 export const antdTheme: ThemeConfig = {
   token: {

@@ -64,6 +64,7 @@ const (
 	StatusPending  RelationStatus = "pending"  // 待审核
 	StatusApproved RelationStatus = "approved" // 已批准
 	StatusRejected RelationStatus = "rejected" // 已拒绝
+	StatusRemoved  RelationStatus = "removed"  // 已移出工作室（可重新申请）
 )
 
 // ProviderStudioRelation 服务者-工作室关联表
@@ -130,9 +131,9 @@ type BalanceTransaction struct {
 	ID           uint            `json:"id" gorm:"primaryKey"`
 	BalanceID    uint            `json:"balance_id" gorm:"not null;index:idx_tx_balance"`
 	Type         TransactionType `json:"type" gorm:"not null;size:20;index"`
-	Amount       decimal.Decimal `json:"amount" gorm:"type:decimal(14,2);not null"`            // 本次变动（正数）
-	BeforeAmount decimal.Decimal `json:"before_amount" gorm:"type:decimal(14,2);not null"`     // 变动前
-	AfterAmount  decimal.Decimal `json:"after_amount" gorm:"type:decimal(14,2);not null"`      // 变动后
+	Amount       decimal.Decimal `json:"amount" gorm:"type:decimal(14,2);not null"`        // 本次变动（正数）
+	BeforeAmount decimal.Decimal `json:"before_amount" gorm:"type:decimal(14,2);not null"` // 变动前
+	AfterAmount  decimal.Decimal `json:"after_amount" gorm:"type:decimal(14,2);not null"`  // 变动后
 	Description  string          `json:"description" gorm:"size:255"`
 	OperatorID   uint            `json:"operator_id" gorm:"index"` // 操作者ID
 	CreatedAt    time.Time       `json:"created_at" gorm:"index"`
@@ -161,9 +162,9 @@ type PlayRecord struct {
 	GameMode    string          `json:"game_mode" gorm:"size:50"`
 	StartTime   time.Time       `json:"start_time" gorm:"not null"`
 	EndTime     *time.Time      `json:"end_time"`
-	Duration    uint            `json:"duration"`                                        // 游玩时长（分钟）
+	Duration    uint            `json:"duration"`                                            // 游玩时长（分钟）
 	Amount      decimal.Decimal `json:"amount" gorm:"type:decimal(14,2);not null;default:0"` // 消费数额（按 settle_type 计）
-	SettleType  BalanceType     `json:"settle_type" gorm:"size:20;default:'money'"`      // 结算余额类型
+	SettleType  BalanceType     `json:"settle_type" gorm:"size:20;default:'money'"`          // 结算余额类型
 	Status      PlayStatus      `json:"status" gorm:"size:20;default:'active';index"`
 	Description string          `json:"description" gorm:"type:text"`
 	CreatedAt   time.Time       `json:"created_at"`
@@ -200,6 +201,13 @@ type Review struct {
 	// 关联
 	Player     User        `json:"player,omitempty" gorm:"foreignKey:PlayerID"`
 	PlayRecord *PlayRecord `json:"play_record,omitempty" gorm:"foreignKey:PlayRecordID"`
+}
+
+// Sanitize 清空联系方式。用户可能作为关联对象出现在公开接口里，
+// 除本人与管理端外不应返回邮箱、手机号。
+func (u *User) Sanitize() {
+	u.Email = ""
+	u.Phone = ""
 }
 
 // TableName 设置表名

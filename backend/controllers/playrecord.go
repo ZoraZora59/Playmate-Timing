@@ -52,6 +52,24 @@ func (pc *PlayRecordController) Create(c *gin.Context) {
 		settleType = models.BalanceTypeMoney
 	}
 
+	db := config.GetDB()
+
+	// 玩家必须存在、启用且角色为 player
+	if err := ensureUserRole(db, req.PlayerID, models.RolePlayer); err != nil {
+		utils.BadRequest(c, "玩家不存在或状态异常")
+		return
+	}
+
+	// 指定工作室时，必须已通过该工作室审批
+	if req.StudioID != 0 {
+		var relation models.ProviderStudioRelation
+		if err := db.Where("provider_id = ? AND studio_id = ? AND status = ?",
+			userID, req.StudioID, models.StatusApproved).First(&relation).Error; err != nil {
+			utils.Forbidden(c, "你未加入该工作室")
+			return
+		}
+	}
+
 	record := models.PlayRecord{
 		PlayerID:    req.PlayerID,
 		ProviderID:  userID,
@@ -65,7 +83,7 @@ func (pc *PlayRecordController) Create(c *gin.Context) {
 		Amount:      decimal.Zero,
 	}
 
-	if err := config.GetDB().Create(&record).Error; err != nil {
+	if err := db.Create(&record).Error; err != nil {
 		utils.InternalServerError(c, "Failed to create play record")
 		return
 	}
@@ -90,6 +108,10 @@ func (pc *PlayRecordController) Complete(c *gin.Context) {
 	var req CompletePlayRecordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.BadRequest(c, err.Error())
+		return
+	}
+	if req.Amount.IsNegative() {
+		utils.BadRequest(c, "结算金额不能为负数")
 		return
 	}
 	settle := req.Settle == nil || *req.Settle
@@ -224,6 +246,10 @@ func (pc *PlayRecordController) list(c *gin.Context, cond string, arg interface{
 		Order("start_time DESC").Offset(offset).Limit(pageSize).Find(&records).Error; err != nil {
 		utils.InternalServerError(c, "Failed to get play records")
 		return
+	}
+	for i := range records {
+		records[i].Player.Sanitize()
+		records[i].Provider.Sanitize()
 	}
 
 	utils.PageSuccess(c, records, total, page, pageSize)

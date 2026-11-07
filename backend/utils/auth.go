@@ -12,9 +12,9 @@ import (
 
 // Claims JWT载荷
 type Claims struct {
-	UserID   uint             `json:"user_id"`
-	Username string           `json:"username"`
-	Role     models.UserRole  `json:"role"`
+	UserID   uint            `json:"user_id"`
+	Username string          `json:"username"`
+	Role     models.UserRole `json:"role"`
 	jwt.RegisteredClaims
 }
 

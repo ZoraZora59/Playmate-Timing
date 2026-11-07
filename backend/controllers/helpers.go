@@ -82,6 +82,12 @@ func adjustBalanceTx(tx *gorm.DB, playerID, providerID, studioID uint, btype mod
 	return &balance, nil
 }
 
+// ensureUserRole 校验用户存在、启用且角色匹配（用于余额/记录等写操作的前置校验）
+func ensureUserRole(db *gorm.DB, id uint, role models.UserRole) error {
+	var u models.User
+	return db.Select("id").Where("id = ? AND role = ? AND is_active = ?", id, role, true).First(&u).Error
+}
+
 // parseUintParam 解析路径/查询参数为 uint
 func parseUintParam(s string) (uint, error) {
 	v, err := strconv.ParseUint(s, 10, 32)

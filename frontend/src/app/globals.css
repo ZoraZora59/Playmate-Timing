@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* 本地字体，避免依赖 Google Fonts（国内网络更稳定） */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/space-grotesk-latin.woff2') format('woff2');
+}
+
 :root {
   /* 设计令牌（与 src/lib/theme.ts 保持一致） */
   --bg-page: #F4F5FA;
@@ -25,8 +34,8 @@
   --point: #F5A524;
   --danger: #F0476A;
 
-  --font-display: 'Space Grotesk', 'Noto Sans SC', sans-serif;
-  --font-body: 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+  --font-display: 'Space Grotesk', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', system-ui, -apple-system, sans-serif;
 }
 
 * {
@@ -105,4 +114,59 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 16px;
+}
+
+/* 应用壳与响应式布局 */
+.pm-sidebar {
+  width: 248px;
+  flex: none;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 50;
+}
+.pm-overlay {
+  display: none;
+}
+.pm-mobile-btn {
+  display: none;
+}
+.pm-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 900px) {
+  .pm-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  }
+  .pm-sidebar.open {
+    transform: none;
+  }
+  .pm-overlay.open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(22, 23, 42, 0.45);
+    z-index: 45;
+  }
+  .pm-mobile-btn {
+    display: inline-flex;
+  }
+  .pm-topbar {
+    padding: 14px 16px !important;
+  }
+  .pm-content {
+    padding: 20px 16px 48px !important;
+  }
+  .pm-grid-2,
+  .pm-grid-3,
+  .pm-grid-4 {
+    grid-template-columns: 1fr !important;
+  }
 }

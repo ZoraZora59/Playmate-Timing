@@ -1,0 +1,25 @@
+[Unit]
+Description=Playmate Web (Next.js standalone)
+After=network-online.target playmate-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www
+Group=www
+WorkingDirectory=/www/wwwroot/playmate-web
+Environment=NODE_ENV=production
+Environment=PORT=3002
+Environment=HOSTNAME=127.0.0.1
+Environment=TZ=Asia/Shanghai
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

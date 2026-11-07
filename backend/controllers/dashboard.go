@@ -53,11 +53,20 @@ func (dc *DashboardController) PlayerDashboard(c *gin.Context) {
 		Where("balances.player_id = ?", userID).
 		Preload("Balance.Provider").Preload("Operator").
 		Order("balance_transactions.created_at DESC").Limit(8).Find(&recent)
+	for i := range recent {
+		recent[i].Balance.Provider.Sanitize()
+		if recent[i].Operator != nil {
+			recent[i].Operator.Sanitize()
+		}
+	}
 
 	// 进行中的陪玩
 	var ongoing []models.PlayRecord
 	db.Where("player_id = ? AND status = ?", userID, models.PlayStatusActive).
 		Preload("Provider").Order("start_time DESC").Find(&ongoing)
+	for i := range ongoing {
+		ongoing[i].Provider.Sanitize()
+	}
 
 	utils.Success(c, gin.H{
 		"money_total":         totals[models.BalanceTypeMoney],
@@ -238,6 +247,9 @@ func (dc *DashboardController) StudioDashboard(c *gin.Context) {
 	var pending []models.ProviderStudioRelation
 	db.Where("studio_id = ? AND status = ?", studio.ID, models.StatusPending).
 		Preload("Provider").Order("applied_at DESC").Limit(10).Find(&pending)
+	for i := range pending {
+		pending[i].Provider.Sanitize()
+	}
 
 	utils.Success(c, gin.H{
 		"studio":               studio,

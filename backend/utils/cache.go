@@ -46,12 +46,12 @@ func SetCacheJSON(key string, value interface{}, expiration time.Duration) error
 	if cacheInstance == nil {
 		return nil
 	}
-	
+
 	jsonData, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
-	
+
 	cacheInstance.Set(key, string(jsonData), expiration)
 	return nil
 }
@@ -61,17 +61,17 @@ func GetCacheJSON(key string, result interface{}) error {
 	if cacheInstance == nil {
 		return nil
 	}
-	
+
 	value, found := cacheInstance.Get(key)
 	if !found {
 		return nil
 	}
-	
+
 	jsonStr, ok := value.(string)
 	if !ok {
 		return nil
 	}
-	
+
 	return json.Unmarshal([]byte(jsonStr), result)
 }
 

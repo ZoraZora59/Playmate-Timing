@@ -53,6 +53,38 @@ func (rc *ReviewController) Create(c *gin.Context) {
 		}
 	}
 
+	// 关联游玩记录时，必须是自己已完成、且对象一致的对局；同一局同一对象只能评价一次
+	if req.PlayRecordID != nil {
+		var record models.PlayRecord
+		if err := db.First(&record, *req.PlayRecordID).Error; err != nil {
+			utils.BadRequest(c, "游玩记录不存在")
+			return
+		}
+		if record.PlayerID != userID {
+			utils.Forbidden(c, "只能评价自己的游玩记录")
+			return
+		}
+		if record.Status != models.PlayStatusCompleted {
+			utils.BadRequest(c, "该局尚未完成，暂不能评价")
+			return
+		}
+		if req.TargetType == models.ReviewTargetProvider && record.ProviderID != req.TargetID {
+			utils.BadRequest(c, "评价对象与该局服务者不一致")
+			return
+		}
+		if req.TargetType == models.ReviewTargetStudio &&
+			(record.StudioID == 0 || record.StudioID != req.TargetID) {
+			utils.BadRequest(c, "评价对象与该局工作室不一致")
+			return
+		}
+		var existing models.Review
+		if err := db.Where("player_id = ? AND play_record_id = ? AND target_type = ?",
+			userID, *req.PlayRecordID, req.TargetType).First(&existing).Error; err == nil {
+			utils.BadRequest(c, "该局已评价过")
+			return
+		}
+	}
+
 	review := models.Review{
 		PlayerID:     userID,
 		TargetType:   req.TargetType,
@@ -95,11 +127,13 @@ func (rc *ReviewController) ListByTarget(c *gin.Context) {
 		return
 	}
 
-	// 匿名评价隐藏玩家身份
+	// 匿名评价隐藏玩家身份；实名评价也不返回联系方式
 	for i := range reviews {
 		if reviews[i].IsAnonymous {
 			reviews[i].Player = models.User{Nickname: "匿名用户"}
 			reviews[i].PlayerID = 0
+		} else {
+			reviews[i].Player.Sanitize()
 		}
 	}
 

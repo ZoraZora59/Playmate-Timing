@@ -101,7 +101,7 @@ npm run e2e        # Playwright 用户故事 E2E（需后端在 8090 + 前端在
 - 余额：`GET /player/balances`、`.../:id/transactions`、`GET /provider/balance-summary`；操作 `POST /provider|studio/balances`(充值) `/balances/deduct`(扣费) `/balances/refund`(退款)
 - 游玩记录：`POST /provider/play-records`、`PUT .../:id/complete|cancel`、`GET /player/records`、`GET /provider/play-records`
 - 评价：`POST /player/reviews`、`GET /player/reviews`、`GET /reviews?target_type=&target_id=`、`GET /reviews/summary`
-- 工作室：创建/更新/申请/审批 + `GET /studio/members`、`GET /provider/relations`
+- 工作室：创建/更新/申请/审批 + `GET /studio/members`、`DELETE /studio/members/:provider_id`（移除成员）、`GET /provider/relations`
 
 ### 代码风格
 - 注释、用户可见文案以中文为主，与现有代码保持一致。
@@ -110,11 +110,19 @@ npm run e2e        # Playwright 用户故事 E2E（需后端在 8090 + 前端在
 
 ## 配置与环境
 
-后端配置全部来自环境变量，带默认值（见 `config/config.go`），`main.go` 启动时用 `godotenv.Load()` 自动加载 `backend/.env`（进程已有的同名变量优先）。变量：`SERVER_PORT` `GIN_MODE` `DB_HOST/PORT/USER/PASSWORD/NAME/CHARSET` `JWT_SECRET`。
+后端配置全部来自环境变量，带默认值（见 `config/config.go`），`main.go` 启动时用 `godotenv.Load()` 自动加载 `backend/.env`（进程已有的同名变量优先）。变量：`SERVER_HOST`（默认 `127.0.0.1`）`SERVER_PORT` `GIN_MODE` `DB_HOST/PORT/USER/PASSWORD/NAME/CHARSET` `JWT_SECRET` `JWT_EXPIRE_HOURS` `CORS_ORIGINS`（逗号分隔）。
 
-**本地开发数据库**（已在 `backend/.env` 配好）：远程 MySQL 8.0，库/用户名均为 `playmate_timing_dev`，地址 `www.zorazora.cn:3204`（明文 TCP，无需 TLS）。后端开发端口用 **8090**（8080 常被本机其它进程占用）。
+**数据库**：生产为服务器本机 `127.0.0.1:3204/playmate_timing`；本地开发可用同一 MySQL 的 `playmate_timing_dev`。`backend/.env`、`frontend/.env.local` 不入库，按 `.env.example` 创建。
 
-前端：`NEXT_PUBLIC_API_URL`（`frontend/.env.local` 已指向 `http://localhost:8090/api/v1`）、`NEXT_PUBLIC_APP_NAME`。
+前端：`NEXT_PUBLIC_API_URL`（本地 `.env.local` 指向 `http://localhost:8090/api/v1`；生产 `.env.production` 固定为同源 `/api/v1`）、`NEXT_PUBLIC_APP_NAME`。
+
+### 生产部署（当前）
+
+- 正式入口：`https://playmate.zorazora.cn`；服务器通过 `ssh aliyun` 访问。
+- 架构：宝塔 Nginx → Next.js standalone（`127.0.0.1:3002`，systemd `playmate-web`）+ Go API（`127.0.0.1:8090`，systemd `playmate-api`）→ 本机 MySQL `127.0.0.1:3204/playmate_timing`。
+- 服务器路径：前端 `/www/wwwroot/playmate-web`，后端 `/www/wwwroot/playmate-backend`（`.env` 仅存在于服务器，权限 600），Nginx 配置 `/www/server/panel/vhost/nginx/playmate.zorazora.cn.conf`。
+- 宝塔 `网站` 列表已登记 `playmate.zorazora.cn`（site id 41）；首次登记脚本见 `deploy/baota_register_site.py`。
+- 完整构建、发布、回滚、安全说明见 `deploy/DEPLOY.md`。**数据库密码、JWT 密钥等只写在服务器 `.env`，不要提交到仓库。**
 
 ## ⚠️ 注意事项（容易踩的坑）
 
