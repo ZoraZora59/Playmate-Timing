@@ -2,10 +2,10 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { App, Select, Spin } from 'antd';
+import { Select, Spin } from 'antd';
 import apiClient from '@/lib/api';
 import { Balance, BalanceTransaction } from '@/types';
-import { EmptyState, LedgerTable, Stamp, type LedgerColumn, type LedgerRow } from '@/components/ui';
+import { EmptyState, LedgerTable, LoadError, Stamp, type LedgerColumn, type LedgerRow } from '@/components/ui';
 import { balanceMeta, formatBalance, txTypeLabel, txIsCredit, formatDateTime } from '@/lib/format';
 
 type TxFilter = 'all' | 'recharge' | 'consume';
@@ -20,7 +20,6 @@ const COLUMNS: LedgerColumn[] = [
 ];
 
 function TransactionsView() {
-  const { message } = App.useApp();
   const searchParams = useSearchParams();
   const preselectId = Number(searchParams.get('balance')) || null;
 
@@ -29,7 +28,9 @@ function TransactionsView() {
   const [txList, setTxList] = useState<BalanceTransaction[]>([]);
   const [filter, setFilter] = useState<TxFilter>('all');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [txLoading, setTxLoading] = useState(false);
+  const [txError, setTxError] = useState(false);
 
   const loadBalances = useCallback(async () => {
     try {
@@ -40,12 +41,13 @@ function TransactionsView() {
         const pre = preselectId && list.some((b) => b.id === preselectId) ? preselectId : list[0].id;
         setActiveId(pre);
       }
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : '加载失败');
+      setError(false);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
-  }, [message, preselectId]);
+  }, [preselectId]);
 
   useEffect(() => {
     loadBalances();
@@ -57,14 +59,15 @@ function TransactionsView() {
       try {
         const res = await apiClient.getBalanceTransactions(balanceId, { page_size: 50 });
         setTxList(res.list || []);
-      } catch (e) {
-        message.error(e instanceof Error ? e.message : '加载失败');
+        setTxError(false);
+      } catch {
+        setTxError(true);
         setTxList([]);
       } finally {
         setTxLoading(false);
       }
     },
-    [message],
+    [],
   );
 
   useEffect(() => {
@@ -85,10 +88,18 @@ function TransactionsView() {
       </div>
     );
 
+  if (error) {
+    return (
+      <div className="animate-pop">
+        <LoadError onRetry={() => { setLoading(true); loadBalances(); }} />
+      </div>
+    );
+  }
+
   if (balances.length === 0) {
     return (
       <div className="animate-pop">
-        <EmptyState title="还没有余额账户" />
+        <EmptyState title="还没有余额账户" hint="服务者充值后会显示在这里。" />
       </div>
     );
   }
@@ -165,12 +176,14 @@ function TransactionsView() {
         <div style={{ padding: 50, textAlign: 'center' }}>
           <Spin />
         </div>
+      ) : txError ? (
+        <LoadError onRetry={() => activeId != null && loadTransactions(activeId)} />
       ) : (
         <LedgerTable
           columns={COLUMNS}
           rows={rows}
           caption={`${meta?.label ?? ''}账户流水`}
-          empty={<EmptyState title="暂无流水" />}
+          empty={<EmptyState title="暂无流水" hint="这个账户还没有变动记录。" />}
         />
       )}
     </div>

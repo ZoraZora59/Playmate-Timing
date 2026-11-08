@@ -30,7 +30,7 @@ const PENDING_COLUMNS: LedgerColumn[] = [
 const MEMBER_COLUMNS: LedgerColumn[] = [
   { key: 'provider', label: '服务者', width: '28%' },
   { key: 'players', label: '玩家数', width: '14%', align: 'right' },
-  { key: 'flow', label: '账上余额', width: '20%', align: 'right' },
+  { key: 'flow', label: '玩家余额', width: '20%', align: 'right' },
   { key: 'rating', label: '评分', width: '16%' },
   { key: 'joined', label: '加入时间', width: '22%', hide: 'sm' },
 ];
@@ -109,8 +109,7 @@ export default function StudioDashboardView() {
   if (loadError) {
     return (
       <EmptyState
-        title="没读到数据。"
-        hint={loadError}
+        title="加载失败，请重试"
         action={<TextAction onClick={load}>再试一次</TextAction>}
       />
     );
@@ -134,8 +133,7 @@ export default function StudioDashboardView() {
   if (!data) {
     return (
       <EmptyState
-        title="这一页还空着。"
-        hint="稍后再试，或刷新一次。"
+        title="暂无数据"
         action={<TextAction onClick={load}>刷新</TextAction>}
       />
     );
@@ -213,7 +211,7 @@ export default function StudioDashboardView() {
           ),
         joined: (
           <span className="pm-cell-time" title={formatDateTime(member.joined_at)}>
-            {member.joined_at ? fromNow(member.joined_at) : '—'}
+            {member.joined_at ? formatDateTime(member.joined_at) : '—'}
           </span>
         ),
       },
@@ -227,20 +225,20 @@ export default function StudioDashboardView() {
       <SectionBlock
         title={
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            待审批
+            待审核
             {data.pending_count > 0 && <Stamp tone="attention-solid">{data.pending_count}</Stamp>}
           </span>
         }
         attention={data.pending_count > 0}
-        action={<TextAction onClick={() => router.push('/studio/approvals')}>全部审批</TextAction>}
+        action={<TextAction onClick={() => router.push('/studio/approvals')}>全部申请</TextAction>}
       >
         <LedgerTable
           columns={PENDING_COLUMNS}
           rows={pendingRows}
-          caption="待审批的入驻申请"
+          caption="待审核的入驻申请"
           empty={
             <EmptyState
-              title="没有待批的申请。"
+              title="暂无待审核申请"
               action={<TextAction onClick={() => router.push('/studio/members')}>去成员管理</TextAction>}
             />
           }
@@ -257,7 +255,7 @@ export default function StudioDashboardView() {
             color: 'var(--ink-muted)',
           }}
         >
-          本月概览
+          工作室数据
         </div>
         <LedgerHead
           variant="compact"
@@ -292,9 +290,8 @@ export default function StudioDashboardView() {
         >
           {membersError ? (
             <EmptyState
-              title="没读到成员。"
-              hint={membersError}
-              action={<TextAction onClick={load}>再试一次</TextAction>}
+              title="成员加载失败，请重试。"
+              action={<TextAction onClick={load}>重新加载</TextAction>}
             />
           ) : (
             <LedgerTable
@@ -314,7 +311,7 @@ export default function StudioDashboardView() {
 
       <Modal
         open={!!rejectRel}
-        title="驳回这条申请？"
+        title={`驳回 ${rejectRel?.provider?.nickname || rejectRel?.provider?.username || '该服务者'} 的申请？`}
         okText="确认驳回"
         cancelText="取消"
         centered

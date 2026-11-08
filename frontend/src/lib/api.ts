@@ -143,6 +143,8 @@ class ApiClient {
       params
     );
   getProviderBalanceSummary = () => this.request<BalanceSummaryRow[]>('get', '/provider/balance-summary');
+  searchPlayers = (keyword: string) =>
+    this.request<User[]>('get', '/provider/players/search', null, { keyword });
 
   // 充值 / 扣费 / 退款（asStudio 决定走 /studio 还是 /provider 前缀）
   recharge = (form: BalanceOpForm, asStudio = false) =>

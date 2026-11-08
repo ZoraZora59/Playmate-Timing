@@ -1,11 +1,19 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { App, Spin } from 'antd';
+import { App, Button, Input, Modal, Spin } from 'antd';
 import apiClient from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { ProviderDashboard, ProviderPlayerAgg } from '@/types';
-import { AccountTag, EmptyState, LedgerTable, type LedgerColumn, type LedgerRow } from '@/components/ui';
+import { User, ProviderDashboard, ProviderPlayerAgg } from '@/types';
+import {
+  AccountTag,
+  EmptyState,
+  LedgerTable,
+  LoadError,
+  TextAction,
+  type LedgerColumn,
+  type LedgerRow,
+} from '@/components/ui';
 import { formatMoney, formatTimeMinutes, formatPoint, fromNow, toNum } from '@/lib/format';
 import BalanceOpModal, { PlayerLite } from '@/components/BalanceOpModal';
 
@@ -23,25 +31,38 @@ export default function ProviderAccountsPage() {
   const { user } = useAuthStore();
   const [data, setData] = useState<ProviderDashboard | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [modal, setModal] = useState<{ open: boolean; mode: 'recharge' | 'deduct' | 'refund'; player: PlayerLite | null }>({
     open: false,
     mode: 'recharge',
     player: null,
   });
 
+  const [addOpen, setAddOpen] = useState(false);
+  const [keyword, setKeyword] = useState('');
+  const [results, setResults] = useState<User[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+
   const load = useCallback(async () => {
     try {
       setData(await apiClient.getProviderDashboard());
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : '加载失败');
+      setError(false);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
-  }, [message]);
+  }, []);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const retry = () => {
+    setLoading(true);
+    load();
+  };
 
   const openModal = (p: ProviderPlayerAgg, mode: 'recharge' | 'deduct' | 'refund') => {
     setModal({
@@ -51,12 +72,66 @@ export default function ProviderAccountsPage() {
     });
   };
 
+  const openAdd = () => {
+    setAddOpen(true);
+    setKeyword('');
+    setResults([]);
+    setSearched(false);
+  };
+
+  const doSearch = async (value: string) => {
+    const q = value.trim();
+    setKeyword(value);
+    if (!q) {
+      setResults([]);
+      setSearched(false);
+      return;
+    }
+    setSearching(true);
+    try {
+      setResults(await apiClient.searchPlayers(q));
+      setSearched(true);
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : '搜索失败');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const existingOf = (id: number) => players.find((p) => p.player_id === id);
+
+  const pickPlayer = (u: User) => {
+    const existing = existingOf(u.id);
+    setAddOpen(false);
+    setModal({
+      open: true,
+      mode: 'recharge',
+      player: existing
+        ? {
+            player_id: existing.player_id,
+            nickname: existing.nickname || existing.username,
+            money: existing.money,
+            time: existing.time,
+            point: existing.point,
+          }
+        : {
+            player_id: u.id,
+            nickname: u.nickname || u.username,
+            money: '0',
+            time: '0',
+            point: '0',
+          },
+    });
+  };
+
   if (loading)
     return (
       <div style={{ padding: 60, textAlign: 'center' }}>
         <Spin size="large" />
       </div>
     );
+
+  if (error) return <LoadError onRetry={retry} />;
 
   const players = data?.active_players || [];
 
@@ -101,11 +176,49 @@ export default function ProviderAccountsPage() {
 
   return (
     <div className="animate-pop">
+      <div className="pm-toolbar">
+        <Button type="primary" size="large" onClick={openAdd}>
+          添加玩家
+        </Button>
+      </div>
+
       {players.length === 0 ? (
-        <EmptyState title="还没有服务中的玩家" />
+        <EmptyState
+          title="还没有玩家"
+          action={<TextAction onClick={openAdd}>添加玩家</TextAction>}
+        />
       ) : (
         <LedgerTable columns={COLUMNS} rows={rows} className="pm-accounts-table" caption="玩家余额" />
       )}
+
+      <Modal title="添加玩家" open={addOpen} onCancel={() => setAddOpen(false)} footer={null}>
+        <Input.Search
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          placeholder="搜索用户名或昵称"
+          allowClear
+          enterButton
+          loading={searching}
+          onSearch={doSearch}
+        />
+        <div className="pm-player-picker">
+          {results.map((u) => {
+            const added = !!existingOf(u.id);
+            return (
+              <button key={u.id} type="button" className="pm-player-option" onClick={() => pickPlayer(u)}>
+                <AccountTag name={u.nickname || u.username} size={26} />
+                <span className="pm-player-option-name">{u.nickname || u.username}</span>
+                {added ? (
+                  <span className="pm-player-option-added">已添加</span>
+                ) : (
+                  <span className="pm-player-option-username">@{u.username}</span>
+                )}
+              </button>
+            );
+          })}
+          {searched && results.length === 0 && <div className="pm-player-empty">没有找到玩家</div>}
+        </div>
+      </Modal>
 
       <BalanceOpModal
         open={modal.open}

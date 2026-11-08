@@ -31,9 +31,9 @@ import {
 import BalanceOpModal, { PlayerLite } from '@/components/BalanceOpModal';
 
 const EARN_LABEL: Record<string, string> = {
-  [BalanceType.MONEY]: '账上余额',
-  [BalanceType.TIME]: '时间余额',
-  [BalanceType.POINT]: '点数余额',
+  [BalanceType.MONEY]: '玩家余额',
+  [BalanceType.TIME]: '玩家时长',
+  [BalanceType.POINT]: '玩家点数',
 };
 
 const COLUMNS: LedgerColumn[] = [
@@ -124,8 +124,7 @@ export default function ProviderDashboardView() {
   if (loadError) {
     return (
       <EmptyState
-        title="没读到数据。"
-        hint={loadError}
+        title="加载失败，请重试"
         action={<TextAction onClick={load}>再试一次</TextAction>}
       />
     );
@@ -134,8 +133,7 @@ export default function ProviderDashboardView() {
   if (!data) {
     return (
       <EmptyState
-        title="这一页还空着。"
-        hint="稍后再试，或刷新一次。"
+        title="暂无数据"
         action={<TextAction onClick={load}>刷新</TextAction>}
       />
     );
@@ -198,9 +196,9 @@ export default function ProviderDashboardView() {
         status: (
           <div className="pm-cell-actions">
             <Stamp tone={zero ? 'attention-solid' : low ? 'attention' : 'muted'}>
-              {low ? '待充值' : '正常'}
+              {low ? '待充值' : '余额充足'}
             </Stamp>
-            {low && <TextAction onClick={() => openRecharge(player)}>代充值</TextAction>}
+            {low && <TextAction onClick={() => openRecharge(player)}>充值</TextAction>}
           </div>
         ),
       },
@@ -221,9 +219,9 @@ export default function ProviderDashboardView() {
               </span>
             );
           })}
-          {shiftError && <span className="pm-shift-line-item">在局数据没读到。</span>}
+          {shiftError && <span className="pm-shift-line-item">在局数据加载失败。</span>}
           {!shiftError && activeRecords.length === 0 && (
-            <span className="pm-shift-line-item">今晚还没有开着的局。</span>
+            <span className="pm-shift-line-item">当前没有进行中的对局</span>
           )}
         </div>
         <div>
@@ -241,7 +239,7 @@ export default function ProviderDashboardView() {
         variant="compact"
         items={[
           {
-            label: '待催充',
+            label: '待充值',
             value: lowCount,
             unit: '位',
             attention: lowCount > 0,
@@ -265,24 +263,24 @@ export default function ProviderDashboardView() {
 
       <div className="pm-dash-grid" style={{ marginTop: 28 }}>
         <SectionBlock
-          title="当班名单"
+          title="玩家余额"
           attention={lowCount > 0}
           action={<TextAction onClick={() => router.push('/provider/accounts')}>全部玩家</TextAction>}
         >
           <LedgerTable
             columns={COLUMNS}
             rows={rows}
-            caption="当班玩家名单"
+            caption="玩家余额"
             empty={
               <EmptyState
-                title="没有要催的账。"
-                action={<TextAction onClick={() => router.push('/provider/accounts')}>查看全部玩家</TextAction>}
+                title="还没有玩家"
+                action={<TextAction onClick={() => router.push('/provider/accounts')}>添加玩家</TextAction>}
               />
             }
           />
         </SectionBlock>
 
-        <SectionBlock title={`近 7 天局数 · ${weeklyTotal} 局`}>
+        <SectionBlock title={`近 7 天 ${weeklyTotal} 局`}>
           <Tally data={data.weekly_play_counts} />
         </SectionBlock>
       </div>

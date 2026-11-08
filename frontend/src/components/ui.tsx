@@ -318,6 +318,15 @@ export function EmptyState({
   );
 }
 
+export function LoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <EmptyState
+      title="加载失败，请重试"
+      action={<TextAction onClick={onRetry}>重新加载</TextAction>}
+    />
+  );
+}
+
 export function SkeletonLedger({ rows = 4 }: { rows?: number }) {
   return (
     <div className="pm-skeleton" aria-busy="true" aria-label="加载中">

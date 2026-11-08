@@ -2,15 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { App, Input, Pagination, Spin } from 'antd';
+import { Input, Pagination, Spin } from 'antd';
 import apiClient from '@/lib/api';
 import { Studio } from '@/types';
-import { EmptyState } from '@/components/ui';
+import { EmptyState, LoadError } from '@/components/ui';
 
 const PAGE_SIZE = 12;
 
 export default function StudiosPage() {
-  const { message } = App.useApp();
   const router = useRouter();
 
   const [keyword, setKeyword] = useState('');
@@ -20,6 +19,7 @@ export default function StudiosPage() {
   const [studios, setStudios] = useState<Studio[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = async (kw: string, p: number) => {
     setLoading(true);
@@ -27,8 +27,9 @@ export default function StudiosPage() {
       const res = await apiClient.getStudioList({ keyword: kw, page: p, page_size: PAGE_SIZE });
       setStudios(res.list);
       setTotal(res.total);
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : '加载失败');
+      setError(false);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -36,7 +37,6 @@ export default function StudiosPage() {
 
   useEffect(() => {
     load(search, page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, page]);
 
   const onSearch = (value: string) => {
@@ -62,6 +62,8 @@ export default function StudiosPage() {
         <div style={{ padding: '60px', textAlign: 'center' }}>
           <Spin size="large" />
         </div>
+      ) : error ? (
+        <LoadError onRetry={() => load(search, page)} />
       ) : studios.length === 0 ? (
         <EmptyState title="没有找到工作室" />
       ) : (

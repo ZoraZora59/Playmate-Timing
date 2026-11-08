@@ -128,14 +128,14 @@ const NAV: Record<string, { group: string; items: NavItem[] }> = {
       { key: '/provider/accounts', label: '玩家账户管理', icon: 'users' },
       { key: '/provider/play-records', label: '游玩记录', icon: 'clock' },
       { key: '/provider/earnings', label: '余额总览', icon: 'chart' },
-      { key: '/provider/studios', label: '工作室归属', icon: 'home' },
+      { key: '/provider/studios', label: '入驻工作室', icon: 'home' },
     ],
   },
   studio: {
     group: '工作室工作台',
     items: [
       { key: '/dashboard', label: '控制台', icon: 'grid' },
-      { key: '/studio/approvals', label: '入驻申请审批', icon: 'check' },
+      { key: '/studio/approvals', label: '入驻审核', icon: 'check' },
       { key: '/studio/members', label: '成员管理', icon: 'users' },
       { key: '/studio/manage', label: '工作室信息', icon: 'home' },
     ],
@@ -184,7 +184,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const d = new Date();
     const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-    setDateLabel(`${d.getMonth() + 1} 月 ${String(d.getDate()).padStart(2, '0')} 日 ${weekdays[d.getDay()]}`);
+    setDateLabel(`${d.getMonth() + 1} 月 ${d.getDate()} 日 ${weekdays[d.getDay()]}`);
   }, []);
 
   useEffect(() => {
@@ -262,12 +262,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="pm-sidebar-inner">
           <div className="pm-sidebar-brand">
             <span className="pm-brand-seal pm-brand-seal-sm" aria-hidden="true">
-              账房
+              陪
             </span>
             <div style={{ minWidth: 0 }}>
               <div className="pm-brand-name">陪玩平台</div>
-              <div className="pm-brand-sub">今晚的局</div>
             </div>
+            <button className="pm-sidebar-close pm-icon-btn" aria-label="关闭菜单" onClick={closeMobile}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
           </div>
 
           <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }} aria-label={nav.group}>
@@ -303,7 +307,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               账号设置
             </button>
             <button className="pm-sidebar-action" onClick={logout}>
-              退出
+              退出登录
             </button>
           </div>
         </div>

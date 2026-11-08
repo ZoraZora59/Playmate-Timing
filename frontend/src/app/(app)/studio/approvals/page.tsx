@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { App, Spin } from 'antd';
 import apiClient from '@/lib/api';
-import { AccountTag, EmptyState, LedgerTable, TextAction, type LedgerColumn, type LedgerRow } from '@/components/ui';
+import { AccountTag, EmptyState, LedgerTable, LoadError, TextAction, type LedgerColumn, type LedgerRow } from '@/components/ui';
 import { fromNow } from '@/lib/format';
 import type { ProviderStudioRelation } from '@/types';
 
@@ -54,7 +54,7 @@ export default function StudioApprovalsPage() {
     setProcessing(rel.id);
     try {
       await apiClient.processApplication(rel.id, status, rel.notes ?? '');
-      message.success(status === 'approved' ? '已批准该申请' : '已拒绝该申请');
+      message.success(status === 'approved' ? '已批准该申请' : '已驳回该申请');
       setApps((prev) => prev.filter((a) => a.id !== rel.id));
     } catch (e) {
       message.error(e instanceof Error ? e.message : '审批失败');
@@ -64,8 +64,9 @@ export default function StudioApprovalsPage() {
   };
 
   const confirmReject = (rel: ProviderStudioRelation) => {
+    const applicant = rel.provider?.nickname || rel.provider?.username || '该服务者';
     modal.confirm({
-      title: '驳回这条申请？',
+      title: `驳回 ${applicant} 的申请？`,
       okText: '确认驳回',
       cancelText: '取消',
       okButtonProps: { danger: true },
@@ -82,7 +83,7 @@ export default function StudioApprovalsPage() {
   }
 
   if (loadError) {
-    return <EmptyState title="没读到数据。" hint={loadError} action={<TextAction onClick={load}>再试一次</TextAction>} />;
+    return <LoadError onRetry={load} />;
   }
 
   if (noStudio) {
@@ -99,7 +100,7 @@ export default function StudioApprovalsPage() {
   if (apps.length === 0) {
     return (
       <div className="animate-pop">
-        <EmptyState title="暂无待审批申请" />
+        <EmptyState title="暂无待审核申请" />
       </div>
     );
   }
@@ -131,7 +132,7 @@ export default function StudioApprovalsPage() {
               批准
             </button>
             <button type="button" className="pm-row-action muted" disabled={busy} onClick={() => confirmReject(rel)}>
-              拒绝
+              驳回
             </button>
           </span>
         ),
@@ -141,7 +142,7 @@ export default function StudioApprovalsPage() {
 
   return (
     <div className="animate-pop">
-      <LedgerTable columns={COLUMNS} rows={rows} className="pm-approvals-table" caption="待审批的入驻申请" />
+      <LedgerTable columns={COLUMNS} rows={rows} className="pm-approvals-table" caption="待审核的入驻申请" />
     </div>
   );
 }

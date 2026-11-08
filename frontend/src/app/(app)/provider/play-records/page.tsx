@@ -18,6 +18,7 @@ import {
   AccountTag,
   EmptyState,
   LedgerTable,
+  LoadError,
   Stamp,
   type LedgerColumn,
   type LedgerRow,
@@ -63,6 +64,7 @@ export default function ProviderPlayRecordsPage() {
   const [players, setPlayers] = useState<ProviderPlayerAgg[]>([]);
   const [records, setRecords] = useState<PlayRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filter, setFilter] = useState<'all' | PlayStatus>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -86,12 +88,13 @@ export default function ProviderPlayRecordsPage() {
         status: filter === 'all' ? undefined : filter,
       });
       setRecords(res.list || []);
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : '游玩记录加载失败');
+      setError(false);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
-  }, [filter, message]);
+  }, [filter]);
 
   useEffect(() => {
     loadPlayers();
@@ -240,6 +243,8 @@ export default function ProviderPlayRecordsPage() {
         <div style={{ padding: 60, textAlign: 'center' }}>
           <Spin size="large" />
         </div>
+      ) : error ? (
+        <LoadError onRetry={() => loadRecords()} />
       ) : records.length === 0 ? (
         <EmptyState title="暂无游玩记录" />
       ) : (
@@ -304,8 +309,22 @@ export default function ProviderPlayRecordsPage() {
           <Form.Item name="duration" label="游玩时长（分钟）" rules={[{ required: true, message: '请输入时长' }]}>
             <InputNumber min={0} max={1440} style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item name="amount" label="结算数额" rules={[{ required: true, message: '请输入结算数额' }]}>
-            <InputNumber min={0} precision={2} style={{ width: '100%' }} />
+          <Form.Item
+            name="amount"
+            label={`结算数额（${
+              completeTarget?.settle_type === BalanceType.TIME
+                ? '分钟'
+                : completeTarget?.settle_type === BalanceType.POINT
+                  ? '点'
+                  : '元'
+            }）`}
+            rules={[{ required: true, message: '请输入结算数额' }]}
+          >
+            <InputNumber
+              min={0}
+              precision={completeTarget?.settle_type === BalanceType.MONEY ? 2 : 0}
+              style={{ width: '100%' }}
+            />
           </Form.Item>
           <Form.Item name="settle" label="从玩家余额扣费" valuePropName="checked">
             <Switch />

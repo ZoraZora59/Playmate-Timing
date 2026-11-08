@@ -6,6 +6,7 @@ import apiClient from '@/lib/api';
 import {
   EmptyState,
   LedgerTable,
+  LoadError,
   Stamp,
   type LedgerColumn,
   type LedgerRow,
@@ -28,6 +29,7 @@ export default function PlayerRecordsPage() {
   const [records, setRecords] = useState<PlayRecord[]>([]);
   const [reviewed, setReviewed] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [reviewTarget, setReviewTarget] = useState<PlayRecord | null>(null);
   const [targetType, setTargetType] = useState<ReviewTargetType>(ReviewTargetType.PROVIDER);
   const [rating, setRating] = useState(5);
@@ -47,7 +49,9 @@ export default function PlayerRecordsPage() {
         if (rv.play_record_id) keys.add(`${rv.play_record_id}:${rv.target_type}`);
       }
       setReviewed(keys);
+      setError(false);
     } catch (e) {
+      setError(true);
       message.error(e instanceof Error ? e.message : '加载失败');
     } finally {
       setLoading(false);
@@ -103,10 +107,18 @@ export default function PlayerRecordsPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="animate-pop">
+        <LoadError onRetry={() => { setLoading(true); load(); }} />
+      </div>
+    );
+  }
+
   if (records.length === 0) {
     return (
       <div className="animate-pop">
-        <EmptyState title="暂无游玩记录" />
+        <EmptyState title="暂无游玩记录" hint="服务者开局后会显示在这里。" />
       </div>
     );
   }

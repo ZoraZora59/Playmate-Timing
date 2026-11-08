@@ -5,16 +5,19 @@ import { App, Spin, Form, Input, Button } from 'antd';
 import axios from 'axios';
 import apiClient from '@/lib/api';
 import { Studio, CreateStudioForm } from '@/types';
+import { LoadError } from '@/components/ui';
 
 export default function StudioManagePage() {
   const { message } = App.useApp();
   const [form] = Form.useForm<CreateStudioForm>();
   const [studio, setStudio] = useState<Studio | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const load = async () => {
     setLoading(true);
+    setError(false);
     try {
       const dashboard = await apiClient.getStudioDashboard();
       setStudio(dashboard.studio ?? null);
@@ -32,7 +35,7 @@ export default function StudioManagePage() {
         setStudio(null);
         form.resetFields();
       } else {
-        message.error(e instanceof Error ? e.message : '加载失败');
+        setError(true);
       }
     } finally {
       setLoading(false);
@@ -66,6 +69,14 @@ export default function StudioManagePage() {
     return (
       <div style={{ padding: '60px', textAlign: 'center' }}>
         <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="animate-pop" style={{ maxWidth: 560 }}>
+        <LoadError onRetry={load} />
       </div>
     );
   }

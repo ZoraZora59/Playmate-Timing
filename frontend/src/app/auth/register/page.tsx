@@ -20,9 +20,9 @@ const ROLE_OPTIONS: { label: string; value: UserRole }[] = [
 ];
 
 const TAPE = [
-  { time: '23:58', name: 'Momo', delta: '+100.00', balance: '136.40' },
-  { time: '23:41', name: '迟到的猫', delta: '−30.00', balance: '52.00' },
-  { time: '23:12', name: '小满', delta: '−50.00', balance: '0.00' },
+  { time: '22:41', name: 'Momo', delta: '+100.00', balance: '136.40' },
+  { time: '22:12', name: '迟到的猫', delta: '−30.00', balance: '52.00' },
+  { time: '21:50', name: '小满', delta: '−50.00', balance: '0.00' },
 ];
 
 function isUserRole(v: string | null): v is UserRole {
@@ -65,11 +65,10 @@ function RegisterView() {
         <div className="pm-auth-top">
           <Link href="/" className="pm-brand" aria-label="陪玩平台首页">
             <span className="pm-brand-seal" aria-hidden="true">
-              账房
+              陪
             </span>
             <span className="pm-brand-text">
               <span className="pm-brand-name">陪玩平台</span>
-              <span className="pm-brand-sub">今晚的局</span>
             </span>
           </Link>
           <Link href="/" className="pm-auth-back">
@@ -78,8 +77,7 @@ function RegisterView() {
         </div>
 
         <div className="pm-auth-form pm-auth-form-wide">
-          <h1 className="pm-auth-title">创建账户</h1>
-          <p className="pm-auth-sub">选好身份，开你自己的账页。</p>
+          <h1 className="pm-auth-title">创建账号</h1>
 
           <Form
             form={form}
@@ -153,7 +151,7 @@ function RegisterView() {
               <Form.Item
                 name="phone"
                 label="手机号（可选）"
-                rules={[{ pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号' }]}
+                rules={[{ pattern: /^1[3-9]\d{9}$/, message: '请输入 11 位手机号' }]}
               >
                 <Input prefix={<PhoneOutlined />} placeholder="11 位手机号" autoComplete="tel" />
               </Form.Item>
@@ -171,19 +169,11 @@ function RegisterView() {
         </div>
       </main>
 
-      <aside className="pm-auth-preview" aria-label="账页预览">
-        <div className="pm-auth-quote">
-          <h2>
-            把今晚的局，
-            <br />
-            记成一本账。
-          </h2>
-          <p>选好身份，之后的每一局、每一笔，都写在同一页上。</p>
-        </div>
+      <aside className="pm-auth-preview" aria-label="示例数据">
         <div className="pm-auth-sheet">
           <div className="pm-auth-sheet-head">
             <span>今晚的流水</span>
-            <span className="num">23:04</span>
+            <span className="num">22:58</span>
           </div>
           {TAPE.map((row, i) => (
             <div className="pm-auth-sheet-row" key={`${row.time}-${i}`}>
@@ -193,7 +183,7 @@ function RegisterView() {
               <span className="pm-auth-sheet-balance num">{row.balance}</span>
             </div>
           ))}
-          <div className="pm-auth-sheet-foot">示例账页 · 数字为演示</div>
+          <div className="pm-auth-sheet-foot">示例数据</div>
         </div>
       </aside>
     </div>

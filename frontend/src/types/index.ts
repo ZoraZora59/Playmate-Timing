@@ -148,6 +148,7 @@ export interface Review {
   player_id: number;
   target_type: ReviewTargetType;
   target_id: number;
+  target_name?: string;
   rating: number;
   content?: string;
   tags?: string;

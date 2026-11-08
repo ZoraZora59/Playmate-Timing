@@ -249,13 +249,6 @@ body {
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
-.pm-brand-sub {
-  margin-top: 2px;
-  font-size: 10.5px;
-  color: var(--ink-muted);
-  line-height: 1.2;
-  white-space: nowrap;
-}
 .pm-nav-links {
   display: flex;
   align-items: center;
@@ -372,7 +365,7 @@ body {
   margin: clamp(16px, 2.4vw, 26px) 0 0;
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: clamp(52px, 5.8vw, 92px);
+  font-size: clamp(48px, 6.4vw, 120px);
   line-height: 1.06;
   letter-spacing: -0.035em;
   color: var(--ink-text);
@@ -412,6 +405,7 @@ body {
 }
 .pm-hero-lede {
   margin: clamp(20px, 2.6vw, 32px) 0 0;
+  text-wrap: pretty;
   max-width: 34em;
   font-size: clamp(14.5px, 1.1vw, 16.5px);
   line-height: 1.85;
@@ -808,7 +802,7 @@ body {
     padding-top: 32px;
   }
   .pm-hero-title {
-    font-size: clamp(38px, 11vw, 56px);
+    font-size: clamp(30px, 9vw, 40px);
     letter-spacing: -0.03em;
   }
   .pm-hero-live {
@@ -1560,6 +1554,11 @@ body {
   gap: 12px;
   flex-wrap: wrap;
 }
+.pm-review-target {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-text);
+}
 .pm-review-anon {
   font-size: 11px;
   color: var(--ink-muted);
@@ -1578,6 +1577,57 @@ body {
   font-size: 13.5px;
   line-height: 1.7;
   color: var(--ink-secondary);
+}
+
+.pm-toolbar .ant-btn {
+  min-height: 44px;
+}
+.pm-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+.pm-player-picker {
+  margin-top: 14px;
+  max-height: 320px;
+  overflow: auto;
+  border-top: 1px solid var(--rule);
+}
+.pm-player-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  border-bottom: 1px solid var(--rule);
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.pm-player-option:hover {
+  background: var(--paper);
+}
+.pm-player-option-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-text);
+}
+.pm-player-option-added {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--ink-muted);
+}
+.pm-player-option-username {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+.pm-player-empty {
+  padding: 24px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-muted);
 }
 
 /* 工作室列表 */
@@ -1809,11 +1859,12 @@ body {
   border-bottom: 1px solid var(--rule);
   margin-bottom: 14px;
 }
+.pm-sidebar .pm-sidebar-close {
+  display: none;
+  margin-left: auto;
+}
 .pm-sidebar .pm-brand-name {
   color: var(--ink-text);
-}
-.pm-sidebar .pm-brand-sub {
-  color: var(--ink-muted);
 }
 .pm-sidebar-group {
   font-size: 11px;
@@ -2029,19 +2080,13 @@ body {
   width: min(460px, 100%);
 }
 .pm-auth-title {
-  margin: 0;
+  margin: 0 0 28px;
   font-family: var(--font-body);
   font-size: clamp(30px, 2.6vw, 38px);
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.03em;
   color: var(--ink-text);
-}
-.pm-auth-sub {
-  margin: 8px 0 28px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--ink-secondary);
 }
 .pm-auth-hint {
   margin: 8px 0 18px;
@@ -2129,24 +2174,6 @@ body {
   padding: clamp(36px, 5vw, 72px);
   background: var(--paper-deep);
   border-left: 1px solid var(--rule);
-}
-.pm-auth-quote {
-  max-width: 560px;
-}
-.pm-auth-quote h2 {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: clamp(28px, 2.8vw, 42px);
-  font-weight: 600;
-  line-height: 1.22;
-  letter-spacing: -0.03em;
-  color: var(--ink-text);
-}
-.pm-auth-quote p {
-  margin: 12px 0 0;
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--ink-secondary);
 }
 .pm-auth-sheet {
   width: 100%;
@@ -2258,11 +2285,29 @@ body {
 .ant-dropdown-menu,
 .ant-popover-inner,
 .ant-tooltip-inner,
+.ant-modal-close {
+  width: 44px !important;
+  height: 44px !important;
+}
+.ant-modal-close-x {
+  width: 44px !important;
+  height: 44px !important;
+  line-height: 44px !important;
+}
 .ant-modal-content,
 .ant-message-notice-content {
   border-radius: 2px !important;
   background: var(--paper-light) !important;
   color: var(--ink-text) !important;
+}
+.ant-modal-close {
+  width: 44px !important;
+  height: 44px !important;
+}
+.ant-modal-close-x {
+  width: 44px !important;
+  height: 44px !important;
+  line-height: 44px !important;
 }
 .ant-modal-content,
 .ant-dropdown-menu,
@@ -2380,6 +2425,11 @@ body {
   }
   .pm-sidebar.open {
     transform: none;
+  }
+  .pm-sidebar .pm-sidebar-close {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
   }
   .pm-overlay.open {
     display: block;

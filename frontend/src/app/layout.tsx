@@ -7,7 +7,7 @@ import { antdTheme } from '@/lib/theme'
 
 export const metadata: Metadata = {
   title: '陪玩平台',
-  description: '陪玩工作室、服务者、玩家的账目与战绩平台',
+  description: '陪玩计时、余额与记录管理平台',
 }
 
 export default function RootLayout({

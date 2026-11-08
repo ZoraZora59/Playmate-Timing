@@ -1,30 +1,34 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { App, Spin } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Spin } from 'antd';
 import apiClient from '@/lib/api';
 import { Review, ReviewTargetType } from '@/types';
-import { EmptyState, Stamp, Stars } from '@/components/ui';
+import { EmptyState, LoadError, Stamp, Stars, TextAction } from '@/components/ui';
 import { formatDateTime } from '@/lib/format';
 
 export default function PlayerReviewsPage() {
-  const { message } = App.useApp();
+  const router = useRouter();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await apiClient.listMyReviews({ page_size: 100 });
+      setReviews(res.list || []);
+      setError(false);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await apiClient.listMyReviews({ page_size: 100 });
-        setReviews(res.list || []);
-      } catch (e) {
-        message.error(e instanceof Error ? e.message : '加载失败');
-      } finally {
-        setLoading(false);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    load();
+  }, [load]);
 
   if (loading) {
     return (
@@ -34,10 +38,21 @@ export default function PlayerReviewsPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="animate-pop">
+        <LoadError onRetry={() => { setLoading(true); load(); }} />
+      </div>
+    );
+  }
+
   if (reviews.length === 0) {
     return (
       <div className="animate-pop">
-        <EmptyState title="还没有写过评价" />
+        <EmptyState
+          title="还没有写过评价"
+          action={<TextAction onClick={() => router.push('/player/records')}>去游玩记录</TextAction>}
+        />
       </div>
     );
   }
@@ -48,6 +63,7 @@ export default function PlayerReviewsPage() {
         <article key={rv.id} className="pm-review">
           <div className="pm-review-head">
             <Stamp tone="muted">{rv.target_type === ReviewTargetType.PROVIDER ? '服务者' : '工作室'}</Stamp>
+            {rv.target_name && <span className="pm-review-target">{rv.target_name}</span>}
             <Stars rating={rv.rating} size={14} />
             {rv.is_anonymous && <span className="pm-review-anon">匿名</span>}
             {rv.play_record && (

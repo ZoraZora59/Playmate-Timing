@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { App } from 'antd';
 import { COLORS } from '@/lib/theme';
 import { BalanceType } from '@/types';
@@ -44,12 +44,47 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
     }
   }, [open, player, mode]);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const items = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href]'
+        )
+      );
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
   if (!open || !player) return null;
 
-  const meta = balanceMeta(type);
   const isCredit = mode !== 'deduct';
   const accent = mode === 'deduct' ? COLORS.danger : mode === 'refund' ? COLORS.time : COLORS.money;
   const modeLabel = mode === 'recharge' ? '充值' : mode === 'refund' ? '退款' : '扣费';
+  const amountLabel =
+    type === BalanceType.TIME ? `${modeLabel}时长` : type === BalanceType.POINT ? `${modeLabel}点数` : `${modeLabel}金额`;
+  const notice =
+    mode === 'recharge' ? '提交后立即到账。' : mode === 'deduct' ? '提交后立即从余额扣除。' : '提交后立即退回余额。';
+  const noticeBg = mode === 'deduct' ? COLORS.warnBg : COLORS.bgSubtle;
+  const noticeColor = mode === 'deduct' ? COLORS.warnText : COLORS.textSecondary;
   const current = type === BalanceType.MONEY ? player.money : type === BalanceType.TIME ? player.time : player.point;
   const before = toNum(current);
   const amt = toNum(amount);
@@ -82,7 +117,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
   const typeBtn = (t: BalanceType) => {
     const m = balanceMeta(t);
     const active = type === t;
-    const label = t === BalanceType.MONEY ? '金额 ¥' : t === BalanceType.TIME ? '时间 分' : '点数 点';
+    const label = t === BalanceType.MONEY ? '金额（元）' : t === BalanceType.TIME ? '时间（分钟）' : '点数';
     return (
       <button
         key={t}
@@ -105,8 +140,12 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
       style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(22,23,42,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'ovl .2s ease both' }}
     >
       <div
+        ref={dialogRef}
         onClick={(e) => e.stopPropagation()}
         className="animate-pop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pm-balance-op-title"
         style={{ width: 440, maxWidth: '92vw', background: '#fff', borderRadius: 4, overflow: 'hidden', border: '1px solid ' + COLORS.border }}
       >
         {/* header */}
@@ -117,10 +156,10 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
             </svg>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 16, fontWeight: 600 }}>{modeLabel} · {player.nickname}</div>
-            <div style={{ fontSize: 12, color: COLORS.textMuted }}>当前{meta.label}余额 {formatBalance(type, before)}</div>
+            <div id="pm-balance-op-title" style={{ fontSize: 16, fontWeight: 600 }}>{modeLabel} · {player.nickname}</div>
+            <div style={{ fontSize: 12, color: COLORS.textMuted }}>当前余额 {formatBalance(type, before)}</div>
           </div>
-          <button onClick={onClose} style={{ border: 'none', background: COLORS.bgPage, width: 30, height: 30, borderRadius: 3, color: COLORS.textSecondary, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>✕</button>
+          <button onClick={onClose} aria-label="关闭" style={{ border: 'none', background: COLORS.bgPage, width: 44, height: 44, borderRadius: 3, color: COLORS.textSecondary, cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>✕</button>
         </div>
 
         {step === 'edit' ? (
@@ -129,7 +168,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
               <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textSecondary, marginBottom: 9 }}>余额类型</div>
               <div style={{ display: 'flex', gap: 9, marginBottom: 20 }}>{TYPES.map(typeBtn)}</div>
 
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textSecondary, marginBottom: 9 }}>{modeLabel}数量</div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textSecondary, marginBottom: 9 }}>{amountLabel}</div>
               <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid ' + COLORS.border, borderRadius: 3, padding: '0 16px', marginBottom: 20 }}>
                 {type === BalanceType.MONEY && <span className="font-display" style={{ fontSize: 22, color: COLORS.textMuted, marginRight: 6 }}>¥</span>}
                 <input
@@ -159,7 +198,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
                 onClick={() => canNext && setStep('review')}
                 style={{ flex: 1.6, padding: 13, border: 'none', borderRadius: 2, background: canNext ? COLORS.primary : COLORS.bgSubtle, color: canNext ? '#fff' : COLORS.textMuted, font: "600 14px 'Noto Sans SC',sans-serif", cursor: canNext ? 'pointer' : 'not-allowed' }}
               >
-                下一步 · 确认
+                下一步
               </button>
             </div>
           </>
@@ -167,8 +206,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
           <>
             <div style={{ padding: '22px 24px' }}>
               <div style={{ background: COLORS.bgSubtle, border: '1px solid ' + COLORS.divider, borderRadius: 4, padding: '18px 20px', marginBottom: 16 }}>
-                <Row label="操作"><span style={{ fontSize: 14, fontWeight: 600, color: accent }}>{modeLabel} · {meta.label}</span></Row>
-                <Row label={`${modeLabel}数量`}><span className="font-display" style={{ fontSize: 20, fontWeight: 700, color: accent }}>{formatBalance(type, amt)}</span></Row>
+                <Row label={amountLabel}><span className="font-display" style={{ fontSize: 20, fontWeight: 700, color: accent }}>{formatBalance(type, amt)}</span></Row>
                 <Row label="余额变化" last>
                   <span className="font-display" style={{ display: 'flex', alignItems: 'center', gap: 9, fontWeight: 600 }}>
                     <span style={{ color: COLORS.textMuted, fontSize: 15 }}>{formatBalance(type, before)}</span>
@@ -177,9 +215,9 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
                   </span>
                 </Row>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', background: COLORS.warnBg, borderRadius: 3, color: COLORS.warnText, fontSize: 12.5, lineHeight: 1.5 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', background: noticeBg, borderRadius: 3, color: noticeColor, fontSize: 12.5, lineHeight: 1.5 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flex: 'none' }}><path d="M12 9v4M12 17h.01" /><circle cx="12" cy="12" r="10" /></svg>
-                提交后立即入账。
+                {notice}
               </div>
             </div>
             <div style={{ padding: '0 24px 22px', display: 'flex', gap: 11 }}>

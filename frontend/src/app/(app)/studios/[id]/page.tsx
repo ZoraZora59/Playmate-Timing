@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { App, Spin, Modal, Input, Button } from 'antd';
 import apiClient from '@/lib/api';
 import { COLORS } from '@/lib/theme';
 import { initialOf, fromNow } from '@/lib/format';
-import { Avatar, SectionCard, EmptyState, Stars } from '@/components/ui';
+import { Avatar, SectionCard, EmptyState, Stars, Stamp, LoadError, TextAction } from '@/components/ui';
 import { useAuthStore } from '@/store/auth';
 import {
   Studio,
@@ -26,11 +26,13 @@ export default function StudioDetailPage() {
   const { message } = App.useApp();
   const user = useAuthStore((s) => s.user);
 
+  const router = useRouter();
   const [studio, setStudio] = useState<Studio | null>(null);
   const [summary, setSummary] = useState<ReviewSummary | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const [applyOpen, setApplyOpen] = useState(false);
   const [notes, setNotes] = useState('');
@@ -39,22 +41,27 @@ export default function StudioDetailPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setNotFound(false);
+    setLoadError(false);
     try {
       const [s, sum, rv] = await Promise.all([
         apiClient.getStudioById(studioId),
         apiClient.getReviewSummary(ReviewTargetType.STUDIO, studioId),
-        apiClient.listReviewsByTarget(ReviewTargetType.STUDIO, studioId),
+        apiClient.listReviewsByTarget(ReviewTargetType.STUDIO, studioId, { page_size: 50 }),
       ]);
       setStudio(s);
       setSummary(sum);
       setReviews(rv.list ?? []);
     } catch (e) {
-      setNotFound(true);
-      message.error(e instanceof Error ? e.message : '加载失败');
+      const status = (e as { status?: number }).status;
+      if (status === 404) {
+        setNotFound(true);
+      } else {
+        setLoadError(true);
+      }
     } finally {
       setLoading(false);
     }
-  }, [studioId, message]);
+  }, [studioId]);
 
   useEffect(() => {
     if (Number.isFinite(studioId)) {
@@ -87,10 +94,21 @@ export default function StudioDetailPage() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="animate-pop">
+        <LoadError onRetry={load} />
+      </div>
+    );
+  }
+
   if (notFound || !studio) {
     return (
       <div className="animate-pop">
-        <EmptyState title="未找到该工作室" />
+        <EmptyState
+          title="未找到该工作室"
+          action={<TextAction onClick={() => router.push('/studios')}>返回工作室列表</TextAction>}
+        />
       </div>
     );
   }
@@ -99,7 +117,15 @@ export default function StudioDetailPage() {
   const memberCount = approved.length;
   const avgRating = summary?.average_rating ?? 0;
   const reviewCount = summary?.count ?? reviews.length;
-  const canApply = user?.role === UserRole.PROVIDER;
+  const myRelation =
+    user?.role === UserRole.PROVIDER
+      ? (studio.relations ?? []).find((r) => r.provider_id === user.id)
+      : undefined;
+  const canApply =
+    user?.role === UserRole.PROVIDER &&
+    (!myRelation ||
+      myRelation.status === RelationStatus.REJECTED ||
+      myRelation.status === RelationStatus.REMOVED);
 
   return (
     <div className="animate-pop">
@@ -147,15 +173,20 @@ export default function StudioDetailPage() {
               {studio.description || '这家工作室还没有填写简介。'}
             </div>
           </div>
-          {canApply && (
-            <Button
-              type="primary"
-              onClick={() => setApplyOpen(true)}
-              style={{ flex: 'none', height: 40, borderRadius: 2, fontWeight: 600 }}
-            >
-              申请加入
-            </Button>
-          )}
+          {user?.role === UserRole.PROVIDER &&
+            (myRelation?.status === RelationStatus.APPROVED ? (
+              <Stamp tone="muted">已加入</Stamp>
+            ) : myRelation?.status === RelationStatus.PENDING ? (
+              <Stamp tone="attention">待审核</Stamp>
+            ) : (
+              <Button
+                type="primary"
+                onClick={() => setApplyOpen(true)}
+                style={{ flex: 'none', height: 40, borderRadius: 2, fontWeight: 600 }}
+              >
+                {canApply && myRelation ? '重新申请' : '申请加入'}
+              </Button>
+            ))}
         </div>
 
         {/* 一行统计 */}
@@ -211,7 +242,7 @@ export default function StudioDetailPage() {
       </div>
 
       {/* 评价区 */}
-      <SectionCard title={`玩家评价（${reviewCount}）`} bodyPad={false}>
+      <SectionCard title="玩家评价" bodyPad={false}>
         {reviews.length === 0 ? (
           <EmptyState title="暂无评价" />
         ) : (

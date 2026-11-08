@@ -80,8 +80,7 @@ export default function PlayerDashboardView() {
   if (loadError) {
     return (
       <EmptyState
-        title="没读到数据。"
-        hint={loadError}
+        title="加载失败，请重试"
         action={<TextAction onClick={load}>再试一次</TextAction>}
       />
     );
@@ -90,8 +89,7 @@ export default function PlayerDashboardView() {
   if (!data) {
     return (
       <EmptyState
-        title="这一页还空着。"
-        hint="稍后再试，或刷新一次。"
+        title="暂无数据"
         action={<TextAction onClick={load}>刷新</TextAction>}
       />
     );
@@ -138,16 +136,16 @@ export default function PlayerDashboardView() {
       <LedgerHead
         items={[
           {
-            label: '金额余额',
+            label: '余额',
             value: formatMoney(data.money_total),
           },
           {
-            label: '时间余额',
+            label: '时长',
             value: formatTimeMinutes(data.time_total).replace(' 分钟', ''),
             unit: '分钟',
           },
           {
-            label: '点数余额',
+            label: '点数',
             value: formatPoint(data.point_total).replace(' 点', ''),
             unit: '点',
           },
@@ -164,7 +162,7 @@ export default function PlayerDashboardView() {
           <SectionBlock title="当前这一局">
             {ongoing.length === 0 ? (
               <EmptyState
-                title="还没有开着的局。"
+                title="暂无进行中的对局"
                 action={<TextAction onClick={() => router.push('/player/records')}>去看游玩记录</TextAction>}
               />
             ) : (

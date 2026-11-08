@@ -2,13 +2,16 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { App, Spin } from 'antd';
+import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api';
 import { StudioMember } from '@/types';
 import {
   AccountTag,
   EmptyState,
   LedgerTable,
+  LoadError,
   Stars,
+  TextAction,
   type LedgerColumn,
   type LedgerRow,
 } from '@/components/ui';
@@ -17,7 +20,7 @@ import { formatMoney, formatDateTime } from '@/lib/format';
 const COLUMNS: LedgerColumn[] = [
   { key: 'member', label: '成员', width: '26%' },
   { key: 'players', label: '玩家数', width: '12%', align: 'right' },
-  { key: 'money', label: '账上余额', width: '18%', align: 'right' },
+  { key: 'money', label: '玩家余额', width: '18%', align: 'right' },
   { key: 'rating', label: '评分', width: '16%', align: 'right' },
   { key: 'joined', label: '加入时间', width: '16%', align: 'right', hide: 'sm' },
   { key: 'actions', label: '操作', width: '12%', align: 'right' },
@@ -25,18 +28,21 @@ const COLUMNS: LedgerColumn[] = [
 
 export default function StudioMembersPage() {
   const { message, modal } = App.useApp();
+  const router = useRouter();
   const [members, setMembers] = useState<StudioMember[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setMembers(await apiClient.getStudioMembers());
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : '加载失败');
+      setError(false);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
-  }, [message]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -68,12 +74,23 @@ export default function StudioMembersPage() {
       </div>
     );
 
+  if (error) {
+    return (
+      <div className="animate-pop">
+        <LoadError onRetry={() => { setLoading(true); load(); }} />
+      </div>
+    );
+  }
+
   const list = members || [];
 
   if (list.length === 0) {
     return (
       <div className="animate-pop">
-        <EmptyState title="还没有工作室成员" />
+        <EmptyState
+          title="还没有工作室成员"
+          action={<TextAction onClick={() => router.push('/studio/approvals')}>去审批</TextAction>}
+        />
       </div>
     );
   }

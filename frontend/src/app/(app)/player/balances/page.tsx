@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { App, Spin } from 'antd';
+import { Spin } from 'antd';
 import apiClient from '@/lib/api';
-import { Balance } from '@/types';
-import { Avatar, EmptyState, TextAction } from '@/components/ui';
-import { formatBalance, balanceMeta } from '@/lib/format';
+import { Balance, BalanceType } from '@/types';
+import { Avatar, EmptyState, LoadError, TextAction } from '@/components/ui';
+import { formatBalance } from '@/lib/format';
 
 interface ProviderGroup {
   providerId: number;
@@ -32,21 +32,22 @@ function groupByProvider(list: Balance[]): ProviderGroup[] {
 }
 
 export default function PlayerBalancesPage() {
-  const { message } = App.useApp();
   const router = useRouter();
   const [groups, setGroups] = useState<ProviderGroup[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const res = await apiClient.getPlayerBalances({ page_size: 100 });
       setGroups(groupByProvider(res.list));
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : '加载失败');
+      setError(false);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
-  }, [message]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -59,12 +60,20 @@ export default function PlayerBalancesPage() {
       </div>
     );
 
+  if (error) {
+    return (
+      <div className="animate-pop">
+        <LoadError onRetry={() => { setLoading(true); load(); }} />
+      </div>
+    );
+  }
+
   const list = groups || [];
 
   if (list.length === 0) {
     return (
       <div className="animate-pop">
-        <EmptyState title="还没有余额账户" />
+        <EmptyState title="还没有余额账户" hint="服务者充值后会显示在这里。" />
       </div>
     );
   }
@@ -85,7 +94,9 @@ export default function PlayerBalancesPage() {
           <div className="pm-account-balances">
             {g.balances.map((b) => (
               <div key={b.id} className="pm-account-balance">
-                <div className="pm-account-label">{balanceMeta(b.type).label}余额</div>
+                <div className="pm-account-label">
+                  {b.type === BalanceType.TIME ? '时长' : b.type === BalanceType.POINT ? '点数' : '金额'}
+                </div>
                 <div className="pm-account-value num">{formatBalance(b.type, b.amount)}</div>
               </div>
             ))}

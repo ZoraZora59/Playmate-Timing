@@ -6,7 +6,7 @@ import apiClient from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { User, UserRole } from '@/types';
 import { COLORS } from '@/lib/theme';
-import { Avatar, EmptyState } from '@/components/ui';
+import { Avatar, EmptyState, LoadError } from '@/components/ui';
 
 const ROLE_LABEL: Record<UserRole, string> = {
   [UserRole.PLAYER]: '玩家',
@@ -27,6 +27,7 @@ export default function SettingsPage() {
 
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -38,8 +39,9 @@ export default function SettingsPage() {
         phone: data.phone,
         avatar: data.avatar,
       });
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : '加载失败');
+      setError(false);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -67,6 +69,14 @@ export default function SettingsPage() {
     return (
       <div style={{ padding: '60px', textAlign: 'center' }}>
         <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="animate-pop" style={{ maxWidth: 560 }}>
+        <LoadError onRetry={() => { setLoading(true); load(); }} />
       </div>
     );
   }
@@ -121,7 +131,7 @@ export default function SettingsPage() {
           <Form.Item
             name="phone"
             label="手机号"
-            rules={[{ pattern: /^1\d{10}$/, message: '请输入有效的 11 位手机号' }]}
+            rules={[{ pattern: /^1[3-9]\d{9}$/, message: '请输入 11 位手机号' }]}
           >
             <Input placeholder="11 位手机号" size="large" allowClear maxLength={11} />
           </Form.Item>

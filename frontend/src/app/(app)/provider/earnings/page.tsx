@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { App } from 'antd';
 import apiClient from '@/lib/api';
 import { ProviderDashboard, BalanceType } from '@/types';
 import { formatBalance, formatPoint, formatTimeMinutes } from '@/lib/format';
@@ -11,6 +10,7 @@ import {
   Tally,
   EmptyState,
   TextAction,
+  LoadError,
   SkeletonLedger,
 } from '@/components/ui';
 
@@ -19,19 +19,20 @@ function totalOf(data: ProviderDashboard, type: BalanceType) {
 }
 
 export default function ProviderEarningsPage() {
-  const { message } = App.useApp();
   const [data, setData] = useState<ProviderDashboard | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const load = useCallback(async () => {
     try {
       setData(await apiClient.getProviderDashboard());
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : '加载失败');
+      setError(false);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
-  }, [message]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -50,14 +51,12 @@ export default function ProviderEarningsPage() {
     return <SkeletonLedger rows={3} />;
   }
 
+  if (error) {
+    return <LoadError onRetry={() => { setLoading(true); load(); }} />;
+  }
+
   if (!data) {
-    return (
-      <EmptyState
-        title="这一页还空着。"
-        hint="稍后再试，或刷新一次。"
-        action={<TextAction onClick={load}>刷新</TextAction>}
-      />
-    );
+    return <EmptyState title="暂无数据" action={<TextAction onClick={load}>重新加载</TextAction>} />;
   }
 
   return (
@@ -66,16 +65,16 @@ export default function ProviderEarningsPage() {
         variant="compact"
         items={[
           {
-            label: '账上余额',
+            label: '玩家余额',
             value: formatBalance(BalanceType.MONEY, totalOf(data, BalanceType.MONEY)),
           },
           {
-            label: '时间余额',
+            label: '玩家时长',
             value: formatTimeMinutes(totalOf(data, BalanceType.TIME)).replace(' 分钟', ''),
             unit: '分钟',
           },
           {
-            label: '点数余额',
+            label: '玩家点数',
             value: formatPoint(totalOf(data, BalanceType.POINT)).replace(' 点', ''),
             unit: '点',
           },
@@ -88,7 +87,7 @@ export default function ProviderEarningsPage() {
       />
 
       <SectionBlock
-        title={`近 7 天局数 · ${data.weekly_play_counts.reduce((sum, item) => sum + item.count, 0)} 局`}
+        title={`近 7 天 ${data.weekly_play_counts.reduce((sum, item) => sum + item.count, 0)} 局`}
       >
         <Tally data={data.weekly_play_counts} />
       </SectionBlock>
