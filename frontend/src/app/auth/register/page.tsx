@@ -172,7 +172,7 @@ function RegisterView() {
       <aside className="pm-auth-preview" aria-label="示例数据">
         <div className="pm-auth-sheet">
           <div className="pm-auth-sheet-head">
-            <span>今晚的流水</span>
+            <span>最近流水</span>
             <span className="num">22:58</span>
           </div>
           {TAPE.map((row, i) => (

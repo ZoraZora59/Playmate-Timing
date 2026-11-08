@@ -1,4 +1,4 @@
-// 设计令牌 —— 明亮工作台 · 夜班账房
+// 设计令牌 —— 明亮工作台
 // 纸、墨、线、章四种材料；朱印只表示“要动手 / 待处理 / 透支 / 危险”。
 import type { ThemeConfig } from 'antd';
 
@@ -41,7 +41,7 @@ export const COLORS = {
   infoBg: '#EDEFE8',
   infoText: '#4D5651',
 
-  // 夜班账房
+  // 纸墨与印章
   ink: '#14181B',
   inkHover: '#2B3339',
   sheetEdge: '#0B0F12',

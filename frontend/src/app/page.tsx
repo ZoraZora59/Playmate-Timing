@@ -134,24 +134,24 @@ export default function Home() {
                     </div>
                     <div className="pm-ph-item">
                       <span className="pm-ph-label">玩家余额</span>
-                      <span className="pm-ph-value">¥4,820.50</span>
+                      <span className="pm-ph-value">¥1,713.50</span>
                     </div>
                     <div className="pm-ph-item">
                       <span className="pm-ph-label">玩家时长</span>
                       <span className="pm-ph-value">
-                        3,260<span className="pm-ph-unit">分钟</span>
+                        1,145<span className="pm-ph-unit">分钟</span>
                       </span>
                     </div>
                     <div className="pm-ph-item">
                       <span className="pm-ph-label">玩家点数</span>
                       <span className="pm-ph-value">
-                        5,680<span className="pm-ph-unit">点</span>
+                        4,160<span className="pm-ph-unit">点</span>
                       </span>
                     </div>
                   </div>
 
                   <table className="pm-product-table">
-                    <caption className="pm-sr-only">工作台预览：服务者今晚的玩家余额</caption>
+                    <caption className="pm-sr-only">工作台预览：玩家余额</caption>
                     <thead>
                       <tr>
                         <th scope="col">玩家</th>
