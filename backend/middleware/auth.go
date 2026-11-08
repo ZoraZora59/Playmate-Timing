@@ -14,7 +14,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("Authorization")
 		if token == "" {
-			utils.Unauthorized(c, "Missing authorization token")
+			utils.Unauthorized(c, "请先登录")
 			c.Abort()
 			return
 		}
@@ -26,7 +26,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		claims, err := utils.ParseToken(token)
 		if err != nil {
-			utils.Unauthorized(c, "Invalid token")
+			utils.Unauthorized(c, "登录已失效，请重新登录")
 			c.Abort()
 			return
 		}
@@ -44,14 +44,14 @@ func RequireRole(roles ...models.UserRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userRole, exists := c.Get("user_role")
 		if !exists {
-			utils.Forbidden(c, "User role not found")
+			utils.Forbidden(c, "账号角色异常")
 			c.Abort()
 			return
 		}
 
 		role, ok := userRole.(models.UserRole)
 		if !ok {
-			utils.Forbidden(c, "Invalid user role")
+			utils.Forbidden(c, "账号角色异常")
 			c.Abort()
 			return
 		}
@@ -64,7 +64,7 @@ func RequireRole(roles ...models.UserRole) gin.HandlerFunc {
 			}
 		}
 
-		utils.Forbidden(c, "Insufficient permissions")
+		utils.Forbidden(c, "没有权限执行此操作")
 		c.Abort()
 	}
 }

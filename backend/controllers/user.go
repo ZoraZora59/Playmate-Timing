@@ -50,14 +50,14 @@ func (uc *UserController) Register(c *gin.Context) {
 	// 检查用户名是否已存在
 	var existingUser models.User
 	if err := db.Where("username = ? OR email = ?", req.Username, req.Email).First(&existingUser).Error; err == nil {
-		utils.BadRequest(c, "Username or email already exists")
+		utils.BadRequest(c, "用户名或邮箱已被注册")
 		return
 	}
 
 	// 加密密码
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
-		utils.InternalServerError(c, "Failed to hash password")
+		utils.InternalServerError(c, "注册失败，请稍后重试")
 		return
 	}
 
@@ -73,7 +73,7 @@ func (uc *UserController) Register(c *gin.Context) {
 	}
 
 	if err := db.Create(&user).Error; err != nil {
-		utils.InternalServerError(c, "Failed to create user")
+		utils.InternalServerError(c, "注册失败，请稍后重试")
 		return
 	}
 
@@ -81,7 +81,7 @@ func (uc *UserController) Register(c *gin.Context) {
 	cfg := config.GetConfig()
 	token, err := utils.GenerateToken(&user, cfg.JWT.Expire)
 	if err != nil {
-		utils.InternalServerError(c, "Failed to generate token")
+		utils.InternalServerError(c, "登录失败，请稍后重试")
 		return
 	}
 
@@ -105,22 +105,22 @@ func (uc *UserController) Login(c *gin.Context) {
 	var user models.User
 	if err := db.Where("username = ? OR email = ?", req.Username, req.Username).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			utils.BadRequest(c, "Invalid username or password")
+			utils.BadRequest(c, "用户名或密码不正确")
 			return
 		}
-		utils.InternalServerError(c, "Database error")
+		utils.InternalServerError(c, "服务暂时不可用，请稍后重试")
 		return
 	}
 
 	// 验证密码
 	if !utils.CheckPassword(user.Password, req.Password) {
-		utils.BadRequest(c, "Invalid username or password")
+		utils.BadRequest(c, "用户名或密码不正确")
 		return
 	}
 
 	// 检查用户是否激活
 	if !user.IsActive {
-		utils.BadRequest(c, "User account is disabled")
+		utils.BadRequest(c, "账号已被停用")
 		return
 	}
 
@@ -128,7 +128,7 @@ func (uc *UserController) Login(c *gin.Context) {
 	cfg := config.GetConfig()
 	token, err := utils.GenerateToken(&user, cfg.JWT.Expire)
 	if err != nil {
-		utils.InternalServerError(c, "Failed to generate token")
+		utils.InternalServerError(c, "登录失败，请稍后重试")
 		return
 	}
 
@@ -142,7 +142,7 @@ func (uc *UserController) Login(c *gin.Context) {
 func (uc *UserController) GetProfile(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -150,10 +150,10 @@ func (uc *UserController) GetProfile(c *gin.Context) {
 	var user models.User
 	if err := db.First(&user, userID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			utils.NotFound(c, "User not found")
+			utils.NotFound(c, "用户不存在")
 			return
 		}
-		utils.InternalServerError(c, "Database error")
+		utils.InternalServerError(c, "服务暂时不可用，请稍后重试")
 		return
 	}
 
@@ -164,7 +164,7 @@ func (uc *UserController) GetProfile(c *gin.Context) {
 func (uc *UserController) UpdateProfile(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -182,7 +182,7 @@ func (uc *UserController) UpdateProfile(c *gin.Context) {
 	db := config.GetDB()
 	var user models.User
 	if err := db.First(&user, userID).Error; err != nil {
-		utils.NotFound(c, "User not found")
+		utils.NotFound(c, "用户不存在")
 		return
 	}
 
@@ -199,11 +199,11 @@ func (uc *UserController) UpdateProfile(c *gin.Context) {
 	}
 
 	if err := db.Model(&user).Updates(updates).Error; err != nil {
-		utils.InternalServerError(c, "Failed to update profile")
+		utils.InternalServerError(c, "保存失败，请稍后重试")
 		return
 	}
 
-	utils.SuccessWithMessage(c, "Profile updated successfully", user)
+	utils.SuccessWithMessage(c, "资料已保存", user)
 }
 
 // GetUserList 获取用户列表（管理员功能）
@@ -234,7 +234,7 @@ func (uc *UserController) GetUserList(c *gin.Context) {
 
 	var users []models.User
 	if err := query.Offset(offset).Limit(pageSize).Find(&users).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get user list")
+		utils.InternalServerError(c, "获取用户列表失败，请稍后重试")
 		return
 	}
 
@@ -269,7 +269,7 @@ func (uc *UserController) GetUserByID(c *gin.Context) {
 	id := c.Param("id")
 	userID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
-		utils.BadRequest(c, "Invalid user ID")
+		utils.BadRequest(c, "用户 ID 不正确")
 		return
 	}
 
@@ -277,10 +277,10 @@ func (uc *UserController) GetUserByID(c *gin.Context) {
 	var user models.User
 	if err := db.First(&user, uint(userID)).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			utils.NotFound(c, "User not found")
+			utils.NotFound(c, "用户不存在")
 			return
 		}
-		utils.InternalServerError(c, "Database error")
+		utils.InternalServerError(c, "服务暂时不可用，请稍后重试")
 		return
 	}
 

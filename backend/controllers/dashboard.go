@@ -18,7 +18,7 @@ type DashboardController struct{}
 func (dc *DashboardController) PlayerDashboard(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -93,7 +93,7 @@ type providerPlayerAgg struct {
 func (dc *DashboardController) ProviderDashboard(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -203,7 +203,7 @@ func (dc *DashboardController) weeklyPlayCounts(providerID uint) []dayCount {
 func (dc *DashboardController) StudioDashboard(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 

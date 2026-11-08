@@ -26,7 +26,7 @@ type CreateReviewRequest struct {
 func (rc *ReviewController) Create(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -97,7 +97,7 @@ func (rc *ReviewController) Create(c *gin.Context) {
 	}
 
 	if err := db.Create(&review).Error; err != nil {
-		utils.InternalServerError(c, "Failed to create review")
+		utils.InternalServerError(c, "提交评价失败，请稍后重试")
 		return
 	}
 
@@ -123,7 +123,7 @@ func (rc *ReviewController) ListByTarget(c *gin.Context) {
 
 	var reviews []models.Review
 	if err := query.Preload("Player").Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&reviews).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get reviews")
+		utils.InternalServerError(c, "获取评价失败，请稍后重试")
 		return
 	}
 
@@ -166,7 +166,7 @@ func (rc *ReviewController) Summary(c *gin.Context) {
 		Select("rating, COUNT(*) as cnt").
 		Where("target_type = ? AND target_id = ?", targetType, targetID).
 		Group("rating").Scan(&rows).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get review summary")
+		utils.InternalServerError(c, "获取评价统计失败，请稍后重试")
 		return
 	}
 
@@ -189,7 +189,7 @@ func (rc *ReviewController) Summary(c *gin.Context) {
 func (rc *ReviewController) ListMine(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -202,7 +202,7 @@ func (rc *ReviewController) ListMine(c *gin.Context) {
 
 	var reviews []models.Review
 	if err := query.Preload("PlayRecord").Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&reviews).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get reviews")
+		utils.InternalServerError(c, "获取评价失败，请稍后重试")
 		return
 	}
 

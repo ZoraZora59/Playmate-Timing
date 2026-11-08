@@ -40,7 +40,7 @@ type ProcessApplicationRequest struct {
 func (sc *StudioController) CreateStudio(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -61,7 +61,7 @@ func (sc *StudioController) CreateStudio(c *gin.Context) {
 
 	// 检查工作室名称是否已存在
 	if err := db.Where("name = ?", req.Name).First(&existingStudio).Error; err == nil {
-		utils.BadRequest(c, "Studio name already exists")
+		utils.BadRequest(c, "工作室名称已被使用")
 		return
 	}
 
@@ -76,14 +76,14 @@ func (sc *StudioController) CreateStudio(c *gin.Context) {
 	}
 
 	if err := db.Create(&studio).Error; err != nil {
-		utils.InternalServerError(c, "Failed to create studio")
+		utils.InternalServerError(c, "创建工作室失败，请稍后重试")
 		return
 	}
 
 	// 预加载Owner信息
 	db.Preload("Owner").First(&studio, studio.ID)
 
-	utils.SuccessWithMessage(c, "Studio created successfully", studio)
+	utils.SuccessWithMessage(c, "工作室创建成功", studio)
 }
 
 // GetStudioList 获取工作室列表
@@ -114,7 +114,7 @@ func (sc *StudioController) GetStudioList(c *gin.Context) {
 
 	var studios []models.Studio
 	if err := query.Preload("Owner").Offset(offset).Limit(pageSize).Find(&studios).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get studio list")
+		utils.InternalServerError(c, "获取工作室列表失败，请稍后重试")
 		return
 	}
 	for i := range studios {
@@ -129,7 +129,7 @@ func (sc *StudioController) GetStudioByID(c *gin.Context) {
 	id := c.Param("id")
 	studioID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
-		utils.BadRequest(c, "Invalid studio ID")
+		utils.BadRequest(c, "工作室 ID 不正确")
 		return
 	}
 
@@ -137,10 +137,10 @@ func (sc *StudioController) GetStudioByID(c *gin.Context) {
 	var studio models.Studio
 	if err := db.Preload("Owner").Preload("Relations.Provider").First(&studio, uint(studioID)).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			utils.NotFound(c, "Studio not found")
+			utils.NotFound(c, "工作室不存在")
 			return
 		}
-		utils.InternalServerError(c, "Database error")
+		utils.InternalServerError(c, "服务暂时不可用，请稍后重试")
 		return
 	}
 	studio.Owner.Sanitize()
@@ -156,13 +156,13 @@ func (sc *StudioController) UpdateStudio(c *gin.Context) {
 	id := c.Param("id")
 	studioID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
-		utils.BadRequest(c, "Invalid studio ID")
+		utils.BadRequest(c, "工作室 ID 不正确")
 		return
 	}
 
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -175,13 +175,13 @@ func (sc *StudioController) UpdateStudio(c *gin.Context) {
 	db := config.GetDB()
 	var studio models.Studio
 	if err := db.First(&studio, uint(studioID)).Error; err != nil {
-		utils.NotFound(c, "Studio not found")
+		utils.NotFound(c, "工作室不存在")
 		return
 	}
 
 	// 检查权限：只有工作室所有者可以更新
 	if studio.OwnerID != userID {
-		utils.Forbidden(c, "Only studio owner can update studio information")
+		utils.Forbidden(c, "只有工作室所有者可以修改资料")
 		return
 	}
 
@@ -194,11 +194,11 @@ func (sc *StudioController) UpdateStudio(c *gin.Context) {
 	}
 
 	if err := db.Model(&studio).Updates(updates).Error; err != nil {
-		utils.InternalServerError(c, "Failed to update studio")
+		utils.InternalServerError(c, "保存失败，请稍后重试")
 		return
 	}
 
-	utils.SuccessWithMessage(c, "Studio updated successfully", studio)
+	utils.SuccessWithMessage(c, "工作室资料已保存", studio)
 }
 
 // ApplyToJoinStudio 申请加入工作室
@@ -206,13 +206,13 @@ func (sc *StudioController) ApplyToJoinStudio(c *gin.Context) {
 	id := c.Param("id")
 	studioID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
-		utils.BadRequest(c, "Invalid studio ID")
+		utils.BadRequest(c, "工作室 ID 不正确")
 		return
 	}
 
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -236,7 +236,7 @@ func (sc *StudioController) ApplyToJoinStudio(c *gin.Context) {
 	// 检查工作室是否存在且可用
 	var studio models.Studio
 	if err := db.First(&studio, uint(studioID)).Error; err != nil {
-		utils.NotFound(c, "Studio not found")
+		utils.NotFound(c, "工作室不存在")
 		return
 	}
 	if !studio.IsActive {
@@ -248,7 +248,7 @@ func (sc *StudioController) ApplyToJoinStudio(c *gin.Context) {
 	var existingRelation models.ProviderStudioRelation
 	if err := db.Where("provider_id = ? AND studio_id = ?", userID, studioID).First(&existingRelation).Error; err == nil {
 		if existingRelation.Status == models.StatusPending || existingRelation.Status == models.StatusApproved {
-			utils.BadRequest(c, "Application already exists")
+			utils.BadRequest(c, "已经提交过申请，请等待审核")
 			return
 		}
 		now := time.Now()
@@ -258,14 +258,14 @@ func (sc *StudioController) ApplyToJoinStudio(c *gin.Context) {
 			"processed_at": nil,
 			"notes":        req.Notes,
 		}).Error; err != nil {
-			utils.InternalServerError(c, "Failed to create application")
+			utils.InternalServerError(c, "提交申请失败，请稍后重试")
 			return
 		}
 		existingRelation.Status = models.StatusPending
 		existingRelation.AppliedAt = now
 		existingRelation.ProcessedAt = nil
 		existingRelation.Notes = req.Notes
-		utils.SuccessWithMessage(c, "Application submitted successfully", existingRelation)
+		utils.SuccessWithMessage(c, "申请已提交", existingRelation)
 		return
 	}
 
@@ -279,11 +279,11 @@ func (sc *StudioController) ApplyToJoinStudio(c *gin.Context) {
 	}
 
 	if err := db.Create(&relation).Error; err != nil {
-		utils.InternalServerError(c, "Failed to create application")
+		utils.InternalServerError(c, "提交申请失败，请稍后重试")
 		return
 	}
 
-	utils.SuccessWithMessage(c, "Application submitted successfully", relation)
+	utils.SuccessWithMessage(c, "申请已提交", relation)
 }
 
 // GetStudioApplications 获取工作室的申请列表
@@ -291,13 +291,13 @@ func (sc *StudioController) GetStudioApplications(c *gin.Context) {
 	id := c.Param("id")
 	studioID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
-		utils.BadRequest(c, "Invalid studio ID")
+		utils.BadRequest(c, "工作室 ID 不正确")
 		return
 	}
 
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -306,12 +306,12 @@ func (sc *StudioController) GetStudioApplications(c *gin.Context) {
 	// 检查权限：只有工作室所有者可以查看申请
 	var studio models.Studio
 	if err := db.First(&studio, uint(studioID)).Error; err != nil {
-		utils.NotFound(c, "Studio not found")
+		utils.NotFound(c, "工作室不存在")
 		return
 	}
 
 	if studio.OwnerID != userID {
-		utils.Forbidden(c, "Only studio owner can view applications")
+		utils.Forbidden(c, "只有工作室所有者可以查看申请")
 		return
 	}
 
@@ -339,7 +339,7 @@ func (sc *StudioController) GetStudioApplications(c *gin.Context) {
 
 	var relations []models.ProviderStudioRelation
 	if err := query.Preload("Provider").Offset(offset).Limit(pageSize).Find(&relations).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get applications")
+		utils.InternalServerError(c, "获取申请列表失败，请稍后重试")
 		return
 	}
 	for i := range relations {
@@ -354,13 +354,13 @@ func (sc *StudioController) ProcessApplication(c *gin.Context) {
 	id := c.Param("id")
 	relationID, err := strconv.ParseUint(id, 10, 32)
 	if err != nil {
-		utils.BadRequest(c, "Invalid relation ID")
+		utils.BadRequest(c, "申请 ID 不正确")
 		return
 	}
 
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -375,19 +375,19 @@ func (sc *StudioController) ProcessApplication(c *gin.Context) {
 	// 查找关联关系
 	var relation models.ProviderStudioRelation
 	if err := db.Preload("Studio").First(&relation, uint(relationID)).Error; err != nil {
-		utils.NotFound(c, "Application not found")
+		utils.NotFound(c, "申请不存在")
 		return
 	}
 
 	// 检查权限：只有工作室所有者可以处理申请
 	if relation.Studio.OwnerID != userID {
-		utils.Forbidden(c, "Only studio owner can process applications")
+		utils.Forbidden(c, "只有工作室所有者可以处理申请")
 		return
 	}
 
 	// 检查申请状态
 	if relation.Status != models.StatusPending {
-		utils.BadRequest(c, "Application has already been processed")
+		utils.BadRequest(c, "这条申请已经处理过了")
 		return
 	}
 
@@ -403,11 +403,11 @@ func (sc *StudioController) ProcessApplication(c *gin.Context) {
 	}
 
 	if err := db.Model(&relation).Updates(updates).Error; err != nil {
-		utils.InternalServerError(c, "Failed to process application")
+		utils.InternalServerError(c, "处理申请失败，请稍后重试")
 		return
 	}
 
-	utils.SuccessWithMessage(c, "Application processed successfully", relation)
+	utils.SuccessWithMessage(c, "申请已处理", relation)
 }
 
 // StudioMember 工作室成员（含聚合统计）
@@ -425,7 +425,7 @@ type StudioMember struct {
 func (sc *StudioController) GetStudioMembers(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -439,7 +439,7 @@ func (sc *StudioController) GetStudioMembers(c *gin.Context) {
 	var relations []models.ProviderStudioRelation
 	if err := db.Where("studio_id = ? AND status = ?", studio.ID, models.StatusApproved).
 		Preload("Provider").Order("processed_at DESC").Find(&relations).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get members")
+		utils.InternalServerError(c, "获取成员列表失败，请稍后重试")
 		return
 	}
 
@@ -476,13 +476,13 @@ func (sc *StudioController) GetStudioMembers(c *gin.Context) {
 func (sc *StudioController) RemoveMember(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
 	providerID, err := parseUintParam(c.Param("provider_id"))
 	if err != nil {
-		utils.BadRequest(c, "Invalid provider ID")
+		utils.BadRequest(c, "服务者 ID 不正确")
 		return
 	}
 
@@ -518,7 +518,7 @@ func (sc *StudioController) RemoveMember(c *gin.Context) {
 func (sc *StudioController) GetMyRelations(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -526,7 +526,7 @@ func (sc *StudioController) GetMyRelations(c *gin.Context) {
 	var relations []models.ProviderStudioRelation
 	if err := db.Where("provider_id = ?", userID).
 		Preload("Studio").Preload("Studio.Owner").Order("applied_at DESC").Find(&relations).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get relations")
+		utils.InternalServerError(c, "获取工作室信息失败，请稍后重试")
 		return
 	}
 	for i := range relations {

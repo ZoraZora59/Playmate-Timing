@@ -29,7 +29,7 @@ type BalanceOpRequest struct {
 func (bc *BalanceController) GetPlayerBalances(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -47,7 +47,7 @@ func (bc *BalanceController) GetPlayerBalances(c *gin.Context) {
 
 	var balances []models.Balance
 	if err := query.Preload("Provider").Preload("Studio").Offset(offset).Limit(pageSize).Find(&balances).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get balances")
+		utils.InternalServerError(c, "获取余额失败，请稍后重试")
 		return
 	}
 	for i := range balances {
@@ -61,13 +61,13 @@ func (bc *BalanceController) GetPlayerBalances(c *gin.Context) {
 func (bc *BalanceController) GetBalanceByProvider(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
 	pid, err := parseUintParam(c.Param("provider_id"))
 	if err != nil {
-		utils.BadRequest(c, "Invalid provider ID")
+		utils.BadRequest(c, "服务者 ID 不正确")
 		return
 	}
 
@@ -77,7 +77,7 @@ func (bc *BalanceController) GetBalanceByProvider(c *gin.Context) {
 	var balances []models.Balance
 	if err := db.Where("player_id = ? AND provider_id = ? AND studio_id = ?", userID, pid, sid).
 		Preload("Provider").Preload("Studio").Find(&balances).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get balance")
+		utils.InternalServerError(c, "获取余额失败，请稍后重试")
 		return
 	}
 	for i := range balances {
@@ -111,7 +111,7 @@ func (bc *BalanceController) Refund(c *gin.Context) {
 func (bc *BalanceController) operate(c *gin.Context, txType models.TransactionType) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -210,13 +210,13 @@ func (bc *BalanceController) operate(c *gin.Context, txType models.TransactionTy
 func (bc *BalanceController) GetBalanceTransactions(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
 	balanceID, err := parseUintParam(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "Invalid balance ID")
+		utils.BadRequest(c, "余额账户 ID 不正确")
 		return
 	}
 
@@ -236,7 +236,7 @@ func (bc *BalanceController) GetBalanceTransactions(c *gin.Context) {
 			utils.Forbidden(c, "无权访问该余额记录")
 			return
 		}
-		utils.InternalServerError(c, "Database error")
+		utils.InternalServerError(c, "服务暂时不可用，请稍后重试")
 		return
 	}
 
@@ -253,7 +253,7 @@ func (bc *BalanceController) GetBalanceTransactions(c *gin.Context) {
 
 	var transactions []models.BalanceTransaction
 	if err := query.Preload("Operator").Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&transactions).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get transactions")
+		utils.InternalServerError(c, "获取流水失败，请稍后重试")
 		return
 	}
 	for i := range transactions {
@@ -276,7 +276,7 @@ type BalanceSummaryRow struct {
 func (bc *BalanceController) GetProviderBalanceSummary(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -293,7 +293,7 @@ func (bc *BalanceController) GetProviderBalanceSummary(c *gin.Context) {
 		Where("provider_id = ?", userID).
 		Group("type").
 		Scan(&summary).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get balance summary")
+		utils.InternalServerError(c, "获取余额汇总失败，请稍后重试")
 		return
 	}
 

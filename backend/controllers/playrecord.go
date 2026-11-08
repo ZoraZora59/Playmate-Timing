@@ -37,7 +37,7 @@ type CompletePlayRecordRequest struct {
 func (pc *PlayRecordController) Create(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
@@ -84,7 +84,7 @@ func (pc *PlayRecordController) Create(c *gin.Context) {
 	}
 
 	if err := db.Create(&record).Error; err != nil {
-		utils.InternalServerError(c, "Failed to create play record")
+		utils.InternalServerError(c, "开局失败，请稍后重试")
 		return
 	}
 
@@ -95,13 +95,13 @@ func (pc *PlayRecordController) Create(c *gin.Context) {
 func (pc *PlayRecordController) Complete(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
 	recordID, err := parseUintParam(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "Invalid record ID")
+		utils.BadRequest(c, "记录 ID 不正确")
 		return
 	}
 
@@ -170,13 +170,13 @@ func (pc *PlayRecordController) Complete(c *gin.Context) {
 func (pc *PlayRecordController) Cancel(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 
 	recordID, err := parseUintParam(c.Param("id"))
 	if err != nil {
-		utils.BadRequest(c, "Invalid record ID")
+		utils.BadRequest(c, "记录 ID 不正确")
 		return
 	}
 
@@ -212,7 +212,7 @@ func (pc *PlayRecordController) Cancel(c *gin.Context) {
 func (pc *PlayRecordController) ListMine(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 	pc.list(c, "player_id = ?", userID)
@@ -222,7 +222,7 @@ func (pc *PlayRecordController) ListMine(c *gin.Context) {
 func (pc *PlayRecordController) ListHosted(c *gin.Context) {
 	userID, err := middleware.GetCurrentUserID(c)
 	if err != nil {
-		utils.Unauthorized(c, "User not found")
+		utils.Unauthorized(c, "用户不存在")
 		return
 	}
 	pc.list(c, "provider_id = ?", userID)
@@ -244,7 +244,7 @@ func (pc *PlayRecordController) list(c *gin.Context, cond string, arg interface{
 	var records []models.PlayRecord
 	if err := query.Preload("Player").Preload("Provider").Preload("Studio").
 		Order("start_time DESC").Offset(offset).Limit(pageSize).Find(&records).Error; err != nil {
-		utils.InternalServerError(c, "Failed to get play records")
+		utils.InternalServerError(c, "获取游玩记录失败，请稍后重试")
 		return
 	}
 	for i := range records {
