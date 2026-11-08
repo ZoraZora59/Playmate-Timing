@@ -142,40 +142,16 @@ const NAV: Record<string, { group: string; items: NavItem[] }> = {
   },
 };
 
-const SUBTITLE: Record<string, string> = {
-  '/player/balances': '按服务者分别记账，点开看明细',
-  '/player/transactions': '每一笔变动，含变动前后金额',
-  '/player/records': '你的陪玩历史，区分进行中与已完成',
-  '/player/reviews': '你对服务者与工作室的评价',
-  '/provider/accounts': '管理你服务的玩家余额，代充值、扣费或退款',
-  '/provider/play-records': '开局、结算与取消记录',
-  '/provider/earnings': '账上余额、时间余额与点数余额',
-  '/provider/studios': '当前归属状态与加入申请进度',
-  '/studio/approvals': '审核服务者的加入申请',
-  '/studio/members': '已加入工作室的服务者',
-  '/studio/manage': '维护你的工作室资料',
-  '/studios': '寻找并申请加入心仪的工作室',
-  '/settings': '管理你的账号资料',
-};
-
-function titleFor(pathname: string, role?: UserRole): { title: string; sub: string } {
-  if (pathname === '/dashboard') {
-    const sub =
-      role === UserRole.PLAYER
-        ? '余额、流水与正在进行的局'
-        : role === UserRole.PROVIDER
-          ? '在局、催充与结算'
-          : '审批、成员与本月充值';
-    return { title: '控制台', sub };
-  }
+function titleFor(pathname: string): string {
+  if (pathname === '/dashboard') return '控制台';
   for (const role0 of Object.values(NAV)) {
     const item = role0.items.find((i) => i.key === pathname);
-    if (item) return { title: item.label, sub: SUBTITLE[pathname] || '' };
+    if (item) return item.label;
   }
-  if (pathname.startsWith('/studios/')) return { title: '工作室详情', sub: '查看简介、评价并申请加入' };
-  if (pathname === '/studios') return { title: '浏览工作室', sub: SUBTITLE['/studios'] };
-  if (pathname === '/settings') return { title: '账号设置', sub: SUBTITLE['/settings'] };
-  return { title: '陪玩平台', sub: '' };
+  if (pathname.startsWith('/studios/')) return '工作室详情';
+  if (pathname === '/studios') return '浏览工作室';
+  if (pathname === '/settings') return '账号设置';
+  return '陪玩平台';
 }
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -191,7 +167,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const role = user?.role || UserRole.PLAYER;
   const nav = NAV[role];
   const roleLabel = role === UserRole.PLAYER ? '玩家' : role === UserRole.PROVIDER ? '服务者' : '工作室';
-  const { title, sub } = titleFor(pathname, role);
+  const title = titleFor(pathname);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -327,7 +303,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               账号设置
             </button>
             <button className="pm-sidebar-action" onClick={logout}>
-              交班
+              退出
             </button>
           </div>
         </div>
@@ -358,7 +334,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </button>
             <div style={{ minWidth: 0 }}>
               <h1 className="pm-page-title">{title}</h1>
-              {sub && <p className="pm-page-sub">{sub}</p>}
             </div>
           </div>
 
@@ -373,7 +348,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               menu={{
                 items: [
                   { key: 'settings', label: '账号设置', onClick: () => router.push('/settings') },
-                  { key: 'logout', label: '交班（退出登录）', danger: true, onClick: logout },
+                  { key: 'logout', label: '退出登录', danger: true, onClick: logout },
                 ],
               }}
             >

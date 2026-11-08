@@ -311,11 +311,6 @@ export function EmptyState({
 }) {
   return (
     <div className="pm-empty">
-      <div className="pm-empty-lines" aria-hidden="true">
-        <span className="pm-empty-line" />
-        <span className="pm-empty-line" />
-        <span className="pm-empty-line" />
-      </div>
       <div className="pm-empty-title">{title}</div>
       {hint && <div className="pm-empty-hint">{hint}</div>}
       {action && <div className="pm-empty-action">{action}</div>}

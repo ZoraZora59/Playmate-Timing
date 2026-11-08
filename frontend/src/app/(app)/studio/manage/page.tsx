@@ -5,7 +5,6 @@ import { App, Spin, Form, Input, Button } from 'antd';
 import axios from 'axios';
 import apiClient from '@/lib/api';
 import { Studio, CreateStudioForm } from '@/types';
-import { SectionCard, InfoBanner } from '@/components/ui';
 
 export default function StudioManagePage() {
   const { message } = App.useApp();
@@ -74,69 +73,49 @@ export default function StudioManagePage() {
   const isEdit = !!studio;
 
   return (
-    <div className="animate-pop" style={{ maxWidth: 720 }}>
-      <div style={{ marginBottom: 16 }}>
-        <InfoBanner tone="info">
-          {isEdit
-            ? '完善工作室主页信息，玩家与服务者会看到这里的简介与联系方式。'
-            : '你还没有创建工作室。填写下方信息即可开通，成为可被服务者申请加入的工作室。'}
-        </InfoBanner>
-      </div>
-
-      <SectionCard title={isEdit ? '工作室信息' : '创建工作室'}>
-        <Form
-          form={form}
-          layout="vertical"
-          requiredMark="optional"
-          onFinish={onFinish}
-          style={{ paddingTop: 4 }}
+    <div className="animate-pop" style={{ maxWidth: 560 }}>
+      <Form
+        form={form}
+        layout="vertical"
+        requiredMark="optional"
+        onFinish={onFinish}
+        style={{ borderTop: '2px solid var(--ink-text)', paddingTop: 20 }}
+      >
+        <Form.Item
+          label="工作室名称"
+          name="name"
+          rules={[{ required: true, message: '请输入工作室名称' }]}
         >
-          <Form.Item
-            label="工作室名称"
-            name="name"
-            rules={[{ required: true, message: '请输入工作室名称' }]}
-          >
-            <Input placeholder="例如：星轨陪玩" maxLength={50} allowClear />
-          </Form.Item>
+          <Input placeholder="例如：星轨陪玩" maxLength={50} allowClear />
+        </Form.Item>
 
-          <Form.Item label="工作室简介" name="description">
-            <Input.TextArea
-              placeholder="介绍工作室的主营游戏、服务特色等"
-              autoSize={{ minRows: 3, maxRows: 6 }}
-              maxLength={500}
-              showCount
-            />
-          </Form.Item>
+        <Form.Item label="工作室简介" name="description">
+          <Input.TextArea
+            placeholder="主营游戏、服务特色"
+            autoSize={{ minRows: 3, maxRows: 6 }}
+            maxLength={500}
+            showCount
+          />
+        </Form.Item>
 
-          <Form.Item
-            label="Logo 链接"
-            name="logo"
-            extra="可选，填写一张图片的 URL"
-          >
-            <Input placeholder="https://…" allowClear />
-          </Form.Item>
+        <Form.Item label="Logo 链接" name="logo">
+          <Input placeholder="https://…" allowClear />
+        </Form.Item>
 
-          <Form.Item label="联系方式" name="contact_info">
-            <Input.TextArea
-              placeholder="微信 / QQ / 客服电话等，便于玩家与服务者联系"
-              autoSize={{ minRows: 2, maxRows: 4 }}
-              maxLength={200}
-            />
-          </Form.Item>
+        <Form.Item label="联系方式" name="contact_info">
+          <Input.TextArea
+            placeholder="微信 / QQ / 客服电话"
+            autoSize={{ minRows: 2, maxRows: 4 }}
+            maxLength={200}
+          />
+        </Form.Item>
 
-          <Form.Item style={{ marginBottom: 4 }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={submitting}
-              size="large"
-              style={{ borderRadius: 3 }}
-            >
-              {isEdit ? '保存修改' : '创建工作室'}
-            </Button>
-          </Form.Item>
-        </Form>
-      </SectionCard>
+        <Form.Item style={{ marginBottom: 4 }}>
+          <Button type="primary" htmlType="submit" loading={submitting} size="large">
+            {isEdit ? '保存修改' : '创建工作室'}
+          </Button>
+        </Form.Item>
+      </Form>
     </div>
   );
 }

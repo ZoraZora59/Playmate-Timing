@@ -167,22 +167,9 @@ export default function ProviderDashboardView() {
         player: (
           <div className="pm-cell-name">
             <AccountTag name={name} size={24} />
-            <div className="pm-cell-name-text" style={{ minWidth: 0 }}>
-              <div
-                className="pm-cell-name-main"
-                title={name}
-                style={{
-                  whiteSpace: 'normal',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                {name}
-              </div>
-              {player.username && <div className="pm-cell-name-sub">{`@${player.username}`}</div>}
-            </div>
+            <span className="pm-cell-name-main" title={name}>
+              {name}
+            </span>
           </div>
         ),
         active: (
@@ -230,7 +217,7 @@ export default function ProviderDashboardView() {
             const name = record.player?.nickname || record.player?.username || '玩家';
             return (
               <span className="pm-shift-line-item" key={record.id}>
-                {name} · {record.game_name || '对局'} · 已进行 {minutesSince(record.start_time)} 分
+                {name} · {record.game_name || '对局'} · {minutesSince(record.start_time)} 分
               </span>
             );
           })}
@@ -257,25 +244,21 @@ export default function ProviderDashboardView() {
             label: '待催充',
             value: lowCount,
             unit: '位',
-            sub: '金额不足 ¥50',
             attention: lowCount > 0,
           },
           {
             label: EARN_LABEL[BalanceType.MONEY],
             value: formatBalance(BalanceType.MONEY, earnOf(BalanceType.MONEY)?.total_amount ?? '0'),
-            sub: `${earnOf(BalanceType.MONEY)?.player_count ?? 0} 位玩家有金额余额`,
           },
           {
             label: EARN_LABEL[BalanceType.TIME],
             value: formatTimeMinutes(earnOf(BalanceType.TIME)?.total_amount ?? '0').replace(' 分钟', ''),
             unit: '分钟',
-            sub: `${earnOf(BalanceType.TIME)?.player_count ?? 0} 位玩家有时间余额`,
           },
           {
             label: EARN_LABEL[BalanceType.POINT],
             value: formatPoint(earnOf(BalanceType.POINT)?.total_amount ?? '0').replace(' 点', ''),
             unit: '点',
-            sub: `${earnOf(BalanceType.POINT)?.player_count ?? 0} 位玩家有点数余额`,
           },
         ]}
       />
@@ -284,11 +267,8 @@ export default function ProviderDashboardView() {
         <SectionBlock
           title="当班名单"
           attention={lowCount > 0}
-          action={<TextAction onClick={() => router.push('/provider/accounts')}>玩家账户管理</TextAction>}
+          action={<TextAction onClick={() => router.push('/provider/accounts')}>全部玩家</TextAction>}
         >
-          <div style={{ marginBottom: 4, fontSize: 11.5, color: 'var(--ink-muted)' }}>
-            显示 {visiblePlayers.length} 位 · 共 {data.player_count} 位
-          </div>
           <LedgerTable
             columns={COLUMNS}
             rows={rows}
@@ -296,18 +276,14 @@ export default function ProviderDashboardView() {
             empty={
               <EmptyState
                 title="没有要催的账。"
-                hint="玩家余额都够下一局。"
                 action={<TextAction onClick={() => router.push('/provider/accounts')}>查看全部玩家</TextAction>}
               />
             }
           />
         </SectionBlock>
 
-        <SectionBlock title="近 7 天局数">
+        <SectionBlock title={`近 7 天局数 · ${weeklyTotal} 局`}>
           <Tally data={data.weekly_play_counts} />
-          <div style={{ marginTop: 12, fontSize: 12, lineHeight: 1.7, color: 'var(--ink-muted)' }}>
-            玩家 {data.player_count} 位 · 金额不足 ¥50 {lowCount} 位 · 近 7 天 {weeklyTotal} 局
-          </div>
         </SectionBlock>
       </div>
 

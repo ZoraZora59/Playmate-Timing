@@ -27,10 +27,11 @@ import {
 import type { PlayerDashboard } from '@/types';
 
 const COLUMNS: LedgerColumn[] = [
-  { key: 'summary', label: '摘要', width: '42%' },
+  { key: 'time', label: '时间', width: '17%', hide: 'sm' },
+  { key: 'summary', label: '摘要', width: '38%' },
   { key: 'type', label: '类型', width: '12%', hide: 'sm' },
-  { key: 'change', label: '变动', width: '20%', align: 'right' },
-  { key: 'balance', label: '结余', width: '26%', align: 'right' },
+  { key: 'change', label: '变动', width: '17%', align: 'right' },
+  { key: 'balance', label: '结余', width: '16%', align: 'right' },
 ];
 
 function minutesSince(iso?: string): number {
@@ -103,18 +104,18 @@ export default function PlayerDashboardView() {
   const rows: LedgerRow[] = recent.map((t) => {
     const credit = txIsCredit(t.type);
     const type = t.balance?.type ?? 'money';
-    const by = t.operator?.nickname || t.balance?.provider?.nickname || '系统';
-    const serial = `№ ${String(t.id).padStart(6, '0')}`;
     return {
       key: t.id,
       cells: {
+        time: (
+          <span className="num" style={{ fontSize: 12, color: 'var(--ink-muted)' }}>
+            {formatDateTime(t.created_at)}
+          </span>
+        ),
         summary: (
-          <div style={{ minWidth: 0 }}>
-            <div className="pm-cell-name-main">{t.description || '余额变动'}</div>
-            <div className="pm-cell-name-sub">
-              {[by, formatDateTime(t.created_at), serial].filter(Boolean).join(' · ')}
-            </div>
-          </div>
+          <span className="pm-cell-name-main" title={t.description || txTypeLabel(t.type)}>
+            {t.description || txTypeLabel(t.type)}
+          </span>
         ),
         type: <Stamp tone="muted">{txTypeLabel(t.type)}</Stamp>,
         change: (
@@ -139,25 +140,21 @@ export default function PlayerDashboardView() {
           {
             label: '金额余额',
             value: formatMoney(data.money_total),
-            sub: '按服务者分账户合计',
           },
           {
             label: '时间余额',
             value: formatTimeMinutes(data.time_total).replace(' 分钟', ''),
             unit: '分钟',
-            sub: '按服务者累计',
           },
           {
             label: '点数余额',
             value: formatPoint(data.point_total).replace(' 点', ''),
             unit: '点',
-            sub: '按服务者累计',
           },
           {
             label: '服务者',
             value: data.provider_count,
             unit: '位',
-            sub: '有余额往来',
           },
         ]}
       />
@@ -168,7 +165,6 @@ export default function PlayerDashboardView() {
             {ongoing.length === 0 ? (
               <EmptyState
                 title="还没有开着的局。"
-                hint="服务者开局后会显示在这里。"
                 action={<TextAction onClick={() => router.push('/player/records')}>去看游玩记录</TextAction>}
               />
             ) : (
@@ -202,28 +198,12 @@ export default function PlayerDashboardView() {
                     </TextAction>
                   </div>
                 )}
-                <div style={{ marginTop: 10 }}>
+                <div style={{ marginTop: 10, display: 'flex', gap: 18, flexWrap: 'wrap' }}>
                   <TextAction onClick={() => router.push('/player/records')}>查看游玩记录</TextAction>
+                  <TextAction onClick={() => router.push('/player/balances')}>查看我的余额</TextAction>
                 </div>
               </>
             )}
-          </SectionBlock>
-
-          <SectionBlock title="批注">
-            <div
-              style={{
-                borderLeft: '1px solid var(--rule)',
-                paddingLeft: 12,
-                fontSize: 12.5,
-                lineHeight: 1.7,
-                color: 'var(--ink-secondary)',
-              }}
-            >
-              余额按服务者分开记，充值、消费、退款只影响对应账户。
-            </div>
-            <div style={{ marginTop: 10 }}>
-              <TextAction onClick={() => router.push('/player/balances')}>查看我的余额</TextAction>
-            </div>
           </SectionBlock>
         </div>
 
@@ -234,11 +214,11 @@ export default function PlayerDashboardView() {
           <LedgerTable
             columns={COLUMNS}
             rows={rows}
+            className="pm-flow-table"
             caption="最近余额流水"
             empty={
               <EmptyState
                 title="还没有流水。"
-                hint="第一笔充值会记在这里。"
                 action={<TextAction onClick={() => router.push('/player/balances')}>查看我的余额</TextAction>}
               />
             }

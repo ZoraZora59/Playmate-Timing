@@ -5,10 +5,18 @@ import { App, Spin } from 'antd';
 import apiClient from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { ProviderDashboard, ProviderPlayerAgg } from '@/types';
-import { COLORS } from '@/lib/theme';
-import { Avatar, InfoBanner, EmptyState } from '@/components/ui';
+import { AccountTag, EmptyState, LedgerTable, type LedgerColumn, type LedgerRow } from '@/components/ui';
 import { formatMoney, formatTimeMinutes, formatPoint, fromNow, toNum } from '@/lib/format';
 import BalanceOpModal, { PlayerLite } from '@/components/BalanceOpModal';
+
+const COLUMNS: LedgerColumn[] = [
+  { key: 'player', label: '玩家', width: '26%' },
+  { key: 'active', label: '最近活跃', width: '14%', hide: 'sm' },
+  { key: 'money', label: '金额', width: '13%', align: 'right' },
+  { key: 'time', label: '时间', width: '12%', align: 'right' },
+  { key: 'point', label: '点数', width: '11%', align: 'right' },
+  { key: 'actions', label: '操作', width: '24%', align: 'right' },
+];
 
 export default function ProviderAccountsPage() {
   const { message } = App.useApp();
@@ -43,61 +51,60 @@ export default function ProviderAccountsPage() {
     });
   };
 
-  if (loading) return <div style={{ padding: 60, textAlign: 'center' }}><Spin size="large" /></div>;
+  if (loading)
+    return (
+      <div style={{ padding: 60, textAlign: 'center' }}>
+        <Spin size="large" />
+      </div>
+    );
 
   const players = data?.active_players || [];
 
+  const rows: LedgerRow[] = players.map((p) => {
+    const name = p.nickname || p.username;
+    const low = toNum(p.money) < 50;
+    return {
+      key: p.player_id,
+      cells: {
+        player: (
+          <div className="pm-cell-name">
+            <AccountTag name={name} size={24} />
+            <span className="pm-cell-name-main" title={name}>
+              {name}
+            </span>
+          </div>
+        ),
+        active: <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{p.last_active ? fromNow(p.last_active) : '—'}</span>,
+        money: (
+          <span className={`num${low ? ' pm-attention' : ''}`} style={{ fontSize: 13, fontWeight: 600 }}>
+            {toNum(p.money) > 0 ? formatMoney(p.money) : '—'}
+          </span>
+        ),
+        time: <span className="num" style={{ fontSize: 12.5 }}>{toNum(p.time) > 0 ? formatTimeMinutes(p.time) : '—'}</span>,
+        point: <span className="num" style={{ fontSize: 12.5 }}>{toNum(p.point) > 0 ? formatPoint(p.point) : '—'}</span>,
+        actions: (
+          <span className="pm-row-actions">
+            <button type="button" className="pm-row-action" onClick={() => openModal(p, 'recharge')}>
+              充值
+            </button>
+            <button type="button" className="pm-row-action muted" onClick={() => openModal(p, 'deduct')}>
+              扣费
+            </button>
+            <button type="button" className="pm-row-action muted" onClick={() => openModal(p, 'refund')}>
+              退款
+            </button>
+          </span>
+        ),
+      },
+    };
+  });
+
   return (
     <div className="animate-pop">
-      <div style={{ marginBottom: 18 }}>
-        <InfoBanner tone="warn">充值 / 扣费 会直接改变玩家余额，属敏感操作，提交前需二次确认。</InfoBanner>
-      </div>
-
       {players.length === 0 ? (
-        <div className="pm-card">
-          <EmptyState title="还没有服务中的玩家" hint="为玩家充值后，他们会出现在这里" />
-        </div>
+        <EmptyState title="还没有服务中的玩家" />
       ) : (
-        <div className="pm-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 16 }}>
-          {players.map((p) => (
-            <div key={p.player_id} className="pm-card" style={{ padding: '18px 20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <Avatar name={p.nickname || p.username} seed={p.player_id} size={44} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 600 }}>{p.nickname || p.username}</div>
-                  <div style={{ fontSize: 12, color: COLORS.textMuted }}>
-                    {p.last_active ? `最近活跃 ${fromNow(p.last_active)}` : '暂无陪玩记录'}
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-                <MiniStat label="金额" value={toNum(p.money) > 0 ? formatMoney(p.money) : '—'} color={COLORS.money} />
-                <MiniStat label="时间" value={toNum(p.time) > 0 ? formatTimeMinutes(p.time) : '—'} color={COLORS.time} />
-                <MiniStat label="点数" value={toNum(p.point) > 0 ? formatPoint(p.point) : '—'} color={COLORS.point} />
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button
-                  onClick={() => openModal(p, 'recharge')}
-                  style={{ flex: 1, padding: '10px 4px', border: 'none', borderRadius: 3, background: COLORS.money, color: '#fff', font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
-                >
-                  充值
-                </button>
-                <button
-                  onClick={() => openModal(p, 'deduct')}
-                  style={{ flex: 1, padding: '10px 4px', border: '1px solid #F2C2CD', borderRadius: 3, background: '#fff', color: COLORS.danger, font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
-                >
-                  扣费
-                </button>
-                <button
-                  onClick={() => openModal(p, 'refund')}
-                  style={{ flex: 1, padding: '10px 4px', border: '1px solid #CFE3FC', borderRadius: 3, background: '#fff', color: COLORS.time, font: "600 13px 'Noto Sans SC',sans-serif", cursor: 'pointer' }}
-                >
-                  退款
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <LedgerTable columns={COLUMNS} rows={rows} className="pm-accounts-table" caption="玩家余额" />
       )}
 
       <BalanceOpModal
@@ -108,17 +115,6 @@ export default function ProviderAccountsPage() {
         onClose={() => setModal((m) => ({ ...m, open: false }))}
         onDone={load}
       />
-    </div>
-  );
-}
-
-function MiniStat({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <div style={{ flex: 1, background: COLORS.bgSubtle, border: '1px solid ' + COLORS.divider, borderRadius: 3, padding: '11px 12px' }}>
-      <div style={{ fontSize: 11, color: COLORS.textMuted, marginBottom: 3 }}>{label}</div>
-      <div className="font-display" style={{ fontWeight: 600, fontSize: 15, color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {value}
-      </div>
     </div>
   );
 }

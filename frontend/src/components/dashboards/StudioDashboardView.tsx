@@ -121,7 +121,6 @@ export default function StudioDashboardView() {
       <SectionBlock title="工作室" attention>
         <EmptyState
           title="还没有工作室。"
-          hint="创建工作室后，审批、成员和本月充值会出现在这里。"
           action={
             <button className="pm-btn pm-btn-primary" onClick={() => router.push('/studio/manage')}>
               创建工作室
@@ -151,12 +150,9 @@ export default function StudioDashboardView() {
         provider: (
           <div className="pm-cell-name">
             <AccountTag name={name} size={24} />
-            <div className="pm-cell-name-text">
-              <div className="pm-cell-name-main" title={name}>
-                {name}
-              </div>
-              {rel.provider?.username && <div className="pm-cell-name-sub">{`@${rel.provider.username}`}</div>}
-            </div>
+            <span className="pm-cell-name-main" title={name}>
+              {name}
+            </span>
           </div>
         ),
         notes: (
@@ -170,18 +166,24 @@ export default function StudioDashboardView() {
           </span>
         ),
         actions: (
-          <div className="pm-cell-actions">
+          <span className="pm-row-actions">
             <button
-              className="pm-btn pm-btn-primary pm-btn-sm"
+              type="button"
+              className="pm-row-action"
               onClick={() => handleProcess(rel, 'approved')}
               disabled={busy}
             >
               {busy ? '处理中' : '批准'}
             </button>
-            <TextAction onClick={() => setRejectRel(rel)} disabled={busy}>
+            <button
+              type="button"
+              className="pm-row-action muted"
+              onClick={() => setRejectRel(rel)}
+              disabled={busy}
+            >
               驳回
-            </TextAction>
-          </div>
+            </button>
+          </span>
         ),
       },
     };
@@ -196,14 +198,9 @@ export default function StudioDashboardView() {
         provider: (
           <div className="pm-cell-name">
             <AccountTag name={name} size={24} />
-            <div className="pm-cell-name-text">
-              <div className="pm-cell-name-main" title={name}>
-                {name}
-              </div>
-              {member.provider?.username && (
-                <div className="pm-cell-name-sub">{`@${member.provider.username}`}</div>
-              )}
-            </div>
+            <span className="pm-cell-name-main" title={name}>
+              {name}
+            </span>
           </div>
         ),
         players: <span className="num">{member.player_count}</span>,
@@ -244,7 +241,6 @@ export default function StudioDashboardView() {
           empty={
             <EmptyState
               title="没有待批的申请。"
-              hint="新的入驻申请会出现在这里。"
               action={<TextAction onClick={() => router.push('/studio/members')}>去成员管理</TextAction>}
             />
           }
@@ -261,7 +257,7 @@ export default function StudioDashboardView() {
             color: 'var(--ink-muted)',
           }}
         >
-          本月账头
+          本月概览
         </div>
         <LedgerHead
           variant="compact"
@@ -269,25 +265,21 @@ export default function StudioDashboardView() {
             {
               label: '本月充值',
               value: formatMoney(data.monthly_flow),
-              sub: `${data.studio.name} · 金额充值 · 本月 1 日至今`,
             },
             {
               label: '成员',
               value: data.member_count,
               unit: '人',
-              sub: '已通过审批',
             },
             {
               label: '平均评分',
               value: hasReviews ? data.average_rating!.toFixed(1) : '—',
               unit: hasReviews ? '分' : undefined,
-              sub: hasReviews ? `${data.review_count} 条评价` : '暂无评价',
             },
             {
               label: '服务玩家',
               value: data.served_player_count,
               unit: '人',
-              sub: '有对局记录',
             },
           ]}
         />
@@ -298,9 +290,6 @@ export default function StudioDashboardView() {
           title="成员"
           action={<TextAction onClick={() => router.push('/studio/members')}>成员管理</TextAction>}
         >
-          <div style={{ marginBottom: 4, fontSize: 11.5, color: 'var(--ink-muted)' }}>
-            共 {data.member_count} 位{members ? ` · 显示 ${visibleMembers.length} 位` : ''}
-          </div>
           {membersError ? (
             <EmptyState
               title="没读到成员。"
@@ -315,7 +304,6 @@ export default function StudioDashboardView() {
               empty={
                 <EmptyState
                   title="还没有成员。"
-                  hint="批准入驻申请后，成员会出现在这里。"
                   action={<TextAction onClick={() => router.push('/studio/approvals')}>去审批</TextAction>}
                 />
               }
@@ -334,9 +322,6 @@ export default function StudioDashboardView() {
         onCancel={() => setRejectRel(null)}
         onOk={() => rejectRel && handleProcess(rejectRel, 'rejected')}
       >
-        <p style={{ margin: '8px 0 0', fontSize: 13, lineHeight: 1.7, color: 'var(--ink-secondary)' }}>
-          申请说明会原样保留。
-        </p>
         {rejectRel?.notes && (
           <p
             style={{

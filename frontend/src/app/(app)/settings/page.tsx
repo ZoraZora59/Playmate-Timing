@@ -5,8 +5,8 @@ import { App, Spin, Form, Input, Button } from 'antd';
 import apiClient from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { User, UserRole } from '@/types';
-import { COLORS, ROLE_HUE } from '@/lib/theme';
-import { Avatar } from '@/components/ui';
+import { COLORS } from '@/lib/theme';
+import { Avatar, EmptyState } from '@/components/ui';
 
 const ROLE_LABEL: Record<UserRole, string> = {
   [UserRole.PLAYER]: '玩家',
@@ -73,90 +73,43 @@ export default function SettingsPage() {
 
   if (!profile) {
     return (
-      <div className="animate-pop" style={{ maxWidth: 720 }}>
-        <div className="pm-card" style={{ padding: '40px 24px', textAlign: 'center', color: COLORS.textMuted }}>
-          暂无账号信息
-        </div>
+      <div className="animate-pop" style={{ maxWidth: 560 }}>
+        <EmptyState title="暂无账号信息" />
       </div>
     );
   }
 
-  const roleHue = ROLE_HUE[profile.role] ?? COLORS.primary;
   const displayName = profile.nickname || profile.username;
 
-  const readonlyRow = (label: string, value: string) => (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 16,
-        padding: '13px 16px',
-        background: COLORS.bgSubtle,
-        border: '1px solid ' + COLORS.divider,
-        borderRadius: 3,
-      }}
-    >
-      <span style={{ fontSize: 13, color: COLORS.textSecondary }}>{label}</span>
-      <span style={{ fontSize: 14, fontWeight: 600, color: COLORS.textPrimary }}>{value}</span>
-    </div>
-  );
-
   return (
-    <div className="animate-pop" style={{ maxWidth: 720 }}>
-      {/* 账号头部卡片 */}
-      <div
-        style={{
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: 4,
-          padding: '24px 26px',
-          marginBottom: 18,
-          background: COLORS.textPrimary,
-          borderTop: `3px solid ${roleHue}`,
-          color: '#fff',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, position: 'relative' }}>
-          <Avatar name={displayName} hue="rgba(255,255,255,.22)" size={56} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="font-display" style={{ fontSize: 22, fontWeight: 700 }}>
-              {displayName}
-            </div>
-            <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.78)', marginTop: 3 }}>
-              @{profile.username} / {ROLE_LABEL[profile.role]}
-            </div>
+    <div className="animate-pop" style={{ maxWidth: 560 }}>
+      <div className="pm-profile-head">
+        <Avatar name={displayName} size={56} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', color: COLORS.textPrimary }}>
+            {displayName}
           </div>
-          <span
-            style={{
-              background: 'rgba(255,255,255,.22)',
-              padding: '6px 14px',
-              borderRadius: 4,
-              fontSize: 12.5,
-              fontWeight: 600,
-            }}
-          >
-            {ROLE_LABEL[profile.role]}
-          </span>
+          <div style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 4 }}>@{profile.username}</div>
         </div>
+        <span className="pm-profile-role">{ROLE_LABEL[profile.role]}</span>
       </div>
 
-      {/* 只读账号信息 */}
-      <div className="pm-card" style={{ padding: '20px 22px', marginBottom: 18 }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 14 }}>账号信息</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {readonlyRow('用户名', profile.username)}
-          {readonlyRow('邮箱', profile.email)}
-          {readonlyRow('角色', ROLE_LABEL[profile.role])}
-        </div>
-        <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 12 }}>
-          用户名、邮箱与角色不可修改。
-        </div>
-      </div>
+      <section className="pm-settings-section">
+        <h2 className="pm-settings-title">账号信息</h2>
+        <dl className="pm-settings-list">
+          <div className="pm-settings-row">
+            <dt>用户名</dt>
+            <dd>{profile.username}</dd>
+          </div>
+          <div className="pm-settings-row">
+            <dt>邮箱</dt>
+            <dd>{profile.email}</dd>
+          </div>
+        </dl>
+      </section>
 
-      {/* 可编辑资料 */}
-      <div className="pm-card" style={{ padding: '22px 24px' }}>
-        <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 18 }}>编辑资料</div>
+      <section className="pm-settings-section">
+        <h2 className="pm-settings-title">编辑资料</h2>
         <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false}>
           <Form.Item
             name="nickname"
@@ -176,7 +129,6 @@ export default function SettingsPage() {
             name="avatar"
             label="头像地址"
             rules={[{ type: 'url', message: '请输入有效的图片链接' }]}
-            extra="填写一张图片的 URL 作为头像。"
           >
             <Input placeholder="https://…" size="large" allowClear />
           </Form.Item>
@@ -186,7 +138,7 @@ export default function SettingsPage() {
             </Button>
           </Form.Item>
         </Form>
-      </div>
+      </section>
     </div>
   );
 }

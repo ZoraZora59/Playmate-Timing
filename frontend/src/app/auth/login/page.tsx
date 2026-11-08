@@ -8,7 +8,13 @@ import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import PasswordField from '@/components/PasswordField';
 import { useAuthStore } from '@/store/auth';
 import { LoginForm } from '@/types';
-import { COLORS } from '@/lib/theme';
+
+const TAPE = [
+  { time: '00:26', name: '峡谷第一深情小鲁班', delta: '−50.00', balance: '328.50' },
+  { time: '23:58', name: 'Momo', delta: '+100.00', balance: '136.40' },
+  { time: '23:41', name: '迟到的猫', delta: '−30.00', balance: '52.00' },
+  { time: '23:12', name: '小满', delta: '−50.00', balance: '0.00' },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -30,72 +36,81 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="pm-auth-desk">
-      <div className="pm-auth-sheet">
-        <div className="pm-binding" aria-hidden="true" />
-        <div className="pm-auth-head">
-          <div className="pm-auth-brand">
-            <span className="pm-brand-seal" style={{ width: 30, height: 44, fontSize: 12 }} aria-hidden="true">
+    <div className="pm-auth">
+      <main className="pm-auth-panel">
+        <div className="pm-auth-top">
+          <Link href="/" className="pm-brand" aria-label="陪玩平台首页">
+            <span className="pm-brand-seal" aria-hidden="true">
               账房
             </span>
-            <div>
-              <div className="pm-brand-name">陪玩平台</div>
-              <div className="pm-brand-sub">今晚的局</div>
-            </div>
-          </div>
-          <h1 className="pm-auth-title">欢迎回来</h1>
-          <p className="pm-auth-sub">登录后翻自己的账页。</p>
-        </div>
-
-        <div className="pm-double-rule" aria-hidden="true" style={{ marginBottom: 22 }} />
-
-        <Form<LoginForm>
-          layout="vertical"
-          requiredMark={false}
-          onFinish={onFinish}
-          disabled={submitting}
-          size="large"
-        >
-          <Form.Item
-            name="username"
-            label="用户名 / 邮箱"
-            rules={[{ required: true, message: '请输入用户名或邮箱' }]}
-          >
-            <Input prefix={<UserOutlined />} placeholder="用户名或邮箱" autoComplete="username" />
-          </Form.Item>
-
-          <Form.Item
-            name="password"
-            label="密码"
-            rules={[{ required: true, message: '请输入密码' }]}
-          >
-            <PasswordField
-              prefix={<LockOutlined />}
-              placeholder="请输入密码"
-              autoComplete="current-password"
-            />
-          </Form.Item>
-
-          <Form.Item style={{ marginTop: 4, marginBottom: 14 }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              block
-              loading={submitting}
-              style={{ height: 44, borderRadius: 2, fontWeight: 600 }}
-            >
-              登录
-            </Button>
-          </Form.Item>
-        </Form>
-
-        <div style={{ textAlign: 'center', fontSize: 13, color: COLORS.textSecondary }}>
-          还没有账号？
-          <Link href="/auth/register" style={{ color: COLORS.primary, fontWeight: 600, marginLeft: 4 }}>
-            去注册
+            <span className="pm-brand-text">
+              <span className="pm-brand-name">陪玩平台</span>
+              <span className="pm-brand-sub">今晚的局</span>
+            </span>
+          </Link>
+          <Link href="/" className="pm-auth-back">
+            返回首页
           </Link>
         </div>
-      </div>
+
+        <div className="pm-auth-form">
+          <h1 className="pm-auth-title">登录</h1>
+          <p className="pm-auth-sub">用你的账号翻账。</p>
+
+          <Form<LoginForm> layout="vertical" requiredMark={false} onFinish={onFinish} disabled={submitting}>
+            <Form.Item
+              name="username"
+              label="用户名 / 邮箱"
+              rules={[{ required: true, message: '请输入用户名或邮箱' }]}
+            >
+              <Input prefix={<UserOutlined />} placeholder="用户名或邮箱" autoComplete="username" />
+            </Form.Item>
+
+            <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
+              <PasswordField
+                prefix={<LockOutlined />}
+                placeholder="请输入密码"
+                autoComplete="current-password"
+              />
+            </Form.Item>
+
+            <Button type="primary" htmlType="submit" block loading={submitting} className="pm-auth-submit">
+              登录
+            </Button>
+          </Form>
+
+          <p className="pm-auth-switch">
+            还没有账号？
+            <Link href="/auth/register">去注册</Link>
+          </p>
+        </div>
+      </main>
+
+      <aside className="pm-auth-preview" aria-label="账页预览">
+        <div className="pm-auth-quote">
+          <h2>
+            局散之后，
+            <br />
+            账还在这里。
+          </h2>
+          <p>开局、消费、结算，一笔一笔都对得上。</p>
+        </div>
+        <div className="pm-auth-sheet">
+          <div className="pm-auth-sheet-head">
+            <span>今晚的流水</span>
+            <span className="num">23:04</span>
+          </div>
+          {TAPE.map((row, i) => (
+            <div className="pm-auth-sheet-row" key={`${row.time}-${i}`}>
+              <span className="pm-auth-sheet-time num">{row.time}</span>
+              <span className="pm-auth-sheet-name">{row.name}</span>
+              <span className="pm-auth-sheet-delta num">{row.delta}</span>
+              <span className="pm-auth-sheet-balance num">{row.balance}</span>
+            </div>
+          ))}
+          <div className="pm-auth-sheet-foot">示例账页 · 数字为演示</div>
+        </div>
+      </aside>
     </div>
   );
 }

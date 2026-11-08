@@ -14,8 +14,14 @@ import {
 } from 'antd';
 import apiClient from '@/lib/api';
 import { BalanceType, PlayStatus, type PlayRecord, type ProviderPlayerAgg } from '@/types';
-import { COLORS } from '@/lib/theme';
-import { Avatar, EmptyState, Pill } from '@/components/ui';
+import {
+  AccountTag,
+  EmptyState,
+  LedgerTable,
+  Stamp,
+  type LedgerColumn,
+  type LedgerRow,
+} from '@/components/ui';
 import { formatBalance, formatDateTime, playStatusMeta } from '@/lib/format';
 
 interface CreateForm {
@@ -37,6 +43,16 @@ const FILTERS: { key: 'all' | PlayStatus; label: string }[] = [
   { key: PlayStatus.ACTIVE, label: '进行中' },
   { key: PlayStatus.COMPLETED, label: '已完成' },
   { key: PlayStatus.CANCELLED, label: '已取消' },
+];
+
+const COLUMNS: LedgerColumn[] = [
+  { key: 'player', label: '玩家', width: '20%' },
+  { key: 'game', label: '游戏 · 模式', width: '25%' },
+  { key: 'start', label: '开始', width: '14%', align: 'right', hide: 'sm' },
+  { key: 'duration', label: '时长', width: '8%', align: 'right', hide: 'sm' },
+  { key: 'amount', label: '结算', width: '12%', align: 'right' },
+  { key: 'status', label: '状态', width: '9%', align: 'right' },
+  { key: 'actions', label: '操作', width: '12%', align: 'right' },
 ];
 
 export default function ProviderPlayRecordsPage() {
@@ -141,7 +157,6 @@ export default function ProviderPlayRecordsPage() {
   const cancelRecord = (record: PlayRecord) => {
     modal.confirm({
       title: '取消这一局？',
-      content: '取消后该局会标记为已取消，且不会产生扣费。',
       okText: '确认取消',
       okButtonProps: { danger: true },
       cancelText: '再想想',
@@ -159,34 +174,65 @@ export default function ProviderPlayRecordsPage() {
 
   const playerName = (r: PlayRecord) => r.player?.nickname || r.player?.username || `玩家 #${r.player_id}`;
 
+  const rows: LedgerRow[] = records.map((r) => {
+    const meta = playStatusMeta(r.status);
+    const active = r.status === PlayStatus.ACTIVE;
+    return {
+      key: r.id,
+      cells: {
+        player: (
+          <div className="pm-cell-name">
+            <AccountTag name={playerName(r)} size={24} />
+            <span className="pm-cell-name-main" title={playerName(r)}>
+              {playerName(r)}
+            </span>
+          </div>
+        ),
+        game: (
+          <span className="pm-cell-name-main" title={`${r.game_name || '未命名对局'}${r.game_mode ? ` · ${r.game_mode}` : ''}`}>
+            {r.game_name || '未命名对局'}
+            {r.game_mode ? <span style={{ fontWeight: 400, color: 'var(--ink-muted)' }}> · {r.game_mode}</span> : null}
+          </span>
+        ),
+        start: <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{formatDateTime(r.start_time)}</span>,
+        duration: <span className="num" style={{ fontSize: 12.5 }}>{r.duration ? `${r.duration} 分钟` : '—'}</span>,
+        amount: (
+          <span className="num" style={{ fontSize: 13, fontWeight: 600 }}>
+            {r.amount && Number(r.amount) > 0 && r.settle_type ? formatBalance(r.settle_type, r.amount) : '—'}
+          </span>
+        ),
+        status: <Stamp tone={active ? 'ink' : 'muted'}>{meta.label}</Stamp>,
+        actions: active ? (
+          <span className="pm-row-actions">
+            <button type="button" className="pm-row-action" onClick={() => openComplete(r)}>
+              完成
+            </button>
+            <button type="button" className="pm-row-action muted" onClick={() => cancelRecord(r)}>
+              取消
+            </button>
+          </span>
+        ) : null,
+      },
+    };
+  });
+
   return (
     <div className="animate-pop">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {FILTERS.map((f) => {
-            const on = filter === f.key;
-            return (
-              <span
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                style={{
-                  padding: '8px 15px',
-                  borderRadius: 3,
-                  fontSize: 12.5,
-                  fontWeight: on ? 600 : 400,
-                  cursor: 'pointer',
-                  background: on ? COLORS.textPrimary : COLORS.bgCard,
-                  color: on ? '#fff' : COLORS.textSecondary,
-                  border: `1px solid ${on ? COLORS.textPrimary : COLORS.border}`,
-                }}
-              >
-                {f.label}
-              </span>
-            );
-          })}
+      <div className="pm-records-bar">
+        <div className="pm-records-filters">
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              className={`pm-tx-filter${filter === f.key ? ' on' : ''}`}
+              onClick={() => setFilter(f.key)}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
-        <Button type="primary" onClick={openCreate} style={{ marginLeft: 'auto', borderRadius: 3, fontWeight: 600 }}>
-          ＋ 开始一局
+        <Button type="primary" onClick={openCreate} style={{ marginLeft: 'auto', fontWeight: 600 }}>
+          开始一局
         </Button>
       </div>
 
@@ -195,94 +241,9 @@ export default function ProviderPlayRecordsPage() {
           <Spin size="large" />
         </div>
       ) : records.length === 0 ? (
-        <div className="pm-card">
-          <EmptyState title="暂无游玩记录" hint="点击「开始一局」，记录会实时出现在这里" />
-        </div>
+        <EmptyState title="暂无游玩记录" />
       ) : (
-        <div className="pm-card pm-table-scroll" style={{ overflow: 'hidden' }}>
-          <div style={{ minWidth: 760 }}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1.4fr 1.3fr 1fr .8fr 1fr .8fr',
-                gap: 12,
-                padding: '13px 20px',
-                background: COLORS.bgSubtle,
-                borderBottom: `1px solid ${COLORS.divider}`,
-                fontSize: 11.5,
-                fontWeight: 600,
-                color: COLORS.textMuted,
-              }}
-            >
-              <div>玩家</div>
-              <div>游戏 / 模式</div>
-              <div>开始时间</div>
-              <div>时长</div>
-              <div style={{ textAlign: 'right' }}>结算</div>
-              <div style={{ textAlign: 'right' }}>操作</div>
-            </div>
-            {records.map((r) => {
-              const meta = playStatusMeta(r.status);
-              const active = r.status === PlayStatus.ACTIVE;
-              return (
-                <div
-                  key={r.id}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1.4fr 1.3fr 1fr .8fr 1fr .8fr',
-                    gap: 12,
-                    alignItems: 'center',
-                    padding: '14px 20px',
-                    borderTop: `1px solid ${COLORS.divider}`,
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                    <Avatar name={playerName(r)} seed={r.player_id} size={34} />
-                    <span style={{ fontSize: 13.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {playerName(r)}
-                    </span>
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 500 }}>{r.game_name || '未命名对局'}</div>
-                    {r.game_mode && <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>{r.game_mode}</div>}
-                  </div>
-                  <div style={{ fontSize: 12.5, color: COLORS.textSecondary }}>{formatDateTime(r.start_time)}</div>
-                  <div style={{ fontSize: 13, color: COLORS.textSecondary }}>{r.duration ? `${r.duration} 分钟` : '—'}</div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div className="font-display" style={{ fontSize: 13.5, fontWeight: 600 }}>
-                      {r.amount && Number(r.amount) > 0 && r.settle_type
-                        ? formatBalance(r.settle_type, r.amount)
-                        : '—'}
-                    </div>
-                    <div style={{ marginTop: 4, display: 'flex', justifyContent: 'flex-end' }}>
-                      <Pill color={meta.color} bg={COLORS.divider}>{meta.label}</Pill>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
-                    {active ? (
-                      <>
-                        <button
-                          onClick={() => openComplete(r)}
-                          style={{ border: 'none', borderRadius: 3, padding: '7px 11px', background: COLORS.money, color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-                        >
-                          完成
-                        </button>
-                        <button
-                          onClick={() => cancelRecord(r)}
-                          style={{ border: '1px solid #F2C2CD', borderRadius: 3, padding: '7px 11px', background: '#fff', color: COLORS.danger, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-                        >
-                          取消
-                        </button>
-                      </>
-                    ) : (
-                      <span style={{ fontSize: 12, color: COLORS.textMuted }}>—</span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <LedgerTable columns={COLUMNS} rows={rows} className="pm-records-table" caption="服务者的游玩记录" />
       )}
 
       <Modal
@@ -293,13 +254,9 @@ export default function ProviderPlayRecordsPage() {
         okText="开始"
         cancelText="取消"
         confirmLoading={creating}
-        okButtonProps={{ style: { borderRadius: 3 } }}
-        cancelButtonProps={{ style: { borderRadius: 3 } }}
       >
         {players.length === 0 && (
-          <div style={{ marginBottom: 14, padding: '10px 12px', borderRadius: 3, background: COLORS.warnBg, color: COLORS.warnText, fontSize: 12.5 }}>
-            还没有可选的玩家。请先在「玩家账户管理」为玩家充值，玩家才会出现在这里。
-          </div>
+          <div className="pm-form-warn">还没有可选的玩家，请先在「玩家账户管理」为玩家充值。</div>
         )}
         <Form form={createForm} layout="vertical" requiredMark={false}>
           <Form.Item name="player_id" label="玩家" rules={[{ required: true, message: '请选择玩家' }]}>
@@ -342,8 +299,6 @@ export default function ProviderPlayRecordsPage() {
         okText="确认完成"
         cancelText="返回"
         confirmLoading={completing}
-        okButtonProps={{ style: { borderRadius: 3 } }}
-        cancelButtonProps={{ style: { borderRadius: 3 } }}
       >
         <Form form={completeForm} layout="vertical" requiredMark={false}>
           <Form.Item name="duration" label="游玩时长（分钟）" rules={[{ required: true, message: '请输入时长' }]}>
@@ -355,9 +310,6 @@ export default function ProviderPlayRecordsPage() {
           <Form.Item name="settle" label="从玩家余额扣费" valuePropName="checked">
             <Switch />
           </Form.Item>
-          <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
-            关闭扣费开关时只记录本局结果，不改动玩家余额。
-          </div>
         </Form>
       </Modal>
     </div>

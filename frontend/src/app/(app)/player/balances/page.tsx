@@ -5,11 +5,9 @@ import { useRouter } from 'next/navigation';
 import { App, Spin } from 'antd';
 import apiClient from '@/lib/api';
 import { Balance } from '@/types';
-import { COLORS } from '@/lib/theme';
-import { Avatar, InfoBanner, EmptyState } from '@/components/ui';
+import { Avatar, EmptyState, TextAction } from '@/components/ui';
 import { formatBalance, balanceMeta } from '@/lib/format';
 
-// 按 provider_id 分组后的结构
 interface ProviderGroup {
   providerId: number;
   name: string;
@@ -54,95 +52,46 @@ export default function PlayerBalancesPage() {
     load();
   }, [load]);
 
-  if (loading) return <div style={{ padding: 60, textAlign: 'center' }}><Spin size="large" /></div>;
+  if (loading)
+    return (
+      <div style={{ padding: 60, textAlign: 'center' }}>
+        <Spin size="large" />
+      </div>
+    );
 
   const list = groups || [];
 
+  if (list.length === 0) {
+    return (
+      <div className="animate-pop">
+        <EmptyState title="还没有余额账户" />
+      </div>
+    );
+  }
+
   return (
     <div className="animate-pop">
-      <div style={{ marginBottom: 16 }}>
-        <InfoBanner tone="info">
-          余额按「服务者」分别记账 —— 你在每位服务者处都有独立的账户，互不通用。
-        </InfoBanner>
-      </div>
-
-      {list.length === 0 ? (
-        <div className="pm-card">
-          <EmptyState title="还没有任何余额账户" hint="向服务者充值后，账户会显示在这里" />
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {list.map((g) => (
-            <div
-              key={g.providerId}
-              style={{
-                background: COLORS.bgCard,
-                border: `1px solid ${COLORS.border}`,
-                borderRadius: 4,
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 13,
-                  padding: '18px 22px',
-                  borderBottom: `1px solid ${COLORS.divider}`,
-                }}
-              >
-                <Avatar name={g.name} seed={g.providerId} size={46} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 16, fontWeight: 600 }}>{g.name}</div>
-                  <div style={{ fontSize: 12.5, color: COLORS.textMuted }}>
-                    {g.balances.length} 个余额账户
-                  </div>
-                </div>
-                <button
-                  onClick={() => router.push(`/player/transactions?balance=${g.balances[0].id}`)}
-                  style={{
-                    border: `1px solid ${COLORS.border}`,
-                    background: COLORS.bgCard,
-                    borderRadius: 3,
-                    padding: '8px 14px',
-                    font: "600 12.5px 'Noto Sans SC',sans-serif",
-                    color: COLORS.primary,
-                    cursor: 'pointer',
-                  }}
-                >
-                  查看流水
-                </button>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, padding: '18px 22px' }}>
-                {g.balances.map((b) => {
-                  const meta = balanceMeta(b.type);
-                  return (
-                    <div
-                      key={b.id}
-                      style={{
-                        flex: 1,
-                        minWidth: 160,
-                        border: `1px solid ${COLORS.divider}`,
-                        borderRadius: 4,
-                        padding: '15px 17px',
-                        background: COLORS.bgSubtle,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 9 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: 3, background: meta.color }} />
-                        <span style={{ fontSize: 12.5, color: COLORS.textSecondary }}>{meta.label}余额</span>
-                      </div>
-                      <div className="font-display" style={{ fontWeight: 700, fontSize: 26, color: meta.color }}>
-                        {formatBalance(b.type, b.amount)}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+      {list.map((g) => (
+        <section key={g.providerId} className="pm-account">
+          <div className="pm-account-head">
+            <div className="pm-account-name">
+              <Avatar name={g.name} size={28} />
+              {g.name}
             </div>
-          ))}
-        </div>
-      )}
+            <TextAction onClick={() => router.push(`/player/transactions?balance=${g.balances[0].id}`)}>
+              查看流水
+            </TextAction>
+          </div>
+          <div className="pm-account-balances">
+            {g.balances.map((b) => (
+              <div key={b.id} className="pm-account-balance">
+                <div className="pm-account-label">{balanceMeta(b.type).label}余额</div>
+                <div className="pm-account-value num">{formatBalance(b.type, b.amount)}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

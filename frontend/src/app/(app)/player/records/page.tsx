@@ -3,10 +3,25 @@
 import { useEffect, useState } from 'react';
 import { App, Input, Modal, Rate, Segmented, Spin, Switch } from 'antd';
 import apiClient from '@/lib/api';
-import { Pill, EmptyState } from '@/components/ui';
-import { COLORS } from '@/lib/theme';
-import { formatBalance, fromNow, playStatusMeta } from '@/lib/format';
+import {
+  EmptyState,
+  LedgerTable,
+  Stamp,
+  type LedgerColumn,
+  type LedgerRow,
+} from '@/components/ui';
+import { formatBalance, formatDateTime, playStatusMeta } from '@/lib/format';
 import { PlayStatus, ReviewTargetType, type PlayRecord } from '@/types';
+
+const COLUMNS: LedgerColumn[] = [
+  { key: 'game', label: '游戏 · 模式', width: '28%' },
+  { key: 'provider', label: '服务者', width: '14%' },
+  { key: 'duration', label: '时长', width: '10%', align: 'right', hide: 'sm' },
+  { key: 'amount', label: '消费', width: '12%', align: 'right' },
+  { key: 'start', label: '开始', width: '14%', align: 'right', hide: 'sm' },
+  { key: 'status', label: '状态', width: '10%', align: 'right' },
+  { key: 'action', label: '操作', width: '12%', align: 'right' },
+];
 
 export default function PlayerRecordsPage() {
   const { message } = App.useApp();
@@ -91,116 +106,50 @@ export default function PlayerRecordsPage() {
   if (records.length === 0) {
     return (
       <div className="animate-pop">
-        <EmptyState title="暂无游玩记录" hint="开始一局陪玩后，记录会出现在这里" />
+        <EmptyState title="暂无游玩记录" />
       </div>
     );
   }
 
+  const rows: LedgerRow[] = records.map((r) => {
+    const meta = playStatusMeta(r.status);
+    const canReviewAny =
+      r.status === PlayStatus.COMPLETED &&
+      (canReview(r, ReviewTargetType.PROVIDER) || canReview(r, ReviewTargetType.STUDIO));
+    return {
+      key: r.id,
+      cells: {
+        game: (
+          <span className="pm-cell-name-main" title={`${r.game_name || '未命名对局'}${r.game_mode ? ` · ${r.game_mode}` : ''}`}>
+            {r.game_name || '未命名对局'}
+            {r.game_mode ? <span style={{ fontWeight: 400, color: 'var(--ink-muted)' }}> · {r.game_mode}</span> : null}
+          </span>
+        ),
+        provider: <span style={{ fontSize: 13 }}>{r.provider?.nickname || r.provider?.username || '—'}</span>,
+        duration: (
+          <span className="num" style={{ fontSize: 12.5 }}>
+            {r.duration != null ? `${r.duration} 分钟` : '—'}
+          </span>
+        ),
+        amount: (
+          <span className="num" style={{ fontSize: 12.5 }}>
+            {r.amount != null && r.settle_type ? formatBalance(r.settle_type, r.amount) : '—'}
+          </span>
+        ),
+        start: <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{formatDateTime(r.start_time)}</span>,
+        status: <Stamp tone={r.status === PlayStatus.ACTIVE ? 'ink' : 'muted'}>{meta.label}</Stamp>,
+        action: canReviewAny ? (
+          <button type="button" className="pm-row-action" onClick={() => openReview(r)}>
+            评价
+          </button>
+        ) : null,
+      },
+    };
+  });
+
   return (
-    <div className="animate-pop" style={{ position: 'relative', paddingLeft: 8 }}>
-      {records.map((r) => {
-        const isActive = r.status === PlayStatus.ACTIVE;
-        const meta = playStatusMeta(r.status);
-        const dotColor = isActive ? COLORS.money : COLORS.border;
-        const canReviewAny =
-          r.status === PlayStatus.COMPLETED &&
-          (canReview(r, ReviewTargetType.PROVIDER) || canReview(r, ReviewTargetType.STUDIO));
-        return (
-          <div key={r.id} style={{ display: 'flex', gap: 18, paddingBottom: 6 }}>
-            {/* 左侧时间线：圆点 + 竖线 */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 14 }}>
-              <span
-                className={isActive ? 'live-dot' : undefined}
-                style={{
-                  width: 13,
-                  height: 13,
-                  borderRadius: '50%',
-                  border: `3px solid ${dotColor}`,
-                  background: '#fff',
-                  flex: 'none',
-                  marginTop: 22,
-                }}
-              />
-              <span style={{ flex: 1, width: 2, background: COLORS.border }} />
-            </div>
-
-            {/* 右侧卡片 */}
-            <div
-              style={{
-                flex: 1,
-                marginBottom: 14,
-                background: COLORS.bgCard,
-                border: `1px solid ${COLORS.border}`,
-                borderRadius: 4,
-                padding: '17px 20px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ fontSize: 15, fontWeight: 600 }}>{r.game_name || '未命名对局'}</div>
-                {r.game_mode && <Pill>{r.game_mode}</Pill>}
-                <span style={{ marginLeft: 'auto', fontSize: 12, color: COLORS.textMuted }}>
-                  {fromNow(r.start_time)}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', gap: 26, marginTop: 13 }}>
-                <div>
-                  <div style={{ fontSize: 11, color: COLORS.textMuted }}>服务者</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 500, marginTop: 2 }}>
-                    {r.provider?.nickname || '—'}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: COLORS.textMuted }}>时长</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 500, marginTop: 2 }}>
-                    {r.duration != null ? `${r.duration} 分钟` : '—'}
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, color: COLORS.textMuted }}>消费</div>
-                  <div style={{ fontSize: 13.5, fontWeight: 500, marginTop: 2 }}>
-                    {r.amount != null && r.settle_type
-                      ? formatBalance(r.settle_type, r.amount)
-                      : '—'}
-                  </div>
-                </div>
-                <div style={{ marginLeft: 'auto', alignSelf: 'center', display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {canReviewAny && (
-                    <button
-                      onClick={() => openReview(r)}
-                      style={{
-                        border: `1px solid ${COLORS.primary}`,
-                        background: '#fff',
-                        color: COLORS.primary,
-                        borderRadius: 3,
-                        padding: '6px 14px',
-                        fontSize: 12.5,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      评价
-                    </button>
-                  )}
-                  <span
-                    style={{
-                      fontSize: 12.5,
-                      fontWeight: 600,
-                      padding: '5px 13px',
-                      borderRadius: 4,
-                      background: meta.color,
-                      color: '#fff',
-                      opacity: 0.92,
-                    }}
-                  >
-                    {meta.label}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+    <div className="animate-pop">
+      <LedgerTable columns={COLUMNS} rows={rows} caption="我的游玩记录" />
 
       <Modal
         title="评价本局"
@@ -210,16 +159,12 @@ export default function PlayerRecordsPage() {
         okText="提交评价"
         cancelText="取消"
         confirmLoading={submitting}
-        okButtonProps={{ style: { borderRadius: 3 } }}
-        cancelButtonProps={{ style: { borderRadius: 3 } }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 4 }}>
-          <div style={{ fontSize: 13, color: COLORS.textSecondary, lineHeight: 1.6 }}>
+          <div style={{ fontSize: 13, color: 'var(--ink-secondary)', lineHeight: 1.6 }}>
             {reviewTarget?.game_name || '未命名对局'}
-            {reviewTarget?.game_mode ? ` / ${reviewTarget.game_mode}` : ''}
-            {targetType === ReviewTargetType.PROVIDER
-              ? reviewTarget?.provider?.nickname || reviewTarget?.provider?.username || '服务者'
-              : reviewTarget?.studio?.name || '工作室'}
+            {reviewTarget?.game_mode ? ` · ${reviewTarget.game_mode}` : ''}
+            {reviewTarget?.provider?.nickname ? ` · ${reviewTarget.provider.nickname}` : ''}
           </div>
 
           <Segmented
@@ -236,25 +181,25 @@ export default function PlayerRecordsPage() {
           />
 
           <div>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textSecondary, marginBottom: 6 }}>评分</div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: 6 }}>评分</div>
             <Rate value={rating} onChange={setRating} />
           </div>
 
           <div>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.textSecondary, marginBottom: 6 }}>评价内容</div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-secondary)', marginBottom: 6 }}>评价内容</div>
             <Input.TextArea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={4}
               maxLength={300}
               showCount
-              placeholder="说说这次陪玩的体验吧（可选）"
+              placeholder="可选"
             />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Switch checked={anonymous} onChange={setAnonymous} />
-            <span style={{ fontSize: 13, color: COLORS.textSecondary }}>匿名评价</span>
+            <span style={{ fontSize: 13, color: 'var(--ink-secondary)' }}>匿名评价</span>
           </div>
         </div>
       </Modal>

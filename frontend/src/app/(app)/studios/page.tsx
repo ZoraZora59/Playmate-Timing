@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { App, Input, Pagination, Spin } from 'antd';
 import apiClient from '@/lib/api';
 import { Studio } from '@/types';
-import { Avatar, EmptyState } from '@/components/ui';
-import { COLORS } from '@/lib/theme';
+import { EmptyState } from '@/components/ui';
 
 const PAGE_SIZE = 12;
 
@@ -47,12 +46,11 @@ export default function StudiosPage() {
 
   return (
     <div className="animate-pop">
-      {/* 搜索 */}
-      <div style={{ marginBottom: 18, maxWidth: 420 }}>
+      <div style={{ marginBottom: 20, maxWidth: 380 }}>
         <Input.Search
           allowClear
           size="large"
-          placeholder="搜索工作室名称…"
+          placeholder="搜索工作室"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           onSearch={onSearch}
@@ -65,95 +63,26 @@ export default function StudiosPage() {
           <Spin size="large" />
         </div>
       ) : studios.length === 0 ? (
-        <div className="pm-card" style={{ padding: '12px 20px' }}>
-          <EmptyState
-            title="没有找到工作室"
-            hint={search ? `没有匹配「${search}」的工作室，换个关键词试试。` : '暂时还没有可浏览的工作室。'}
-          />
-        </div>
+        <EmptyState title="没有找到工作室" />
       ) : (
         <>
-          <div
-            className="pm-grid-3"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 18,
-            }}
-          >
+          <div className="pm-studio-list">
             {studios.map((studio) => (
-              <div
+              <button
                 key={studio.id}
-                className="pm-card"
-                style={{
-                  padding: '20px 22px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
+                type="button"
+                className="pm-studio-row"
+                onClick={() => router.push(`/studios/${studio.id}`)}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-                  <Avatar name={studio.name} seed={studio.id} size={46} />
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div
-                      style={{
-                        fontSize: 16,
-                        fontWeight: 600,
-                        color: COLORS.textPrimary,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {studio.name}
-                    </div>
-                    {studio.owner?.nickname && (
-                      <div
-                        style={{
-                          fontSize: 12.5,
-                          color: COLORS.textMuted,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        负责人：{studio.owner.nickname}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    fontSize: 13,
-                    lineHeight: 1.6,
-                    color: COLORS.textSecondary,
-                    marginBottom: 18,
-                    minHeight: 42,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {studio.description || '该工作室还没有填写简介。'}
-                </div>
-
-                <button
-                  onClick={() => router.push(`/studios/${studio.id}`)}
-                  style={{
-                    marginTop: 'auto',
-                    padding: 11,
-                    border: `1px solid ${COLORS.border}`,
-                    background: COLORS.bgCard,
-                    borderRadius: 3,
-                    color: COLORS.primary,
-                    font: "600 13px 'Noto Sans SC', sans-serif",
-                    cursor: 'pointer',
-                  }}
-                >
-                  查看详情
-                </button>
-              </div>
+                <span className="pm-studio-main">
+                  <span className="pm-studio-name">{studio.name}</span>
+                  <span className="pm-studio-desc">{studio.description || '暂无简介'}</span>
+                </span>
+                <span className="pm-studio-owner">
+                  {studio.owner?.nickname ? `负责人 ${studio.owner.nickname}` : ''}
+                </span>
+                <span className="pm-studio-go">查看</span>
+              </button>
             ))}
           </div>
 

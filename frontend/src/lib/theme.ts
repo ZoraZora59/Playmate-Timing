@@ -1,55 +1,55 @@
-// 设计令牌 —— 夜班账房 · 今晚的局
+// 设计令牌 —— 明亮工作台 · 夜班账房
 // 纸、墨、线、章四种材料；朱印只表示“要动手 / 待处理 / 透支 / 危险”。
 import type { ThemeConfig } from 'antd';
 
 export const COLORS = {
   // 中性 / 纸墨
-  bgPage: '#F1F2EC',
-  bgCard: '#F7F8F4',
-  bgSubtle: '#E7E9E0',
-  sidebar: '#141B20',
+  bgPage: '#F6F6F2',
+  bgCard: '#FFFFFF',
+  bgSubtle: '#EDEFE8',
+  sidebar: '#FFFFFF',
 
-  textPrimary: '#1D272D',
-  textSecondary: '#46534E',
-  textMuted: '#5E6A64',
+  textPrimary: '#14181B',
+  textSecondary: '#4D5651',
+  textMuted: '#78827C',
 
-  border: '#CBD1C6',
-  divider: '#CBD1C6',
-  lineHeavy: '#A8B1A5',
+  border: '#DCDFD6',
+  divider: '#DCDFD6',
+  lineHeavy: '#B8BEB4',
 
   // 墨色主操作
-  primary: '#1D272D',
-  primaryHover: '#2A353B',
-  primaryDark: '#141B20',
-  primarySoft: '#E7E9E0',
+  primary: '#14181B',
+  primaryHover: '#2B3339',
+  primaryDark: '#0E1215',
+  primarySoft: '#EDEFE8',
 
   // 兼容旧页面：金额/时间/点数不再各发一色
-  cyan: '#46534E',
-  teal: '#46534E',
-  signal: '#B5342B',
-  money: '#1D272D',
-  moneySoft: '#E7E9E0',
-  time: '#1D272D',
-  timeSoft: '#E7E9E0',
-  point: '#1D272D',
-  pointSoft: '#E7E9E0',
+  cyan: '#4D5651',
+  teal: '#4D5651',
+  signal: '#C0392B',
+  money: '#14181B',
+  moneySoft: '#EDEFE8',
+  time: '#14181B',
+  timeSoft: '#EDEFE8',
+  point: '#14181B',
+  pointSoft: '#EDEFE8',
 
-  danger: '#B5342B',
-  dangerSoft: '#F3E4E1',
-  warnBg: '#F3E4E1',
-  warnText: '#8C2720',
-  infoBg: '#E7E9E0',
-  infoText: '#46534E',
+  danger: '#C0392B',
+  dangerSoft: '#FBEAE7',
+  warnBg: '#FBEAE7',
+  warnText: '#93291F',
+  infoBg: '#EDEFE8',
+  infoText: '#4D5651',
 
-  // 夜班账房新增
-  ink: '#141B20',
-  inkHover: '#2A353B',
+  // 夜班账房
+  ink: '#14181B',
+  inkHover: '#2B3339',
   sheetEdge: '#0B0F12',
-  seal: '#B5342B',
-  sealDeep: '#8C2720',
-  sealSoft: '#F3E4E1',
-  sidebarText: '#E9EBE3',
-  sidebarMuted: '#9AA49D',
+  seal: '#C0392B',
+  sealDeep: '#93291F',
+  sealSoft: '#FBEAE7',
+  sidebarText: '#14181B',
+  sidebarMuted: '#78827C',
 } as const;
 
 // 角色不靠颜色区分；保留导出以兼容旧引用。
@@ -97,9 +97,9 @@ export const antdTheme: ThemeConfig = {
     fontFamily: FONT_BODY,
     fontSize: 14,
     controlHeight: 38,
-    controlOutline: 'rgba(29,39,45,.12)',
+    controlOutline: 'rgba(20,24,27,.12)',
     boxShadow: 'none',
-    boxShadowSecondary: '0 18px 50px rgba(20,27,32,.28)',
+    boxShadowSecondary: '0 18px 50px rgba(20,24,27,.18)',
   },
   components: {
     Button: {
@@ -115,27 +115,27 @@ export const antdTheme: ThemeConfig = {
       controlHeight: 40,
       borderRadius: 2,
       activeBorderColor: COLORS.textPrimary,
-      activeShadow: '0 0 0 2px rgba(29,39,45,.12)',
+      activeShadow: '0 0 0 2px rgba(20,24,27,.12)',
       hoverBorderColor: COLORS.lineHeavy,
     },
     InputNumber: {
       controlHeight: 40,
       borderRadius: 2,
       activeBorderColor: COLORS.textPrimary,
-      activeShadow: '0 0 0 2px rgba(29,39,45,.12)',
+      activeShadow: '0 0 0 2px rgba(20,24,27,.12)',
       hoverBorderColor: COLORS.lineHeavy,
     },
     Select: {
       controlHeight: 40,
       borderRadius: 2,
       activeBorderColor: COLORS.textPrimary,
-      activeOutlineColor: 'rgba(29,39,45,.12)',
+      activeOutlineColor: 'rgba(20,24,27,.12)',
       hoverBorderColor: COLORS.lineHeavy,
     },
     Modal: {
       borderRadiusLG: 3,
       contentBg: COLORS.bgCard,
-      boxShadow: '0 18px 50px rgba(20,27,32,.28)',
+      boxShadow: '0 18px 50px rgba(20,24,27,.18)',
     },
     Table: {
       borderRadiusLG: 0,

@@ -90,9 +90,7 @@ export default function StudioDetailPage() {
   if (notFound || !studio) {
     return (
       <div className="animate-pop">
-        <SectionCard>
-          <EmptyState title="未找到该工作室" hint="工作室可能已删除，或链接有误。" />
-        </SectionCard>
+        <EmptyState title="未找到该工作室" />
       </div>
     );
   }
@@ -105,69 +103,55 @@ export default function StudioDetailPage() {
 
   return (
     <div className="animate-pop">
-      {/* 工作室头卡 */}
+      {/* 工作室头部 */}
       <div
         style={{
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: 4,
-          padding: '26px 28px',
-          marginBottom: 18,
-          background: COLORS.textPrimary,
-          borderTop: `3px solid ${COLORS.primary}`,
-          color: '#fff',
+          padding: '24px 0 20px',
+          marginBottom: 20,
+          borderTop: `2px solid ${COLORS.textPrimary}`,
+          borderBottom: '1px solid ' + COLORS.divider,
         }}
       >
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
           <div
-            className="font-display"
             style={{
-              width: 60,
-              height: 60,
-              borderRadius: 4,
-              background: 'rgba(255,255,255,.18)',
+              width: 56,
+              height: 56,
+              borderRadius: 2,
+              background: COLORS.bgSubtle,
+              border: '1px solid ' + COLORS.divider,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: 26,
+              fontWeight: 600,
+              fontSize: 24,
+              color: COLORS.textPrimary,
               flex: 'none',
             }}
           >
             {initialOf(studio.name)}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="font-display" style={{ fontSize: 24, fontWeight: 700, letterSpacing: '.2px' }}>
+            <div style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', color: COLORS.textPrimary }}>
               {studio.name}
             </div>
             <div
               style={{
-                fontSize: 13,
-                color: 'rgba(255,255,255,.78)',
+                fontSize: 13.5,
+                color: COLORS.textSecondary,
                 marginTop: 6,
-                lineHeight: 1.6,
+                lineHeight: 1.7,
                 maxWidth: 620,
               }}
             >
               {studio.description || '这家工作室还没有填写简介。'}
-            </div>
-            <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.55)', marginTop: 10 }}>
-              负责人：{studio.owner?.nickname || studio.owner?.username || '未知'}
             </div>
           </div>
           {canApply && (
             <Button
               type="primary"
               onClick={() => setApplyOpen(true)}
-              style={{
-                flex: 'none',
-                background: '#fff',
-                borderColor: '#fff',
-                color: COLORS.primaryDark,
-                fontWeight: 600,
-                borderRadius: 3,
-                height: 40,
-              }}
+              style={{ flex: 'none', height: 40, borderRadius: 2, fontWeight: 600 }}
             >
               申请加入
             </Button>
@@ -175,31 +159,31 @@ export default function StudioDetailPage() {
         </div>
 
         {/* 一行统计 */}
-        <div style={{ position: 'relative', display: 'flex', gap: 26, marginTop: 22 }}>
+        <div style={{ display: 'flex', gap: 26, marginTop: 22 }}>
           <div>
-            <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.55)' }}>成员数</div>
-            <div className="font-display" style={{ fontWeight: 600, fontSize: 20, marginTop: 3 }}>
+            <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>成员数</div>
+            <div style={{ fontWeight: 600, fontSize: 20, marginTop: 3, color: COLORS.textPrimary }}>
               {memberCount}{' '}
-              <span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,.6)' }}>位</span>
+              <span style={{ fontSize: 12, fontWeight: 400, color: COLORS.textMuted }}>位</span>
             </div>
           </div>
-          <div style={{ width: 1, background: 'rgba(255,255,255,.15)' }} />
+          <div style={{ width: 1, background: COLORS.divider }} />
           <div>
-            <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.55)' }}>平均评分</div>
-            <div className="font-display" style={{ fontWeight: 600, fontSize: 20, marginTop: 3 }}>
+            <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>平均评分</div>
+            <div style={{ fontWeight: 600, fontSize: 20, marginTop: 3, color: COLORS.textPrimary }}>
               {avgRating > 0 ? (
                 <Stars rating={avgRating} size={16} />
               ) : (
-                <span style={{ color: 'rgba(255,255,255,.6)', fontSize: 16 }}>暂无</span>
+                <span style={{ color: COLORS.textMuted, fontSize: 16 }}>暂无</span>
               )}
             </div>
           </div>
-          <div style={{ width: 1, background: 'rgba(255,255,255,.15)' }} />
+          <div style={{ width: 1, background: COLORS.divider }} />
           <div>
-            <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,.55)' }}>评价数</div>
-            <div className="font-display" style={{ fontWeight: 600, fontSize: 20, marginTop: 3 }}>
+            <div style={{ fontSize: 11.5, color: COLORS.textMuted }}>评价数</div>
+            <div style={{ fontWeight: 600, fontSize: 20, marginTop: 3, color: COLORS.textPrimary }}>
               {reviewCount}{' '}
-              <span style={{ fontSize: 12, fontWeight: 400, color: 'rgba(255,255,255,.6)' }}>条</span>
+              <span style={{ fontSize: 12, fontWeight: 400, color: COLORS.textMuted }}>条</span>
             </div>
           </div>
         </div>
@@ -209,25 +193,14 @@ export default function StudioDetailPage() {
       <div style={{ marginBottom: 18 }}>
         <SectionCard title={`工作室成员（${memberCount}）`}>
           {memberCount === 0 ? (
-            <EmptyState title="暂无成员" hint="还没有服务者加入这家工作室。" />
+            <EmptyState title="暂无成员" />
           ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, padding: '6px 0' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px 32px', padding: '8px 0' }}>
               {approved.map((rel: ProviderStudioRelation) => {
                 const name = rel.provider?.nickname || rel.provider?.username || '服务者';
                 return (
-                  <div
-                    key={rel.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 11,
-                      padding: '11px 16px 11px 11px',
-                      border: '1px solid ' + COLORS.divider,
-                      borderRadius: 4,
-                      background: COLORS.bgSubtle,
-                    }}
-                  >
-                    <Avatar name={name} seed={rel.provider_id} size={38} />
+                  <div key={rel.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Avatar name={name} size={30} />
                     <span style={{ fontSize: 14, fontWeight: 600 }}>{name}</span>
                   </div>
                 );
@@ -240,7 +213,7 @@ export default function StudioDetailPage() {
       {/* 评价区 */}
       <SectionCard title={`玩家评价（${reviewCount}）`} bodyPad={false}>
         {reviews.length === 0 ? (
-          <EmptyState title="暂无评价" hint="还没有玩家评价过这家工作室。" />
+          <EmptyState title="暂无评价" />
         ) : (
           reviews.map((rv) => {
             const author = rv.is_anonymous
@@ -286,12 +259,7 @@ export default function StudioDetailPage() {
         okText="提交申请"
         cancelText="取消"
         confirmLoading={submitting}
-        okButtonProps={{ style: { borderRadius: 3 } }}
-        cancelButtonProps={{ style: { borderRadius: 3 } }}
       >
-        <div style={{ fontSize: 13, color: COLORS.textSecondary, margin: '8px 0 10px' }}>
-          填写一段备注，向工作室说明你的主玩游戏与经验（可选）。
-        </div>
         <Input.TextArea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
