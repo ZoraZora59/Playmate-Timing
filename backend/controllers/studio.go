@@ -33,7 +33,7 @@ type ApplyProviderRequest struct {
 // ProcessApplicationRequest 处理申请请求
 type ProcessApplicationRequest struct {
 	Status models.RelationStatus `json:"status" binding:"required,oneof=approved rejected"`
-	Notes  string                `json:"notes"`
+	Notes  *string               `json:"notes"`
 }
 
 // CreateStudio 创建工作室
@@ -396,7 +396,10 @@ func (sc *StudioController) ProcessApplication(c *gin.Context) {
 	updates := map[string]interface{}{
 		"status":       req.Status,
 		"processed_at": &now,
-		"notes":        req.Notes,
+	}
+	// 未传 notes 时保留申请人写的说明；传了才覆盖。
+	if req.Notes != nil {
+		updates["notes"] = *req.Notes
 	}
 
 	if err := db.Model(&relation).Updates(updates).Error; err != nil {
@@ -412,9 +415,10 @@ type StudioMember struct {
 	Provider    models.User           `json:"provider"`
 	Status      models.RelationStatus `json:"status"`
 	PlayerCount int64                 `json:"player_count"`
-	MoneyFlow   decimal.Decimal       `json:"money_flow"`
-	Rating      float64               `json:"rating"`
-	JoinedAt    *time.Time            `json:"joined_at"`
+	// MoneyFlow 是该服务者在本工作室下的当前金额余额合计，不是一段时间的交易流水。
+	MoneyFlow decimal.Decimal `json:"money_flow"`
+	Rating    float64         `json:"rating"`
+	JoinedAt  *time.Time      `json:"joined_at"`
 }
 
 // GetStudioMembers 获取工作室成员列表（工作室所有者查看自己的工作室）

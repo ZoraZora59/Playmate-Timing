@@ -3,11 +3,12 @@
 import { Suspense, useMemo } from 'react';
 import { Form, Input, Button, Segmented, App, Spin } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, SmileOutlined, PhoneOutlined } from '@ant-design/icons';
+import PasswordField from '@/components/PasswordField';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { RegisterForm, UserRole } from '@/types';
-import { COLORS, FONT_DISPLAY, ROLE_HUE } from '@/lib/theme';
+import { COLORS } from '@/lib/theme';
 
 interface RegisterFields extends RegisterForm {
   confirm: string;
@@ -36,7 +37,6 @@ function RegisterCard() {
   }, [searchParams]);
 
   const selectedRole: UserRole = Form.useWatch('role', form) ?? initialRole;
-  const accent = ROLE_HUE[selectedRole];
   const roleDesc = ROLE_OPTIONS.find((o) => o.value === selectedRole)?.desc ?? '';
 
   const handleSubmit = async (values: RegisterFields) => {
@@ -58,62 +58,24 @@ function RegisterCard() {
   };
 
   return (
-    <div
-      className="animate-pop"
-      style={{
-        minHeight: '100vh',
-        width: '100%',
-        background: COLORS.bgPage,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 20px',
-      }}
-    >
-      <div
-        style={{
-          width: 440,
-          maxWidth: '100%',
-          background: COLORS.bgCard,
-          border: `1px solid ${COLORS.border}`,
-          borderRadius: 4,
-          padding: '34px 34px 30px',
-        }}
-      >
-        {/* logo + 标题 */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 26 }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: 4,
-              background: COLORS.textPrimary,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: FONT_DISPLAY,
-              fontWeight: 700,
-              fontSize: 25,
-              color: '#fff',
-            }}
-          >
-            陪
+    <div className="pm-auth-desk">
+      <div className="pm-auth-sheet pm-auth-sheet-wide">
+        <div className="pm-binding" aria-hidden="true" />
+        <div className="pm-auth-head">
+          <div className="pm-auth-brand">
+            <span className="pm-brand-seal" style={{ width: 30, height: 44, fontSize: 12 }} aria-hidden="true">
+              账房
+            </span>
+            <div>
+              <div className="pm-brand-name">陪玩平台</div>
+              <div className="pm-brand-sub">今晚的局</div>
+            </div>
           </div>
-          <div
-            style={{
-              fontFamily: FONT_DISPLAY,
-              fontWeight: 700,
-              fontSize: 22,
-              color: COLORS.textPrimary,
-              marginTop: 14,
-            }}
-          >
-            创建账户
-          </div>
-          <div style={{ fontSize: 13, color: COLORS.textSecondary, marginTop: 4 }}>
-            加入陪玩平台 · {roleDesc}
-          </div>
+          <h1 className="pm-auth-title">创建账户</h1>
+          <p className="pm-auth-sub">加入陪玩平台 · {roleDesc}</p>
         </div>
+
+        <div className="pm-double-rule" aria-hidden="true" style={{ marginBottom: 22 }} />
 
         <Form
           form={form}
@@ -124,12 +86,15 @@ function RegisterCard() {
           initialValues={{ role: initialRole }}
           onFinish={handleSubmit}
         >
-          <Form.Item name="role" label="选择身份" style={{ marginBottom: 18 }}>
+          <Form.Item name="role" label="选择身份" style={{ marginBottom: 8 }}>
             <Segmented<UserRole>
               block
               options={ROLE_OPTIONS.map((o) => ({ label: o.label, value: o.value }))}
             />
           </Form.Item>
+          <div style={{ marginTop: 0, marginBottom: 18, fontSize: 11.5, color: COLORS.textMuted }}>
+            身份注册后不可更改。
+          </div>
 
           <Form.Item
             name="username"
@@ -150,7 +115,7 @@ function RegisterCard() {
               { type: 'email', message: '请输入有效的邮箱地址' },
             ]}
           >
-            <Input prefix={<MailOutlined />} placeholder="用于找回账户" autoComplete="email" />
+            <Input prefix={<MailOutlined />} placeholder="用于账号识别与通知" autoComplete="email" />
           </Form.Item>
 
           <Form.Item
@@ -161,7 +126,11 @@ function RegisterCard() {
               { min: 6, message: '密码至少 6 位' },
             ]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="至少 6 位" autoComplete="new-password" />
+            <PasswordField
+              prefix={<LockOutlined />}
+              placeholder="至少 6 位"
+              autoComplete="new-password"
+            />
           </Form.Item>
 
           <Form.Item
@@ -180,7 +149,11 @@ function RegisterCard() {
               }),
             ]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="再次输入密码" autoComplete="new-password" />
+            <PasswordField
+              prefix={<LockOutlined />}
+              placeholder="再次输入密码"
+              autoComplete="new-password"
+            />
           </Form.Item>
 
           <Form.Item name="nickname" label="昵称（可选）">
@@ -202,10 +175,8 @@ function RegisterCard() {
               block
               loading={isLoading}
               style={{
-                height: 46,
-                borderRadius: 3,
-                background: accent,
-                borderColor: accent,
+                height: 44,
+                borderRadius: 2,
                 fontWeight: 600,
               }}
             >
@@ -229,7 +200,7 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="pm-auth-desk">
           <Spin size="large" />
         </div>
       }

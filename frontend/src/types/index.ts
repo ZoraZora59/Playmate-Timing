@@ -219,7 +219,8 @@ export interface StudioDashboard {
   member_count: number;
   served_player_count: number;
   monthly_flow: Decimal;
-  average_rating: number;
+  average_rating: number | null;
+  review_count: number;
   pending_count: number;
   pending_applications: ProviderStudioRelation[];
 }

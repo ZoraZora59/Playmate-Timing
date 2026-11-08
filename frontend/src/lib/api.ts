@@ -25,6 +25,11 @@ import {
 
 type Params = Record<string, string | number | undefined> | undefined;
 
+export interface ApiError extends Error {
+  status?: number;
+  code?: number;
+}
+
 class ApiClient {
   private client: AxiosInstance;
 
@@ -48,7 +53,12 @@ class ApiClient {
           this.removeToken();
           if (typeof window !== 'undefined') window.location.href = '/auth/login';
         }
-        return Promise.reject(error);
+        const apiError = new Error(
+          error.response?.data?.message || error.message || '请求失败'
+        ) as ApiError;
+        apiError.status = error.response?.status;
+        apiError.code = error.response?.data?.code;
+        return Promise.reject(apiError);
       }
     );
   }
@@ -112,7 +122,7 @@ class ApiClient {
     this.request<ProviderStudioRelation>('post', `/studio/${id}/apply`, { notes });
   getStudioApplications = (id: number, params?: Params) =>
     this.request<PageResponse<ProviderStudioRelation>>('get', `/studio/${id}/applications`, null, params);
-  processApplication = (id: number, status: 'approved' | 'rejected', notes?: string) =>
+  processApplication = (id: number, status: 'approved' | 'rejected', notes: string) =>
     this.request<ProviderStudioRelation>('put', `/studio/applications/${id}`, { status, notes });
   getStudioMembers = () => this.request<StudioMember[]>('get', '/studio/members');
   removeStudioMember = (providerId: number) =>

@@ -220,24 +220,30 @@ func (dc *DashboardController) StudioDashboard(c *gin.Context) {
 		Where("studio_id = ? AND status = ?", studio.ID, models.StatusApproved).Count(&memberCount)
 
 	var servedPlayers int64
-	db.Model(&models.Balance{}).Where("studio_id = ?", studio.ID).Distinct("player_id").Count(&servedPlayers)
+	db.Model(&models.PlayRecord{}).
+		Where("studio_id = ? AND status IN ?", studio.ID, []models.PlayStatus{models.PlayStatusActive, models.PlayStatusCompleted}).
+		Distinct("player_id").Count(&servedPlayers)
 
 	now := time.Now()
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	var monthlyFlow decimal.Decimal
 	db.Model(&models.BalanceTransaction{}).
 		Joins("JOIN balances ON balances.id = balance_transactions.balance_id").
-		Where("balances.studio_id = ? AND balance_transactions.type = ? AND balance_transactions.created_at >= ?",
-			studio.ID, models.TransactionTypeRecharge, startOfMonth).
+		Where("balances.studio_id = ? AND balances.type = ? AND balance_transactions.type = ? AND balance_transactions.created_at >= ?",
+			studio.ID, models.BalanceTypeMoney, models.TransactionTypeRecharge, startOfMonth).
 		Select("COALESCE(SUM(balance_transactions.amount),0)").Scan(&monthlyFlow)
+
+	var reviewCount int64
+	db.Model(&models.Review{}).
+		Where("target_type = ? AND target_id = ?", models.ReviewTargetStudio, studio.ID).Count(&reviewCount)
 
 	var avgRating *float64
 	db.Model(&models.Review{}).
 		Where("target_type = ? AND target_id = ?", models.ReviewTargetStudio, studio.ID).
 		Select("AVG(rating)").Scan(&avgRating)
-	rating := 0.0
+	var averageRating interface{}
 	if avgRating != nil {
-		rating = *avgRating
+		averageRating = *avgRating
 	}
 
 	var pendingCount int64
@@ -256,7 +262,8 @@ func (dc *DashboardController) StudioDashboard(c *gin.Context) {
 		"member_count":         memberCount,
 		"served_player_count":  servedPlayers,
 		"monthly_flow":         monthlyFlow,
-		"average_rating":       rating,
+		"average_rating":       averageRating,
+		"review_count":         reviewCount,
 		"pending_count":        pendingCount,
 		"pending_applications": pending,
 	})

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { App, Button, Form, Input } from 'antd';
+import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import PasswordField from '@/components/PasswordField';
 import { useAuthStore } from '@/store/auth';
 import { LoginForm } from '@/types';
 import { COLORS } from '@/lib/theme';
@@ -28,68 +30,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      className="animate-pop"
-      style={{
-        minHeight: '100vh',
-        width: '100%',
-        background: COLORS.bgPage,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 20px',
-      }}
-    >
-      <div
-        className="pm-card"
-        style={{
-          width: 400,
-          maxWidth: '100%',
-          padding: '36px 34px 30px',
-        }}
-      >
-        {/* logo + 标题 */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            marginBottom: 28,
-          }}
-        >
-          <div
-            className="font-display"
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 4,
-              background: COLORS.textPrimary,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: 28,
-              color: '#fff',
-            }}
-          >
-            陪
+    <div className="pm-auth-desk">
+      <div className="pm-auth-sheet">
+        <div className="pm-binding" aria-hidden="true" />
+        <div className="pm-auth-head">
+          <div className="pm-auth-brand">
+            <span className="pm-brand-seal" style={{ width: 30, height: 44, fontSize: 12 }} aria-hidden="true">
+              账房
+            </span>
+            <div>
+              <div className="pm-brand-name">陪玩平台</div>
+              <div className="pm-brand-sub">今晚的局</div>
+            </div>
           </div>
-          <h1
-            className="font-display"
-            style={{
-              margin: '18px 0 4px',
-              fontSize: 22,
-              fontWeight: 700,
-              color: COLORS.textPrimary,
-              letterSpacing: '.2px',
-            }}
-          >
-            欢迎回来
-          </h1>
-          <p style={{ margin: 0, fontSize: 13, color: COLORS.textSecondary }}>
-            登录陪玩平台，继续你的服务管理
-          </p>
+          <h1 className="pm-auth-title">欢迎回来</h1>
+          <p className="pm-auth-sub">登录后翻自己的账页。</p>
         </div>
+
+        <div className="pm-double-rule" aria-hidden="true" style={{ marginBottom: 22 }} />
 
         <Form<LoginForm>
           layout="vertical"
@@ -103,7 +61,7 @@ export default function LoginPage() {
             label="用户名 / 邮箱"
             rules={[{ required: true, message: '请输入用户名或邮箱' }]}
           >
-            <Input placeholder="用户名或邮箱" autoComplete="username" />
+            <Input prefix={<UserOutlined />} placeholder="用户名或邮箱" autoComplete="username" />
           </Form.Item>
 
           <Form.Item
@@ -111,16 +69,20 @@ export default function LoginPage() {
             label="密码"
             rules={[{ required: true, message: '请输入密码' }]}
           >
-            <Input.Password placeholder="请输入密码" autoComplete="current-password" />
+            <PasswordField
+              prefix={<LockOutlined />}
+              placeholder="请输入密码"
+              autoComplete="current-password"
+            />
           </Form.Item>
 
-          <Form.Item style={{ marginTop: 4, marginBottom: 12 }}>
+          <Form.Item style={{ marginTop: 4, marginBottom: 14 }}>
             <Button
               type="primary"
               htmlType="submit"
               block
               loading={submitting}
-              style={{ height: 44, borderRadius: 3, fontWeight: 600 }}
+              style={{ height: 44, borderRadius: 2, fontWeight: 600 }}
             >
               登录
             </Button>
@@ -129,10 +91,7 @@ export default function LoginPage() {
 
         <div style={{ textAlign: 'center', fontSize: 13, color: COLORS.textSecondary }}>
           还没有账号？
-          <Link
-            href="/auth/register"
-            style={{ color: COLORS.primary, fontWeight: 600, marginLeft: 4 }}
-          >
+          <Link href="/auth/register" style={{ color: COLORS.primary, fontWeight: 600, marginLeft: 4 }}>
             去注册
           </Link>
         </div>

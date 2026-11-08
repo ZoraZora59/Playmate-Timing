@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { App, Spin } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import { App } from 'antd';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/lib/api';
-import { COLORS } from '@/lib/theme';
 import {
   formatMoney,
   formatTimeMinutes,
@@ -14,222 +13,237 @@ import {
   txTypeLabel,
   formatDateTime,
 } from '@/lib/format';
-import { StatCard, ScoreStrip, SectionCard, EmptyState, Pill } from '@/components/ui';
+import {
+  LedgerHead,
+  LedgerTable,
+  SectionBlock,
+  EmptyState,
+  Stamp,
+  TextAction,
+  SkeletonLedger,
+  type LedgerColumn,
+  type LedgerRow,
+} from '@/components/ui';
 import type { PlayerDashboard } from '@/types';
 
-const TX_GRID = '1.6fr .8fr .9fr';
-
-const QUICK_LINKS = [
-  { label: '余额账户', to: '/player/balances', color: COLORS.money },
-  { label: '余额流水', to: '/player/transactions', color: COLORS.time },
-  { label: '游玩记录', to: '/player/records', color: COLORS.point },
-  { label: '我的评价', to: '/player/reviews', color: COLORS.primary },
+const COLUMNS: LedgerColumn[] = [
+  { key: 'summary', label: '摘要', width: '42%' },
+  { key: 'type', label: '类型', width: '12%', hide: 'sm' },
+  { key: 'change', label: '变动', width: '20%', align: 'right' },
+  { key: 'balance', label: '结余', width: '26%', align: 'right' },
 ];
+
+function minutesSince(iso?: string): number {
+  if (!iso) return 0;
+  const start = new Date(iso).getTime();
+  if (Number.isNaN(start)) return 0;
+  return Math.max(0, Math.floor((Date.now() - start) / 60000));
+}
 
 export default function PlayerDashboardView() {
   const { message } = App.useApp();
   const router = useRouter();
   const [data, setData] = useState<PlayerDashboard | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setData(await apiClient.getPlayerDashboard());
+      setLoadError(null);
     } catch (e) {
+      setLoadError(e instanceof Error ? e.message : '加载失败');
       message.error(e instanceof Error ? e.message : '加载失败');
     } finally {
       setLoading(false);
     }
-  };
+  }, [message]);
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [load]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      event.preventDefault();
+      load();
+    };
+    window.addEventListener('pm:refresh', handler);
+    return () => window.removeEventListener('pm:refresh', handler);
+  }, [load]);
 
   if (loading) {
+    return <SkeletonLedger rows={5} />;
+  }
+
+  if (loadError) {
     return (
-      <div style={{ padding: '60px', textAlign: 'center' }}>
-        <Spin size="large" />
-      </div>
+      <EmptyState
+        title="没读到数据。"
+        hint={loadError}
+        action={<TextAction onClick={load}>再试一次</TextAction>}
+      />
     );
   }
 
   if (!data) {
     return (
-      <div className="animate-pop">
-        <EmptyState title="暂无控制台数据" hint="稍后再试或刷新页面" />
-      </div>
+      <EmptyState
+        title="这一页还空着。"
+        hint="稍后再试，或刷新一次。"
+        action={<TextAction onClick={load}>刷新</TextAction>}
+      />
     );
   }
 
-  const ongoing = data.ongoing_records[0];
-  const ongoingProviderName = ongoing?.provider?.nickname || ongoing?.provider?.username;
   const recent = data.recent_transactions.slice(0, 6);
+  const ongoing = data.ongoing_records.slice(0, 2);
+  const moreOngoing = Math.max(0, data.ongoing_records.length - ongoing.length);
+
+  const rows: LedgerRow[] = recent.map((t) => {
+    const credit = txIsCredit(t.type);
+    const type = t.balance?.type ?? 'money';
+    const by = t.operator?.nickname || t.balance?.provider?.nickname || '系统';
+    const serial = `№ ${String(t.id).padStart(6, '0')}`;
+    return {
+      key: t.id,
+      cells: {
+        summary: (
+          <div style={{ minWidth: 0 }}>
+            <div className="pm-cell-name-main">{t.description || '余额变动'}</div>
+            <div className="pm-cell-name-sub">
+              {[by, formatDateTime(t.created_at), serial].filter(Boolean).join(' · ')}
+            </div>
+          </div>
+        ),
+        type: <Stamp tone="muted">{txTypeLabel(t.type)}</Stamp>,
+        change: (
+          <span className="pm-cell-amount num">
+            {credit ? '+' : '−'}
+            {formatBalance(type, t.amount)}
+          </span>
+        ),
+        balance: (
+          <span className="num" style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>
+            {formatBalance(type, t.after_amount)}
+          </span>
+        ),
+      },
+    };
+  });
 
   return (
-    <div className="animate-pop">
-      <ScoreStrip>
-        <StatCard label="金额余额" value={formatMoney(data.money_total)} sub="可用余额" color={COLORS.money} />
-        <StatCard
-          label="时间余额"
-          value={formatTimeMinutes(data.time_total).replace(' 分钟', '')}
-          unit="分钟"
-          sub="按服务者累计"
-          color={COLORS.time}
-        />
-        <StatCard
-          label="点数余额"
-          value={formatPoint(data.point_total).replace(' 点', '')}
-          unit="点"
-          sub="按服务者累计"
-          color={COLORS.point}
-        />
-        <StatCard label="服务者" value={data.provider_count} unit="位" sub="有余额往来" color={COLORS.primary} />
-      </ScoreStrip>
+    <div>
+      <LedgerHead
+        items={[
+          {
+            label: '金额余额',
+            value: formatMoney(data.money_total),
+            sub: '按服务者分账户合计',
+          },
+          {
+            label: '时间余额',
+            value: formatTimeMinutes(data.time_total).replace(' 分钟', ''),
+            unit: '分钟',
+            sub: '按服务者累计',
+          },
+          {
+            label: '点数余额',
+            value: formatPoint(data.point_total).replace(' 点', ''),
+            unit: '点',
+            sub: '按服务者累计',
+          },
+          {
+            label: '服务者',
+            value: data.provider_count,
+            unit: '位',
+            sub: '有余额往来',
+          },
+        ]}
+      />
 
-      <div className="pm-grid-2" style={{ display: 'grid', gridTemplateColumns: '1.55fr 1fr', gap: 16, marginTop: 16 }}>
-        <SectionCard
-          title="最近流水"
-          bodyPad={false}
-          extra={
-            <button className="pm-link" onClick={() => router.push('/player/transactions')}>
-              查看全部
-            </button>
-          }
-        >
-          {recent.length === 0 ? (
-            <EmptyState title="暂无流水记录" hint="充值或消费后会显示在这里" />
-          ) : (
-            <div className="pm-table-scroll">
-              <div className="pm-tx-table">
-                <div
-                  className="pm-tx-grid"
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: TX_GRID,
-                    gap: 12,
-                    padding: '9px 18px',
-                    background: COLORS.bgSubtle,
-                    borderBottom: `1px solid ${COLORS.divider}`,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: COLORS.textMuted,
-                  }}
-                >
-                  <div>说明</div>
-                  <div className="pm-tx-type">类型</div>
-                  <div style={{ textAlign: 'right' }}>变动</div>
-                </div>
-                {recent.map((t) => {
-                  const credit = txIsCredit(t.type);
-                  const by = t.operator?.nickname || t.balance?.provider?.nickname;
-                  const type = t.balance?.type;
+      <div className="pm-dash-grid pm-player-grid" style={{ marginTop: 28 }}>
+        <div className="pm-dash-stack">
+          <SectionBlock title="当前这一局">
+            {ongoing.length === 0 ? (
+              <EmptyState
+                title="还没有开着的局。"
+                hint="服务者开局后会显示在这里。"
+                action={<TextAction onClick={() => router.push('/player/records')}>去看游玩记录</TextAction>}
+              />
+            ) : (
+              <>
+                {ongoing.map((record) => {
+                  const providerName = record.provider?.nickname || record.provider?.username;
                   return (
                     <div
-                      key={t.id}
-                      className="pm-row pm-tx-grid"
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: TX_GRID,
-                        gap: 12,
-                        alignItems: 'center',
-                        padding: '12px 18px',
-                        borderBottom: `1px solid ${COLORS.divider}`,
-                      }}
+                      key={record.id}
+                      style={{ padding: '12px 0', borderBottom: '1px solid var(--rule)' }}
                     >
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {t.description || '余额变动'}
-                        </div>
-                        <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginTop: 2 }}>
-                          {[by, formatDateTime(t.created_at)].filter(Boolean).join('，')}
-                        </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 15, fontWeight: 700 }}>{record.game_name || '未命名对局'}</span>
+                        {record.game_mode && <Stamp tone="muted">{record.game_mode}</Stamp>}
                       </div>
-                      <div className="pm-tx-type">
-                        <Pill color={credit ? COLORS.money : COLORS.textSecondary}>{txTypeLabel(t.type)}</Pill>
+                      <div className="pm-cell-meta" style={{ marginTop: 6 }}>
+                        {providerName ? `服务者 ${providerName} · ` : ''}
+                        开始于 {formatDateTime(record.start_time)} · 已进行 {minutesSince(record.start_time)} 分
                       </div>
-                      <div
-                        className="font-display num"
-                        style={{ textAlign: 'right', fontWeight: 700, fontSize: 14, color: credit ? COLORS.money : COLORS.danger }}
-                      >
-                        {credit ? '+' : '-'}
-                        {type ? formatBalance(type, t.amount) : formatMoney(t.amount)}
+                      <div className="pm-live-row" style={{ marginTop: 9 }}>
+                        <span className="pm-live-dot" aria-hidden="true" />
+                        <Stamp tone="ink">进行中</Stamp>
                       </div>
                     </div>
                   );
                 })}
-              </div>
-            </div>
-          )}
-        </SectionCard>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <SectionCard title="进行中的陪玩" bodyPad={false}>
-            {ongoing ? (
-              <div style={{ padding: '16px 18px', borderLeft: `3px solid ${COLORS.primary}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: COLORS.textPrimary }}>
-                    {ongoing.game_name || '未命名对局'}
-                  </span>
-                  {ongoing.game_mode && <Pill color={COLORS.primary}>{ongoing.game_mode}</Pill>}
+                {moreOngoing > 0 && (
+                  <div style={{ paddingTop: 10 }}>
+                    <TextAction onClick={() => router.push('/player/records')}>
+                      另有 {moreOngoing} 局进行中
+                    </TextAction>
+                  </div>
+                )}
+                <div style={{ marginTop: 10 }}>
+                  <TextAction onClick={() => router.push('/player/records')}>查看游玩记录</TextAction>
                 </div>
-                <div style={{ fontSize: 12.5, color: COLORS.textSecondary, marginTop: 8 }}>
-                  {ongoingProviderName ? `服务者 ${ongoingProviderName}` : '陪玩中'}
-                </div>
-                <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginTop: 3 }}>
-                  开始于 {formatDateTime(ongoing.start_time)}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, fontSize: 12, fontWeight: 600, color: COLORS.money }}>
-                  <span className="live-dot" style={{ width: 7, height: 7, borderRadius: 1, background: COLORS.money }} />
-                  进行中
-                </div>
-              </div>
-            ) : (
-              <EmptyState title="暂无进行中的陪玩" hint="服务者开局后会显示在这里" />
+              </>
             )}
-          </SectionCard>
+          </SectionBlock>
 
-          <div className="pm-panel" style={{ padding: '16px 18px' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.textPrimary }}>余额按服务者分开记</div>
-            <div style={{ fontSize: 12.5, lineHeight: 1.7, color: COLORS.textSecondary, marginTop: 6 }}>
-              你在不同服务者处的账户互不通用，充值、消费与退款只影响对应账户。
-            </div>
-            <button
-              className="pm-btn pm-btn-ghost"
-              style={{ width: '100%', height: 36, marginTop: 14 }}
-              onClick={() => router.push('/player/balances')}
+          <SectionBlock title="批注">
+            <div
+              style={{
+                borderLeft: '1px solid var(--rule)',
+                paddingLeft: 12,
+                fontSize: 12.5,
+                lineHeight: 1.7,
+                color: 'var(--ink-secondary)',
+              }}
             >
-              查看我的余额
-            </button>
-          </div>
-
-          <SectionCard title="快速入口" bodyPad={false}>
-            {QUICK_LINKS.map((link) => (
-              <button
-                key={link.to}
-                className="pm-row"
-                onClick={() => router.push(link.to)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 9,
-                  width: '100%',
-                  padding: '10px 18px',
-                  border: 'none',
-                  borderTop: `1px solid ${COLORS.divider}`,
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <span style={{ width: 6, height: 6, borderRadius: 1, background: link.color, flex: 'none' }} />
-                <span style={{ flex: 1, fontSize: 12.5, fontWeight: 600, color: COLORS.textPrimary }}>{link.label}</span>
-                <span style={{ fontSize: 11.5, color: COLORS.textMuted }}>查看</span>
-              </button>
-            ))}
-          </SectionCard>
+              余额按服务者分开记，充值、消费、退款只影响对应账户。
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <TextAction onClick={() => router.push('/player/balances')}>查看我的余额</TextAction>
+            </div>
+          </SectionBlock>
         </div>
+
+        <SectionBlock
+          title="最近流水"
+          action={<TextAction onClick={() => router.push('/player/transactions')}>查看全部</TextAction>}
+        >
+          <LedgerTable
+            columns={COLUMNS}
+            rows={rows}
+            caption="最近余额流水"
+            empty={
+              <EmptyState
+                title="还没有流水。"
+                hint="第一笔充值会记在这里。"
+                action={<TextAction onClick={() => router.push('/player/balances')}>查看我的余额</TextAction>}
+              />
+            }
+          />
+        </SectionBlock>
       </div>
     </div>
   );

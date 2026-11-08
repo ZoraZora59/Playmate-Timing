@@ -48,11 +48,19 @@ describe('金额格式化', () => {
 });
 
 describe('balanceMeta', () => {
-  it('三种类型的标签/颜色不同', () => {
+  it('三种类型的标签/单位不同，颜色统一为墨色', () => {
     expect(balanceMeta(BalanceType.MONEY).label).toBe('金额');
     expect(balanceMeta(BalanceType.TIME).label).toBe('时间');
     expect(balanceMeta(BalanceType.POINT).label).toBe('点数');
-    expect(balanceMeta(BalanceType.MONEY).color).not.toBe(balanceMeta(BalanceType.TIME).color);
+    expect(balanceMeta(BalanceType.MONEY).unit).toBe('¥');
+    expect(balanceMeta(BalanceType.TIME).unit).toBe('分钟');
+    expect(balanceMeta(BalanceType.POINT).unit).toBe('点');
+    const colors = [
+      balanceMeta(BalanceType.MONEY).color,
+      balanceMeta(BalanceType.TIME).color,
+      balanceMeta(BalanceType.POINT).color,
+    ];
+    expect(new Set(colors).size).toBe(1);
   });
 });
 

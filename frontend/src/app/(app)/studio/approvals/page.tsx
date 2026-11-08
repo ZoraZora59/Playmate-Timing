@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { App, Spin } from 'antd';
 import apiClient from '@/lib/api';
-import { Avatar, EmptyState } from '@/components/ui';
+import { Avatar, EmptyState, TextAction } from '@/components/ui';
 import { COLORS } from '@/lib/theme';
 import { fromNow } from '@/lib/format';
 import type { ProviderStudioRelation } from '@/types';
@@ -15,10 +15,12 @@ export default function StudioApprovalsPage() {
   const [apps, setApps] = useState<ProviderStudioRelation[]>([]);
   const [loading, setLoading] = useState(true);
   const [noStudio, setNoStudio] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [processing, setProcessing] = useState<number | null>(null);
 
   const load = async () => {
     try {
+      setLoadError(null);
       setNoStudio(false);
       const dashboard = await apiClient.getStudioDashboard();
       const res = await apiClient.getStudioApplications(dashboard.studio.id, {
@@ -27,9 +29,12 @@ export default function StudioApprovalsPage() {
       });
       setApps(res.list);
     } catch (e) {
-      // 工作室未创建时接口抛 404，展示引导卡而非错误提示
-      setNoStudio(true);
-      void e;
+      const status = (e as { status?: number }).status;
+      if (status === 404) {
+        setNoStudio(true);
+      } else {
+        setLoadError(e instanceof Error ? e.message : '加载失败');
+      }
     } finally {
       setLoading(false);
     }
@@ -37,13 +42,12 @@ export default function StudioApprovalsPage() {
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleProcess = async (rel: ProviderStudioRelation, status: 'approved' | 'rejected') => {
     setProcessing(rel.id);
     try {
-      await apiClient.processApplication(rel.id, status);
+      await apiClient.processApplication(rel.id, status, rel.notes ?? '');
       message.success(status === 'approved' ? '已批准该申请' : '已拒绝该申请');
       setApps((prev) => prev.filter((a) => a.id !== rel.id));
     } catch (e) {
@@ -58,6 +62,16 @@ export default function StudioApprovalsPage() {
       <div style={{ padding: '60px', textAlign: 'center' }}>
         <Spin size="large" />
       </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <EmptyState
+        title="没读到数据。"
+        hint={loadError}
+        action={<TextAction onClick={load}>再试一次</TextAction>}
+      />
     );
   }
 

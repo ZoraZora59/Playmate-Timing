@@ -276,6 +276,15 @@ func TestStudioApprovalFlow(t *testing.T) {
 		t.Fatalf("approve failed: %v", resp)
 	}
 
+	// 审批未携带 notes 时，申请人写的说明必须原样保留。
+	var stored models.ProviderStudioRelation
+	if err := config.DB.First(&stored, relID).Error; err != nil {
+		t.Fatalf("load processed application: %v", err)
+	}
+	if stored.Notes != "想加入" {
+		t.Fatalf("application notes lost after approval: %q", stored.Notes)
+	}
+
 	// 成员列表出现该服务者
 	_, resp = doReq(t, r, "GET", "/api/v1/studio/members", stok, nil)
 	members := resp["data"].([]any)
@@ -291,6 +300,54 @@ func TestStudioApprovalFlow(t *testing.T) {
 }
 
 // --- 用户故事 5：玩家评价服务者，评分汇总 ---
+
+func TestStudioMonthlyFlowMoneyOnly(t *testing.T) {
+	r := newTestApp(t)
+	_, pid := register(t, r, "player", "player_flow", "小柚")
+	vtok, vid := register(t, r, "provider", "provider_flow", "晚风")
+	stok, _ := register(t, r, "studio", "studio_flow", "夜航")
+
+	_, resp := doReq(t, r, "POST", "/api/v1/studio/", stok, map[string]any{"name": "夜航工作室"})
+	sid := uint(mustData(t, resp)["id"].(float64))
+
+	_, resp = doReq(t, r, "POST", fmt.Sprintf("/api/v1/studio/%d/apply", sid), vtok, map[string]any{"notes": "主玩无畏契约"})
+	if resp["code"].(float64) != 0 {
+		t.Fatalf("apply failed: %v", resp)
+	}
+	_, resp = doReq(t, r, "GET", fmt.Sprintf("/api/v1/studio/%d/applications", sid), stok, nil)
+	list := mustData(t, resp)["list"].([]any)
+	relID := uint(list[0].(map[string]any)["id"].(float64))
+	_, resp = doReq(t, r, "PUT", fmt.Sprintf("/api/v1/studio/applications/%d", relID), stok, map[string]any{"status": "approved"})
+	if resp["code"].(float64) != 0 {
+		t.Fatalf("approve failed: %v", resp)
+	}
+
+	// 金额、时间、点数三种充值都写入该工作室的账本。
+	for _, item := range []map[string]any{
+		{"type": "money", "amount": 100},
+		{"type": "time", "amount": 60},
+		{"type": "point", "amount": 300},
+	} {
+		_, resp = doReq(t, r, "POST", "/api/v1/studio/balances", stok, map[string]any{
+			"player_id": pid, "provider_id": vid, "type": item["type"], "amount": item["amount"], "description": "测试充值",
+		})
+		if resp["code"].(float64) != 0 {
+			t.Fatalf("studio recharge %v failed: %v", item["type"], resp)
+		}
+	}
+
+	_, resp = doReq(t, r, "GET", "/api/v1/studio/dashboard", stok, nil)
+	d := mustData(t, resp)
+	if got := decFloat(d["monthly_flow"]); got != 100 {
+		t.Fatalf("monthly_flow = %v, want 100 (money recharge only)", got)
+	}
+	if d["average_rating"] != nil {
+		t.Fatalf("average_rating = %v, want null when there are no reviews", d["average_rating"])
+	}
+	if d["review_count"].(float64) != 0 {
+		t.Fatalf("review_count = %v, want 0", d["review_count"])
+	}
+}
 
 func TestReviewFlow(t *testing.T) {
 	r := newTestApp(t)

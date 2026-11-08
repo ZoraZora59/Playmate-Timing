@@ -86,7 +86,7 @@ export default function StudioMembersPage() {
           >
             <div>成员</div>
             <div style={{ textAlign: 'right' }}>玩家数</div>
-            <div style={{ textAlign: 'right' }}>本月流水</div>
+            <div style={{ textAlign: 'right' }}>账上余额</div>
             <div style={{ textAlign: 'right' }}>评分</div>
             <div style={{ textAlign: 'right' }}>加入时间</div>
             <div style={{ textAlign: 'right' }}>操作</div>
