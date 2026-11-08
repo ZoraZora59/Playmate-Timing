@@ -206,5 +206,42 @@ func (rc *ReviewController) ListMine(c *gin.Context) {
 		return
 	}
 
+	providerIDs := make([]uint, 0)
+	studioIDs := make([]uint, 0)
+	for _, rv := range reviews {
+		if rv.TargetType == models.ReviewTargetProvider {
+			providerIDs = append(providerIDs, rv.TargetID)
+		} else if rv.TargetType == models.ReviewTargetStudio {
+			studioIDs = append(studioIDs, rv.TargetID)
+		}
+	}
+	userNames := map[uint]string{}
+	studioNames := map[uint]string{}
+	if len(providerIDs) > 0 {
+		var users []models.User
+		db.Where("id IN ?", providerIDs).Find(&users)
+		for _, u := range users {
+			if u.Nickname != "" {
+				userNames[u.ID] = u.Nickname
+			} else {
+				userNames[u.ID] = u.Username
+			}
+		}
+	}
+	if len(studioIDs) > 0 {
+		var studios []models.Studio
+		db.Where("id IN ?", studioIDs).Find(&studios)
+		for _, st := range studios {
+			studioNames[st.ID] = st.Name
+		}
+	}
+	for i := range reviews {
+		if reviews[i].TargetType == models.ReviewTargetProvider {
+			reviews[i].TargetName = userNames[reviews[i].TargetID]
+		} else {
+			reviews[i].TargetName = studioNames[reviews[i].TargetID]
+		}
+	}
+
 	utils.PageSuccess(c, reviews, total, page, pageSize)
 }

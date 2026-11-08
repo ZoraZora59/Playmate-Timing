@@ -587,3 +587,36 @@ func ptokOfName(t *testing.T, r *gin.Engine, username string) string {
 	_, resp := doReq(t, r, "POST", "/api/v1/login", "", map[string]any{"username": username, "password": "pass123"})
 	return mustData(t, resp)["token"].(string)
 }
+
+// --- 服务者搜索玩家（添加玩家入口） ---
+
+func TestProviderSearchPlayers(t *testing.T) {
+	r := newTestApp(t)
+
+	providerToken, _ := register(t, r, "provider", "wanfeng", "晚风")
+	_, _ = register(t, r, "player", "alice", "Alice")
+	_, _ = register(t, r, "player", "bob", "Bob")
+	studioToken, _ := register(t, r, "studio", "yehang", "夜航")
+
+	code, resp := doReq(t, r, "GET", "/api/v1/provider/players/search?keyword=ali", providerToken, nil)
+	if code != http.StatusOK || resp["code"].(float64) != 0 {
+		t.Fatalf("search failed: %d %v", code, resp)
+	}
+	list, ok := resp["data"].([]any)
+	if !ok || len(list) != 1 {
+		t.Fatalf("expected one player, got %v", resp["data"])
+	}
+	u := list[0].(map[string]any)
+	if u["username"] != "alice" || u["role"] != "player" {
+		t.Fatalf("unexpected player: %v", u)
+	}
+	if u["email"] != "" || u["phone"] != "" {
+		t.Fatalf("search result must not expose contact: %v", u)
+	}
+
+	// 工作室没有该入口的权限
+	code, resp = doReq(t, r, "GET", "/api/v1/provider/players/search?keyword=ali", studioToken, nil)
+	if code != http.StatusForbidden {
+		t.Fatalf("studio must be forbidden, got %d %v", code, resp)
+	}
+}

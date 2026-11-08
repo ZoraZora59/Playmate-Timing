@@ -83,6 +83,7 @@ func SetupRoutes(r *gin.Engine) {
 		provider.Use(middleware.RequireRole(models.RoleProvider))
 		{
 			provider.GET("/dashboard", dashboardController.ProviderDashboard)
+			provider.GET("/players/search", userController.SearchPlayers)
 			provider.GET("/balance-summary", balanceController.GetProviderBalanceSummary)
 			provider.GET("/balances/:id/transactions", balanceController.GetBalanceTransactions)
 			provider.POST("/balances", balanceController.Recharge)

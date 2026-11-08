@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"companion-platform-backend/config"
@@ -265,6 +266,28 @@ func toPublicUser(u models.User) PublicUser {
 }
 
 // GetUserByID 根据ID获取用户公开信息
+
+// SearchPlayers 服务者按用户名或昵称搜索玩家，用于添加新玩家
+func (uc *UserController) SearchPlayers(c *gin.Context) {
+	keyword := strings.TrimSpace(c.Query("keyword"))
+	if keyword == "" {
+		utils.Success(c, []models.User{})
+		return
+	}
+	db := config.GetDB()
+	like := "%" + keyword + "%"
+	var users []models.User
+	if err := db.Where("role = ? AND is_active = ? AND (username LIKE ? OR nickname LIKE ?)",
+		models.RolePlayer, true, like, like).Order("id DESC").Limit(20).Find(&users).Error; err != nil {
+		utils.InternalServerError(c, "搜索玩家失败，请稍后重试")
+		return
+	}
+	for i := range users {
+		users[i].Sanitize()
+	}
+	utils.Success(c, users)
+}
+
 func (uc *UserController) GetUserByID(c *gin.Context) {
 	id := c.Param("id")
 	userID, err := strconv.ParseUint(id, 10, 32)

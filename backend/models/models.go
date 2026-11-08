@@ -195,6 +195,7 @@ type Review struct {
 	Tags         string           `json:"tags" gorm:"size:255"` // JSON 数组字符串
 	IsAnonymous  bool             `json:"is_anonymous" gorm:"default:false"`
 	PlayRecordID *uint            `json:"play_record_id" gorm:"index"` // 关联的游玩记录
+	TargetName   string           `json:"target_name,omitempty" gorm:"-"`
 	CreatedAt    time.Time        `json:"created_at"`
 	UpdatedAt    time.Time        `json:"updated_at"`
 
