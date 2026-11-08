@@ -157,7 +157,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
               <button
                 disabled={!canNext}
                 onClick={() => canNext && setStep('review')}
-                style={{ flex: 1.6, padding: 13, border: 'none', borderRadius: 3, background: canNext ? COLORS.primary : '#C7C9D9', color: '#fff', font: "600 14px 'Noto Sans SC',sans-serif", cursor: canNext ? 'pointer' : 'not-allowed' }}
+                style={{ flex: 1.6, padding: 13, border: 'none', borderRadius: 2, background: canNext ? COLORS.primary : COLORS.bgSubtle, color: canNext ? '#fff' : COLORS.textMuted, font: "600 14px 'Noto Sans SC',sans-serif", cursor: canNext ? 'pointer' : 'not-allowed' }}
               >
                 下一步 · 确认
               </button>
@@ -179,7 +179,7 @@ export default function BalanceOpModal({ open, mode, player, providerId, asStudi
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', background: COLORS.warnBg, borderRadius: 3, color: COLORS.warnText, fontSize: 12.5, lineHeight: 1.5 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flex: 'none' }}><path d="M12 9v4M12 17h.01" /><circle cx="12" cy="12" r="10" /></svg>
-                请确认数额无误，提交后将立即写入 {player.nickname} 的账户流水。
+                提交后立即入账。
               </div>
             </div>
             <div style={{ padding: '0 24px 22px', display: 'flex', gap: 11 }}>
