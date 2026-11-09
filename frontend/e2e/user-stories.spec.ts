@@ -91,3 +91,18 @@ test('服务者通过充值弹窗给玩家加余额', async ({ page }) => {
   await expect(page.getByText(/已为.*充值/).first()).toBeVisible({ timeout: 15000 });
   await expect(page.getByText('¥150.00').first()).toBeVisible();
 });
+
+test('工作室通过 UI 创建工作室', async ({ page }) => {
+  const s = Date.now().toString();
+  const studio = await registerViaApi('studio', s);
+
+  await loginAs(page, studio.token);
+  await page.goto('/studio/manage');
+  await expect(page.getByRole('button', { name: '创建工作室' })).toBeVisible({ timeout: 15000 });
+
+  await page.locator('input[placeholder="例如：星轨陪玩"]').fill(`星轨E2E${s}`);
+  await page.getByRole('button', { name: '创建工作室' }).click();
+
+  await expect(page.getByText('工作室创建成功').first()).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('button', { name: '保存修改' })).toBeVisible();
+});

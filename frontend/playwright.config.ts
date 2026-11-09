@@ -10,6 +10,9 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: 'http://localhost:3000',
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_PATH
+      ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH }
+      : {},
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
