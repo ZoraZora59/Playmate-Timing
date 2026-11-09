@@ -125,6 +125,7 @@ export default function PlayerRecordsPage() {
 
   const rows: LedgerRow[] = records.map((r) => {
     const meta = playStatusMeta(r.status);
+    const settled = r.status === PlayStatus.COMPLETED;
     const canReviewAny =
       r.status === PlayStatus.COMPLETED &&
       (canReview(r, ReviewTargetType.PROVIDER) || canReview(r, ReviewTargetType.STUDIO));
@@ -132,20 +133,26 @@ export default function PlayerRecordsPage() {
       key: r.id,
       cells: {
         game: (
-          <span className="pm-cell-name-main" title={`${r.game_name || '未命名对局'}${r.game_mode ? ` · ${r.game_mode}` : ''}`}>
-            {r.game_name || '未命名对局'}
-            {r.game_mode ? <span style={{ fontWeight: 400, color: 'var(--ink-muted)' }}> · {r.game_mode}</span> : null}
+          <span>
+            <span className="pm-cell-name-main" title={`${r.game_name || '未命名对局'}${r.game_mode ? ` · ${r.game_mode}` : ''}`}>
+              {r.game_name || '未命名对局'}
+              {r.game_mode ? <span style={{ fontWeight: 400, color: 'var(--ink-muted)' }}> · {r.game_mode}</span> : null}
+            </span>
+            <span className="pm-cell-mobile-meta">
+              {formatDateTime(r.start_time)}
+              {settled && r.duration != null ? ` · ${r.duration} 分钟` : ''}
+            </span>
           </span>
         ),
         provider: <span style={{ fontSize: 13 }}>{r.provider?.nickname || r.provider?.username || '—'}</span>,
         duration: (
           <span className="num" style={{ fontSize: 12.5 }}>
-            {r.duration != null ? `${r.duration} 分钟` : '—'}
+            {settled && r.duration != null ? `${r.duration} 分钟` : '—'}
           </span>
         ),
         amount: (
           <span className="num" style={{ fontSize: 12.5 }}>
-            {r.amount != null && r.settle_type ? formatBalance(r.settle_type, r.amount) : '—'}
+            {settled && r.amount != null && r.settle_type ? formatBalance(r.settle_type, r.amount) : '—'}
           </span>
         ),
         start: <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{formatDateTime(r.start_time)}</span>,

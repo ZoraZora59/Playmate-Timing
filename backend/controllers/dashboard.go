@@ -144,7 +144,7 @@ func (dc *DashboardController) ProviderDashboard(c *gin.Context) {
 		Where("provider_id = ?", userID).
 		Group("player_id").Scan(&lastRows)
 	for _, r := range lastRows {
-		if agg, ok := aggMap[r.PlayerID]; ok {
+		if agg, ok := aggMap[r.PlayerID]; ok && !r.Last.IsZero() {
 			t := r.Last
 			agg.LastActive = &t
 		}

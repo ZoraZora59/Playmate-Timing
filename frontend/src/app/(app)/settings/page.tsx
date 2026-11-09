@@ -34,11 +34,6 @@ export default function SettingsPage() {
     try {
       const data = await apiClient.getProfile();
       setProfile(data);
-      form.setFieldsValue({
-        nickname: data.nickname,
-        phone: data.phone,
-        avatar: data.avatar,
-      });
       setError(false);
     } catch {
       setError(true);
@@ -49,7 +44,6 @@ export default function SettingsPage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onFinish = async (values: ProfileForm) => {
@@ -120,7 +114,13 @@ export default function SettingsPage() {
 
       <section className="pm-settings-section">
         <h2 className="pm-settings-title">编辑资料</h2>
-        <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+          requiredMark={false}
+          initialValues={{ nickname: profile.nickname, phone: profile.phone, avatar: profile.avatar }}
+        >
           <Form.Item
             name="nickname"
             label="昵称"

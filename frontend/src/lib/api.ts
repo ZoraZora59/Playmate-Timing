@@ -116,7 +116,7 @@ class ApiClient {
   getStudioList = (params?: { page?: number; page_size?: number; keyword?: string }) =>
     this.request<PageResponse<Studio>>('get', '/studios', null, params);
   getStudioById = (id: number) => this.request<Studio>('get', `/studios/${id}`);
-  createStudio = (form: CreateStudioForm) => this.request<Studio>('post', '/studio', form);
+  createStudio = (form: CreateStudioForm) => this.request<Studio>('post', '/studio/', form);
   updateStudio = (id: number, form: CreateStudioForm) => this.request<Studio>('put', `/studio/${id}`, form);
   applyToJoinStudio = (id: number, notes?: string) =>
     this.request<ProviderStudioRelation>('post', `/studio/${id}/apply`, { notes });

@@ -292,7 +292,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {role === UserRole.PROVIDER && (
+          {(role === UserRole.PROVIDER || role === UserRole.STUDIO) && (
             <button
               onClick={() => router.push('/studios')}
               className="pm-btn pm-btn-ghost pm-btn-sm"
@@ -349,6 +349,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <Icon name="refresh" />
             </button>
             <Dropdown
+              trigger={['click']}
+              placement="bottomRight"
               menu={{
                 items: [
                   { key: 'settings', label: '账号设置', onClick: () => router.push('/settings') },

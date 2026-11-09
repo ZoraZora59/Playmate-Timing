@@ -1135,6 +1135,9 @@ body {
   min-width: 0;
   line-height: 1.35;
 }
+.pm-cell-mobile-meta {
+  display: none;
+}
 .pm-table .pm-cell-name-main {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1220,8 +1223,10 @@ body {
 
 /* 文字动作 / 按钮 */
 .pm-action {
-  display: inline;
-  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 0;
   border: none;
   background: none;
   color: var(--ink-text);
@@ -1299,9 +1304,12 @@ body {
 }
 
 .pm-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   border: none;
   background: none;
-  padding: 0;
+  padding: 2px 0;
   color: var(--ink-text);
   font-family: var(--font-body);
   font-size: 12.5px;
@@ -2316,11 +2324,19 @@ body {
 .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
   background: var(--paper-deep) !important;
 }
+.ant-input-clear-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: -8px 0;
+  font-size: 14px;
+}
 .ant-form-item-explain-error {
   color: var(--seal) !important;
   font-size: 12px !important;
-}
-.ant-form-item-label > label {
+}.ant-form-item-label > label {
   color: var(--ink-muted) !important;
   font-size: 11.5px !important;
   font-weight: 600 !important;
@@ -2464,6 +2480,39 @@ body {
 @media (max-width: 640px) {
   .pm-hide-mobile {
     display: none !important;
+  }
+  .pm-page-title {
+    font-size: 18px;
+  }
+  .pm-auth-back,
+  .pm-auth-switch a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .pm-row-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+  .pm-tx-filter {
+    min-height: 44px;
+    padding: 10px 8px;
+  }
+  .ant-input-clear-icon {
+    width: 44px;
+    height: 44px;
+    margin: -12px 0;
+  }
+  .pm-cell-mobile-meta {
+    display: block;
+    margin-top: 2px;
+    font-size: 11.5px;
+    color: var(--ink-muted);
+    white-space: nowrap;
   }
   .pm-icon-btn {
     width: 44px;
@@ -2693,7 +2742,7 @@ body {
     display: none;
   }
   .pm-user-name {
-    max-width: 96px;
+    display: none;
   }
   .pm-topbar-meta {
     gap: 8px;

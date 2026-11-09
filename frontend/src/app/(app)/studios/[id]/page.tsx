@@ -75,7 +75,12 @@ export default function StudioDetailPage() {
   const submitApply = async () => {
     setSubmitting(true);
     try {
-      await apiClient.applyToJoinStudio(studioId, notes.trim() || undefined);
+      const relation = await apiClient.applyToJoinStudio(studioId, notes.trim() || undefined);
+      setStudio((prev) => {
+        if (!prev) return prev;
+        const rest = (prev.relations ?? []).filter((r) => r.provider_id !== user?.id);
+        return { ...prev, relations: [...rest, relation] };
+      });
       message.success('申请已提交，请等待工作室审核');
       setApplyOpen(false);
       setNotes('');

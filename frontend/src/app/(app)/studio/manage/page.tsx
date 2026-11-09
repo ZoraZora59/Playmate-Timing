@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { App, Spin, Form, Input, Button } from 'antd';
-import axios from 'axios';
 import apiClient from '@/lib/api';
 import { Studio, CreateStudioForm } from '@/types';
 import { LoadError } from '@/components/ui';
 
 export default function StudioManagePage() {
   const { message } = App.useApp();
-  const [form] = Form.useForm<CreateStudioForm>();
   const [studio, setStudio] = useState<Studio | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -21,19 +19,11 @@ export default function StudioManagePage() {
     try {
       const dashboard = await apiClient.getStudioDashboard();
       setStudio(dashboard.studio ?? null);
-      form.setFieldsValue({
-        name: dashboard.studio?.name ?? '',
-        description: dashboard.studio?.description ?? '',
-        logo: dashboard.studio?.logo ?? '',
-        contact_info: dashboard.studio?.contact_info ?? '',
-      });
     } catch (e) {
       // 404 视为「尚未创建工作室」，进入创建模式而非报错
-      const notFound =
-        axios.isAxiosError(e) && e.response?.status === 404;
+      const notFound = (e as { status?: number }).status === 404;
       if (notFound) {
         setStudio(null);
-        form.resetFields();
       } else {
         setError(true);
       }
@@ -44,7 +34,6 @@ export default function StudioManagePage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onFinish = async (values: CreateStudioForm) => {
@@ -86,10 +75,16 @@ export default function StudioManagePage() {
   return (
     <div className="animate-pop" style={{ maxWidth: 560 }}>
       <Form
-        form={form}
+        key={studio?.id ?? 'new'}
         layout="vertical"
         requiredMark="optional"
         onFinish={onFinish}
+        initialValues={{
+          name: studio?.name ?? '',
+          description: studio?.description ?? '',
+          logo: studio?.logo ?? '',
+          contact_info: studio?.contact_info ?? '',
+        }}
         style={{ borderTop: '2px solid var(--ink-text)', paddingTop: 20 }}
       >
         <Form.Item
