@@ -2287,19 +2287,6 @@ body {
 }
 
 /* Ant Design 兜底：去掉默认蓝、圆角、阴影 */
-.ant-select-dropdown,
-.ant-dropdown-menu,
-.ant-popover-inner,
-.ant-tooltip-inner,
-.ant-modal-close {
-  width: 44px !important;
-  height: 44px !important;
-}
-.ant-modal-close-x {
-  width: 44px !important;
-  height: 44px !important;
-  line-height: 44px !important;
-}
 .ant-modal-content,
 .ant-message-notice-content {
   border-radius: 2px !important;
