@@ -102,8 +102,8 @@ export default function ProviderDashboardView() {
   const mergedPlayers = useMemo(() => {
     if (!data) return [] as ProviderPlayerAgg[];
     const map = new Map<number, ProviderPlayerAgg>();
-    for (const player of data.active_players) map.set(player.player_id, player);
-    for (const player of data.todos) {
+    for (const player of data.active_players ?? []) map.set(player.player_id, player);
+    for (const player of data.todos ?? []) {
       if (!map.has(player.player_id)) map.set(player.player_id, player);
     }
     const all = Array.from(map.values());
@@ -139,8 +139,8 @@ export default function ProviderDashboardView() {
     );
   }
 
-  const earnOf = (type: BalanceType) => data.earnings.find((item) => item.type === type);
-  const weeklyTotal = data.weekly_play_counts.reduce((sum, item) => sum + item.count, 0);
+  const earnOf = (type: BalanceType) => (data.earnings ?? []).find((item) => item.type === type);
+  const weeklyTotal = (data.weekly_play_counts ?? []).reduce((sum, item) => sum + item.count, 0);
   const lowCount = mergedPlayers.filter((player) => toNum(player.money) < 50).length;
   const visiblePlayers = mergedPlayers.slice(0, 8);
 
@@ -281,7 +281,7 @@ export default function ProviderDashboardView() {
         </SectionBlock>
 
         <SectionBlock title={`近 7 天 ${weeklyTotal} 局`}>
-          <Tally data={data.weekly_play_counts} />
+          <Tally data={data.weekly_play_counts ?? []} />
         </SectionBlock>
       </div>
 

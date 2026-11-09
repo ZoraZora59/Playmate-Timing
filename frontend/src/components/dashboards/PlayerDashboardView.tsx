@@ -95,9 +95,10 @@ export default function PlayerDashboardView() {
     );
   }
 
-  const recent = data.recent_transactions.slice(0, 6);
-  const ongoing = data.ongoing_records.slice(0, 2);
-  const moreOngoing = Math.max(0, data.ongoing_records.length - ongoing.length);
+  const recent = (data.recent_transactions ?? []).slice(0, 6);
+  const ongoingAll = data.ongoing_records ?? [];
+  const ongoing = ongoingAll.slice(0, 2);
+  const moreOngoing = Math.max(0, ongoingAll.length - ongoing.length);
 
   const rows: LedgerRow[] = recent.map((t) => {
     const credit = txIsCredit(t.type);

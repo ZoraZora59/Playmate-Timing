@@ -47,7 +47,7 @@ func (dc *DashboardController) PlayerDashboard(c *gin.Context) {
 	db.Model(&models.Balance{}).Where("player_id = ?", userID).Distinct("provider_id").Count(&providerCount)
 
 	// 最近流水（跨所有余额）
-	var recent []models.BalanceTransaction
+	recent := make([]models.BalanceTransaction, 0)
 	db.Model(&models.BalanceTransaction{}).
 		Joins("JOIN balances ON balances.id = balance_transactions.balance_id").
 		Where("balances.player_id = ?", userID).
@@ -61,7 +61,7 @@ func (dc *DashboardController) PlayerDashboard(c *gin.Context) {
 	}
 
 	// 进行中的陪玩
-	var ongoing []models.PlayRecord
+	ongoing := make([]models.PlayRecord, 0)
 	db.Where("player_id = ? AND status = ?", userID, models.PlayStatusActive).
 		Preload("Provider").Order("start_time DESC").Find(&ongoing)
 	for i := range ongoing {
@@ -100,7 +100,7 @@ func (dc *DashboardController) ProviderDashboard(c *gin.Context) {
 	db := config.GetDB()
 
 	// 收益汇总（按类型）
-	var earnings []BalanceSummaryRow
+	earnings := make([]BalanceSummaryRow, 0)
 	db.Model(&models.Balance{}).
 		Select("type, COALESCE(SUM(amount),0) as total_amount, COUNT(DISTINCT player_id) as player_count").
 		Where("provider_id = ?", userID).
@@ -250,7 +250,7 @@ func (dc *DashboardController) StudioDashboard(c *gin.Context) {
 	db.Model(&models.ProviderStudioRelation{}).
 		Where("studio_id = ? AND status = ?", studio.ID, models.StatusPending).Count(&pendingCount)
 
-	var pending []models.ProviderStudioRelation
+	pending := make([]models.ProviderStudioRelation, 0)
 	db.Where("studio_id = ? AND status = ?", studio.ID, models.StatusPending).
 		Preload("Provider").Order("applied_at DESC").Limit(10).Find(&pending)
 	for i := range pending {

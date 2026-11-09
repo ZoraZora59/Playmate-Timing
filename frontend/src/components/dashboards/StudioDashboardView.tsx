@@ -139,7 +139,7 @@ export default function StudioDashboardView() {
     );
   }
 
-  const pendingRows: LedgerRow[] = data.pending_applications.map((rel) => {
+  const pendingRows: LedgerRow[] = (data.pending_applications ?? []).map((rel) => {
     const name = rel.provider?.nickname || rel.provider?.username || '服务者';
     const busy = processing === rel.id;
     return {

@@ -620,3 +620,39 @@ func TestProviderSearchPlayers(t *testing.T) {
 		t.Fatalf("studio must be forbidden, got %d %v", code, resp)
 	}
 }
+
+// 新注册、没有任何数据的账号，控制台聚合里的列表必须是空数组而不是 null。
+func TestDashboardEmptyListsAreArrays(t *testing.T) {
+	r := newTestApp(t)
+
+	playerToken, _ := register(t, r, "player", "freshplayer", "新玩家")
+	providerToken, _ := register(t, r, "provider", "freshprovider", "新服务者")
+	studioToken, _ := register(t, r, "studio", "freshstudio", "新工作室")
+	_, resp := doReq(t, r, "POST", "/api/v1/studio/", studioToken, map[string]any{"name": "新工作室"})
+	if resp["code"].(float64) != 0 {
+		t.Fatalf("create studio failed: %v", resp)
+	}
+
+	cases := []struct {
+		name  string
+		path  string
+		token string
+		keys  []string
+	}{
+		{"player", "/api/v1/player/dashboard", playerToken, []string{"recent_transactions", "ongoing_records"}},
+		{"provider", "/api/v1/provider/dashboard", providerToken, []string{"earnings", "active_players", "weekly_play_counts", "todos"}},
+		{"studio", "/api/v1/studio/dashboard", studioToken, []string{"pending_applications"}},
+	}
+	for _, tc := range cases {
+		code, resp := doReq(t, r, "GET", tc.path, tc.token, nil)
+		if code != http.StatusOK {
+			t.Fatalf("%s dashboard status = %d", tc.name, code)
+		}
+		data := mustData(t, resp)
+		for _, key := range tc.keys {
+			if _, ok := data[key].([]any); !ok {
+				t.Errorf("%s dashboard %s = %#v, want []", tc.name, key, data[key])
+			}
+		}
+	}
+}
